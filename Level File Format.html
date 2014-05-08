@@ -1,0 +1,497 @@
+
+<!-- saved from url=(0083)http://www.cs.princeton.edu/courses/archive/spr14/cos426/assignment4/scnformat.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Syntax of COS426 Scene File Format</title>
+
+<meta content="MSHTML 6.00.2722.900" name="GENERATOR"><link type="text/css" rel="stylesheet" href="chrome-extension://cpngackimfmofbokmjmljamhdncknpmg/style.css"><script type="text/javascript" charset="utf-8" src="chrome-extension://cpngackimfmofbokmjmljamhdncknpmg/js/page_context.js"></script><style type="text/css"></style></head>
+<body text="#000000" vlink="#800080" alink="#0000ff" link="#ff0000" bgcolor="#ffffff" screen_capture_injected="true">
+<hr width="99%" size="3">
+<br><b><font size="+3">Syntax of the COS426 Scene File Format</font></b> <br>
+<hr width="99%" size="3">
+
+
+<p>For this project we define a rudimentary scene graph language. Each command 
+begins with keyword and goes on until the next command or until the end of the 
+file is reached. Commands may extend across new-line characters, lines starting 
+with the hash character # will be ignored as comments.  All numbers
+are assumed to be floating point.  Angles are given in radians.</p>
+
+<p>Most of the commands are the same as in assignment #3. 
+There are only five new commands (particle, particle_source, and particle_sink, 
+particle_spring, and particle_gravity), as described below. 
+
+</p><p>In general, positions and distances should be in meters, times in seconds, and weights in kilograms.
+
+<!------------------------------------------------------------------------>
+
+<br>&nbsp;<br></p><hr>
+<p><b>particle</b> 
+<br><b>&nbsp;&nbsp;&nbsp; position_x position_y position_z</b> 
+<br><b>&nbsp;&nbsp;&nbsp; velocity_x velocity_y velocity_z</b> 
+<br><b>&nbsp;&nbsp;&nbsp; mass fixed drag elasticity lifetime mat_id</b> 
+
+</p><p>This command defines a particle with initial position
+<i>(position_x,position_y,position_z)</i> and initial velocity
+<i>(velocity_x,velocity_y,velocity_z)</i>.  
+
+</p><p>The last six values specify the <i>mass</i> of the particle (range:
+0 to <i>infinity</i>), whether or not the particle has a fixed position
+(range: 0=freetomove or 1=fixed), the <i><a name="#drag">drag</a></i> coefficient of the
+particle (range: 0 to <i> infinity</i>), the <i>elasticity</i> of the particle
+(range: 0 to 1), the <i>lifetime</i> of the particle (in seconds from
+its creation, or &lt;=0 to live forever), and the material ID for the
+particle, an index into the list of <i>materials</i> previously
+defined within the same file.  If <i>mat_id = -1</i>, then no material
+is assigned immediately, and the surface will either adopt the
+material specified with an enclosing <i>begin</i> and <i>end</i>
+commands or a default material (gray) if there are no enclosing
+<i>begin</i> and <i>end</i> commands.
+
+<!------------------------------------------------------------------------>
+
+<br>&nbsp;<br></p><hr>
+<p><b>particle_source</b> 
+<br><b>&nbsp;&nbsp;&nbsp; mass fixed drag elasticity lifetime mat_id</b> 
+<br><b>&nbsp;&nbsp;&nbsp; rate velocity angle_cutoff</b> 
+<br><b>&nbsp;&nbsp;&nbsp; source_shape</b>
+
+</p><p>This command defines a particle source, a generator of particles.  The 
+source should generate <i>rate</i> particles per second with initial positions 
+randomly distributed on the surface of the source.
+
+</p><p>The surface of the source is specified by the <i>source_shape</i> parameters, 
+which appear in one of the following formats:
+</p><pre>   line    x1 y1 z1  x2 y2 z2  
+   box     low_x low_y low_z  high_x high_y high_z
+   circle  center_x center_y center_z  normal_x normal_y normal_z radius 
+   sphere  center_x center_y center_z  radius
+   mesh    meshname
+</pre>
+
+<p>These shape descriptions are similar to the ones used for creating
+scene elements.  Specifically, if the source shape is a line, then six
+values appear after the "line" keyword to specify the two endpoints of
+the line segment: <i>(x1,y1,z1)</i> and <i>(x2,y2,z2)</i>.  If the
+source shape is a box, then six values appear after the "box" keyword
+to specify the "low" corner of the box <i>(low_x,low_y,low_z)</i> and
+the "high" corner of the box <i>(high_x,high_y,high_z)</i> (e.g., a
+unit cube is "box -1 -1 -1 1 1 1"). If the source shape is a circle,
+then seven values appear after the "circle" keyword to specify its
+center <i>(center_x,center_y,center_z)</i>, its normal direction
+<i>(normal_x,normal_y,normal_z)</i>, and its <i>radius</i> (e.g., a
+unit circle in the xz-plane is "circle 0 0 0 0 1 0 1").  If the source
+shape is a sphere, then four values appear after the "sphere" keyword
+to specify its center <i>(center_x,center_y,center_z)</i> and
+<i>radius</i> (e.g., a unit sphere is "sphere 0 0 0 1").  Finally, if
+the source shape is a mesh, then one parameter follows the "mesh"
+keyword to specify the mesh filename (e.g., "mesh teapot.off").
+
+</p><p>When a particle is generated with this source, it should have an
+initial velocity vector with magnitude equal to <i>velocity</i> and
+with a direction equal to the normal of the surface (or line) at the
+particle's initial position perturbed by a random angle between zero
+and <i>angle_cutoff</i>.
+
+</p><p>The particle should be generated with the given <i>mass</i> (range:
+0 to <i>infinity</i>), fixed status (range: 0=freetomove or 1=fixed), 
+drag coefficient (range: 0 to <i>infinity</i>), elasticity (range:
+0 to 1), liftime (in seconds from their creation, or &lt;=0 to live
+forever), material ID (<i>mat_id</i> is an index into previous defined
+materials), where all these parameters are interpreted in the same way
+as described in the particle command.
+
+<!------------------------------------------------------------------------>
+
+<br>&nbsp;<br></p><hr>
+<p><b>particle_sink</b> 
+<br><b>&nbsp;&nbsp;&nbsp; intensity ca la qa</b>
+<br><b>&nbsp;&nbsp;&nbsp; sink_shape</b>
+
+</p><p>This command defines a particle sink, an attactor or repulsor of
+particles.  The sink attracts particles towards (or away from) the
+sink surface and kills them if they intersect its surface.
+
+</p><p>The sink surface is specified by the <i>sink_shape</i>,
+which has the same format and interpretation as described for 
+particle sources. 
+
+</p><p>If the <i>intensity</i> of the particle sink is non-zero, then
+the sink exerts a force on particles.  The direction of the force is along the
+vector from the particle to the closest point on the surface.
+The magnitude is equal to
+<i>intensity</i>*<i>1.0/</i> (<i>ca </i>+ <i>la*d</i> +
+<i>qa*d*d</i>), where <i>d</i> is the distance from a particle to the
+closest point on the sink shape's surface, and <i>ca, la, </i>and
+<i>qa </i> define the constant, linear and quadratic components of the
+attenuation factor. Note that the specified
+<i>intensity</i> can be negative (to repel particles).
+
+<!------------------------------------------------------------------------>
+
+<br>&nbsp;<br></p><hr>
+<p><b>particle_spring</b> 
+<br><b>&nbsp;&nbsp;&nbsp; particle1 particle2</b>
+<br><b>&nbsp;&nbsp;&nbsp; rest_length ks kd</b>
+
+</p><p>This command defines a "spring" between two particles with the given
+<i>rest_length</i>, spring coefficient <i>(ks)</i>, and damping_coefficient<i>(kd)</i>.
+This pair of particles should apply a force upon each other according to
+Hooke's Law.
+
+<!------------------------------------------------------------------------>
+
+<br>&nbsp;<br></p><hr>
+<p><b>particle_gravity</b> 
+<br><b>&nbsp;&nbsp;&nbsp; vx vy vz</b>
+
+</p><p>This command defines the vector of acceleration due to gravity.  
+For earth, you can use (0, -9.80665, 0), assuming that Y is "up."
+
+<!------------------------------------------------------------------------>
+
+<br>&nbsp;<br>&nbsp;<br></p><hr><hr>
+The following commands define the non-particle elements of the scene -- 
+they follow the syntax of assignment #3 without change.
+<br><hr><hr>
+
+<!------------------------------------------------------------------------>
+
+<br>&nbsp;<br><hr>
+<p><b>box</b> 
+<br><b>&nbsp;&nbsp;&nbsp; mat_id </b>
+<br><b>&nbsp;&nbsp;&nbsp; low_x low_y low_z</b> 
+<br><b>&nbsp;&nbsp;&nbsp; high_x high_y high_z</b> 
+</p><p>This command defines an axis-aligned box with corners <i>(low_x,low_y,low_z)</i> and 
+<i>(high_x,high_y,high_z)</i>, where <i>high_x&gt;low_x, high_y&gt;low_y, and high_z&gt;low_z</i>.  
+</p><p>The box will have the material indicated by <i>mat_id</i>,
+an index into the list of <i>materials</i> previously defined within the same file.
+If <i>mat_id = -1</i>, then no material is assigned immediately, and the surface
+will either adopt the material specified with an enclosing <i>begin</i> and <i>end</i>
+commands or a default material (gray) if there are no enclosing <i>begin</i> and 
+<i>end</i> commands.
+
+<br>&nbsp;<br></p><hr>
+<p><b>cone</b> 
+<br><b>&nbsp;&nbsp;&nbsp; mat_id </b>
+<br><b>&nbsp;&nbsp;&nbsp; center_x center_y center_z</b> 
+<br><b>&nbsp;&nbsp;&nbsp; radius height</b> 
+</p><p>This command defines a cone, with a central axis parallel to the y-axis, and 
+centered at the point (<i>center_x,center_y,center_z</i>). The radius and height are given 
+by <i>radius</i> and <i>height</i>, respectively. The cone is a closed surface 
+(i.e. it has an end cap on the lower-y-side, and an apex on the higher-y-side). 
+The base lies at y=center_y-height/2 and the apex lies at y=center_y+height/2. 
+</p><p>The cone will have the material indicated by <i>mat_id</i>,
+an index into the list of <i>materials</i> previously defined within the same file.
+If <i>mat_id = -1</i>, then no material is assigned immediately, and the surface
+will either adopt the material specified with an enclosing <i>begin</i> and <i>end</i>
+commands or a default material (gray) if there are no enclosing <i>begin</i> and 
+<i>end</i> commands.
+
+<br>&nbsp;<br></p><hr>
+<p><b>cylinder</b> 
+<br><b>&nbsp;&nbsp;&nbsp; mat_id </b>
+<br><b>&nbsp;&nbsp;&nbsp; center_x center_y center_z</b> 
+<br><b>&nbsp;&nbsp;&nbsp; radius height</b> 
+</p><p>This command defines a cylinder, with a central axis parallel to the y-axis, and 
+centered at the point (<i>center_x,center_y,center_z</i>). The radius and height are given 
+by <i>radius</i> and <i>height</i>, respectively. The cylinder is a closed surface 
+(i.e. it has end caps.). The ends lie at y=center_y-height/2 and y=center_y+height/2. 
+</p><p>The cylinder will have the material indicated by <i>mat_id</i>,
+an index into the list of <i>materials</i> previously defined within the same file.
+If <i>mat_id = -1</i>, then no material is assigned immediately, and the surface
+will either adopt the material specified with an enclosing <i>begin</i> and <i>end</i>
+commands or a default material (gray) if there are no enclosing <i>begin</i> and 
+<i>end</i> commands.
+
+<br>&nbsp;<br></p><hr>
+<p><b>line</b> 
+<br><b>&nbsp;&nbsp;&nbsp; mat_id </b>
+<br><b>&nbsp;&nbsp;&nbsp; x1 y1 z1</b> 
+<br><b>&nbsp;&nbsp;&nbsp; x2 y2 z2</b> 
+</p><p>This command defines a line segment with endpoints <i>(x1, y1, z1)</i> and 
+<i>(x2, y2, z2)</i>.  You do not have to intersect lines in your ray tracer,
+since they are infinitely thin.  This command is provided mainly for visualization 
+purposes (the lines will be drawn in rayview).
+</p><p>The line segment will have the material indicated by <i>mat_id</i>,
+an index into the list of <i>materials</i> previously defined within the same file.
+If <i>mat_id = -1</i>, then no material is assigned immediately, and the line segment
+will either adopt the material specified with an enclosing <i>begin</i> and <i>end</i>
+commands or a default material (gray) if there are no enclosing <i>begin</i> and 
+<i>end</i> commands.  
+
+<br>&nbsp;<br></p><hr>
+<p><b>mesh</b> 
+<br><b>&nbsp;&nbsp;&nbsp; mat_id </b>
+<br><b>&nbsp;&nbsp;&nbsp; meshname </b>
+</p><p>This command includes a mesh into the scene.  The file with name <i>meshname</i>
+is opened (.off, .ray, or .obj), and all the triangles of that file are read 
+and added to the scene graph. 
+</p><p>The mesh will have the material indicated by <i>mat_id</i>, 
+an index into the list of <i>materials</i> previously defined within the same file.
+If <i>mat_id = -1</i>, then no material is assigned immediately, and the surface
+will either adopt the material specified with an enclosing <i>begin</i> and <i>end</i>
+commands or a default material (gray) if there are no enclosing <i>begin</i> and 
+<i>end</i> commands.
+
+<br>&nbsp;<br></p><hr>
+<p><b>sphere</b> 
+<br><b>&nbsp;&nbsp;&nbsp; mat_id </b>
+<br><b>&nbsp;&nbsp;&nbsp; center_x center_y center_z</b> 
+<br><b>&nbsp;&nbsp;&nbsp; radius</b> 
+</p><p>This command defines a sphere with the specified center <i>(center_x,center_y,center_z)</i> and 
+<i>radius</i>.  
+</p><p>The sphere will have the material indicated by <i>mat_id</i>,
+an index into the list of <i>materials</i> previously defined within the same file.
+If <i>mat_id = -1</i>, then no material is assigned immediately, and the surface
+will either adopt the material specified with an enclosing <i>begin</i> and <i>end</i>
+commands or a default material (gray) if there are no enclosing <i>begin</i> and 
+<i>end</i> commands.
+
+<br>&nbsp;<br></p><hr>
+<p><b>tri</b> 
+<br><b>&nbsp;&nbsp;&nbsp; mat_id </b>
+<br><b>&nbsp;&nbsp;&nbsp; x1 y1 z1</b> 
+<br><b>&nbsp;&nbsp;&nbsp; x2 y2 z2</b> 
+<br><b>&nbsp;&nbsp;&nbsp; x3 y3 z3</b> 
+</p><p>This command defines a triangle with coordinates <i>(x1,y1,z1)</i>, 
+<i>(x2,y2,z2)</i>, and <i>(x3,y3,z3)</i>.  
+</p><p>The triangle will have the material indicated by <i>mat_id</i>,
+an index into the list of <i>materials</i> previously defined within the same file.
+If <i>mat_id = -1</i>, then no material is assigned immediately, and the surface
+will either adopt the material specified with an enclosing <i>begin</i> and <i>end</i>
+commands or a default material (gray) if there are no enclosing <i>begin</i> and 
+<i>end</i> commands.
+
+<br>&nbsp;<br></p><hr>
+<p><b>begin</b>
+<br><b>&nbsp;&nbsp;&nbsp; mat_id</b>
+<br><b>&nbsp;&nbsp;&nbsp; m11 m21 m31 m41</b>
+<br><b>&nbsp;&nbsp;&nbsp; m12 m22 m32 m42</b>
+<br><b>&nbsp;&nbsp;&nbsp; m13 m23 m33 m43</b>
+<br><b>&nbsp;&nbsp;&nbsp; m14 m24 m34 m44</b>
+&nbsp;<br>
+<br><b>&nbsp;&nbsp;&nbsp; ... commands ...</b>
+&nbsp;<br>
+<br><b>end</b>
+</p><p>This pair of commands defines a node that will be added to the current
+scene-graph with the specified material and transformation context.
+All geometric primitives within the <i>begin</i> .. and associated <i>end</i> command
+are subject to the 4x4 transformation matrix given in the <i>begin</i> command,
+and any such geometric primitive that does not already have a material assigned
+(i.e., its <i>mat_id</i> was -1) will adopt the material indicated by <i>mat_id</i>
+(where <i>mat_id</i> is the index of a material in the same file).
+</p><p>Groups may be nested, permitting the specification of a transformation
+heirarchy.&nbsp; Shapes within nested groups are subject, in order, to the
+transformation contexts of all their enclosing groups.&nbsp; The total
+transformation context of a given shape is determined, then, by starting with
+the matrix of the root enclosing group, and concatenating additional matrices on
+the right as we decend into nested groups, until we reach the geometric primitives.
+The transformation context of a group is applicable only to its shapes and sub
+groups, so we must remove matrices from the right as we ascend back up the
+heirarchy.
+</p><p>The matrix elements appear as follows and are intended to operate on column
+vectors:
+</p><p><tt>|m11 m21 m31 m41|</tt>
+<br><tt>|m12 m22 m32 m42|</tt>
+<br><tt>|m13 m23 m33 m43|</tt>
+<br><tt>|m14 m24 m34 m44|</tt>
+</p><p>Note: When the .ray file is initially parsed the root scene-graph node is
+instantiated with the identity matrix, so that geometric primitives may be specified
+in world coordinates outside the context of any <i>begin</i> and <i>end</i> pair.
+
+
+<br>&nbsp;<br></p><hr>
+<p><b>material</b> 
+<br><b>&nbsp;&nbsp;&nbsp; ka_r ka_g ka_b</b> 
+<br><b>&nbsp;&nbsp;&nbsp; kd_r kd_g kd_b</b> 
+<br><b>&nbsp;&nbsp;&nbsp; ks_r ks_g ks_b</b> 
+<br><b>&nbsp;&nbsp;&nbsp; kt_r kt_g kt_b</b> 
+<br><b>&nbsp;&nbsp;&nbsp; e_r e_g e_b</b> 
+<br><b>&nbsp;&nbsp;&nbsp; n &nbsp; ir &nbsp; texturename</b> 
+</p><p>This command defines a material. 
+The first material declared will take the interger identifier 
+<i>0</i>, and subsequent materials will follow in order (i.e. <i>1, 2, 3</i>, 
+...). This integer handle is used in geometric commands later in the file
+to assign reflectance properties to surfaces.  Note that materials have file
+scope.  So, the material indices will not be affected by <i>include</i> commands.
+</p><p><i>(ka_r,ka_g,ka_b)</i>, <i>(kd_r,kd_g,kd_b)</i>, and <i>(ks_r,ks_g,ks_b)</i> are the RGB 
+coefficients of ambient, diffuse, and specular specular reflectance, <i>(kt_r,kt_g,kt_b)</i> 
+are the coefficient of transparency (where 0 is fully opaque and 1 is fully transparent), and 
+<i>(e_r,e_g,e_b)</i> is the emissive color of the material (e.g., if a
+geometric primitive is a light source). With the exception of the distributed ray
+tracing task, emissive surfaces do not actually contribute
+illumination to other surfaces, but, unlike the explicit light
+sources, they are directly visible in the camera and in reflections
+etc.
+</p><p>The exponent n defines the specular 'shininess' of the material, and takes 
+non-negative values where <i>0.0</i> is not shiny at all and <i>100.0</i> is very shiny. 
+The cosine of the angle between the ray direction and the specular reflection 
+direction raised to the power of n gives the specular highlight factor. 
+</p><p>The index of refraction is given by <i>ir</i> and is used in Snell's 
+Law computations for refraction direction. For non-closed surfaces, 
+such as triangles, it is assumed that <i>ir</i> is the index of refraction 
+on the backside of the surface. For closed surfaces, such as cones, it is 
+assumed that <i>ir</i> is the index of refraction on the inside of the surface. 
+</p><p>To assign a texture to this material, <i>texturename</i> should be the
+name of an image file, and texture coordinate should be generated for primitives.
+At rendering time, the diffuse color kd will be modulated by the color of the corresponding texture pixel . If no texture is to be associated with the material, then a value of <i>0</i> must be given
+for <i>texturename</i>.
+
+<br>&nbsp;<br></p><hr>
+<p><b>ambient</b> 
+<br><b>&nbsp;&nbsp;&nbsp; r g b</b>
+</p><p>This command defines the color of ambient light for the scene.  For a 
+ray tracer, it specifies the RGB color that should be added to every illumination
+calculation (in addition to the contributions determined for diffuse and specular
+reflections from dir_lights, point_lights, and spot_lights. Do not compute ambient 
+contributions from each light, but rather use the color provided by this
+command for the single, global ambient light source.
+
+<br>&nbsp;<br></p><hr>
+<p><b>area_light</b> 
+<br><b>&nbsp;&nbsp;&nbsp; r g b</b> 
+<br><b>&nbsp;&nbsp;&nbsp; px py pz</b> 
+<br><b>&nbsp;&nbsp;&nbsp; dx dy dz</b> 
+<br><b>&nbsp;&nbsp;&nbsp; radius</b> 
+<br><b>&nbsp;&nbsp;&nbsp; ca la qa</b> 
+</p><p>This command defines a light with a planar, circular area in the scene.&nbsp;  
+<i>(r,g,b)</i> gives the color of the light.
+<i>(px,py,pz)</i> gives the center of the circular area in world coordinates.
+<i>(px,py,pz)</i> and <i>(dx,dy,dz)</i> define the plane on which the area light resides,
+and <i>radius</i> defines extent of the area on the plane (i.e., the radius of the circle).
+Use this type of light to demonstrate soft shadows.
+</p><p>The attenuation of the light with distance from its position is given by <i>ca, 
+la, </i>and <i>qa </i>which define the constant, linear and quadratic components 
+of the attenuation factor. If <i>d</i> is the distance from the light to 
+the surface, and <i>thera</i> is the angle between the light direction and the
+direction to the surface, then the light's color at the surface is given by (<i>r,g,b</i>) 
+*<i>cos(theta)/</i> (<i>ca </i>+ <i>la*d</i> + <i>qa*d*d</i>). Each coeficient 
+must be non-negative. Note: to achieve no attenuation use a 
+<i>(ca,la,qa)</i> of (<i>1.0,0.0,0.0</i>). 
+</p><p>If no light sources
+appear in the file, default ones will be provided by the parser (two directional
+light sources).  Otherwise, every light source must 
+appear before any <i>begin</i> commands in the file.  
+
+
+<br>&nbsp;<br></p><hr>
+<p><b>dir_light</b> 
+<br><b>&nbsp;&nbsp;&nbsp; r g b</b> 
+<br><b>&nbsp;&nbsp;&nbsp; dx dy dz</b> 
+</p><p>This command defines a directional light in the scene.&nbsp; 
+<i>(r,g,b)</i> gives the color of the light, and
+<i>(dx,dy,dz)</i> is a vector describing the direction of the 
+light (it will be normalized by the parser).  Since directional light sources do not attenuate with distance,
+<i>ca</i>, <i>la</i>, and <i>qa</i> are not parameters of this command. 
+</p><p>If no light sources
+appear in the file, default ones will be provided by the parser (two directional
+light sources).  Otherwise, every light source must 
+appear before any <i>begin</i> commands in the file.  
+
+<br>&nbsp;<br></p><hr>
+<p><b>point_light</b> 
+<br><b>&nbsp;&nbsp;&nbsp; r g b</b> 
+<br><b>&nbsp;&nbsp;&nbsp; px py pz</b> 
+<br><b>&nbsp;&nbsp;&nbsp; ca la qa</b> 
+</p><p>This command defines a point light source in the scene. 
+<i>(r,g,b)</i> gives the color of the light. 
+<i>(px,py,pz) </i>gives the position of the light in world coordinates. 
+</p><p>The attenuation of the light with distance from its position is given by <i>ca, 
+la, </i>and <i>qa </i>which define the constant, linear and quadratic components 
+of the attenuation factor. If <i>d</i> is the distance from the light to 
+the surface, then the light's color at the surface is given by (<i>r,g,b</i>) 
+*<i>1.0/</i> (<i>ca </i>+ <i>la*d</i> + <i>qa*d*d</i>). Each coeficient 
+must be non-negative. Note: to achieve no attenuation use a 
+<i>(ca,la,qa)</i> of (<i>1.0,0.0,0.0</i>). 
+</p><p>If no light sources
+appear in the file, default ones will be provided by the parser (two directional
+light sources).  Otherwise, every light source must 
+appear before any <i>begin</i> commands in the file.  
+
+<br>&nbsp;<br></p><hr>
+<p><b>spot_light</b> <br><b>&nbsp;&nbsp;&nbsp; r g b</b> 
+<br><b>&nbsp;&nbsp;&nbsp; px py pz</b> 
+<br><b>&nbsp;&nbsp;&nbsp; dx dy dz</b> 
+<br><b>&nbsp;&nbsp;&nbsp; ca la qa</b> 
+<br><b>&nbsp;&nbsp;&nbsp; sc sd</b> 
+</p><p>This command defines a spot light in the scene. 
+<i>(r,g,b)</i> gives the color of the light, and <i>(px,py,pz)</i>
+gives the position of the light in world coordinates. 
+In this ray tracer, use this single light color for diffuse 
+and specular contributions at each surface. Do not compute ambient 
+contributions from each light, but rather use the global ambient light defined 
+by the <i>ambient</i> command. 
+</p><p>The attenuation of the light with distance from its position is given by <i>ca, 
+la, </i>and <i>qa </i>which define the constant, linear and quadratic components 
+of the attenuation factor. If <i>d</i> is the distance from the light to 
+the surface, then the light's color at the surface is given by (<i>r,g,b</i>) 
+*<i>1.0/</i> (<i>ca </i>+ <i>la*d</i> + <i>qa*d*d</i>). Each coeficient 
+must be non-negative. Note: to achieve no attenuation use a 
+<i>(ca,la,qa)</i> of (<i>1.0,0.0,0.0</i>). 
+</p><p>The direction of the spot light source is given by (dx,dy,dz), and 
+the cutoff angle is given by <i>sc</i> -- i.e., the half angle of 
+divergence of the light cone. It can be measured as the angle from the 
+center axis (dx,dy,dz) to the edge of the spot cone (in radians). 
+The fall off in intensity from the center axis to the 
+cone edge is given by the spot drop-off exponent, <i>sd</i>. 
+So, for a given direction, L, whose angle to the center axis (dx,dy,dz)
+is less than sc, the light intensity (before attenuation with distance)
+can be computed by cos(angle)^sd, or equivalently (L dot (dx,dy,dz))^sd. 
+Note that sc should be less than <i>pi/2</i> radians,
+and sd can take any non-negative, where <i>0.0</i> indicated constant 
+intensity across the cone, and <i>100.0</i> yields a sharp fall-off.
+</p><p>If no light sources
+appear in the file, default ones will be provided by the parser (two directional
+light sources).  Otherwise, every light source must 
+appear before any <i>begin</i> commands in the file.  
+
+
+<br>&nbsp;<br></p><hr>
+<p><b>background</b> 
+<br><b>&nbsp;&nbsp;&nbsp; r g b</b>
+</p><p>This command defines the background color for the scene.  For a 
+ray tracer, it specifies the RGB color that should be used for rays that
+fail to intersect any object. The <i>r</i>, <i>g</i>, and
+<i>b</i> values range from 0 to 1 (where 0,0,0 is black
+and 1,1,1 is white).  The <i>background</i> command is not required --
+a default background (black) will be computed if none is present in
+the file.  If there is a <i>background</i> command, it must appear
+before of any <i>begin</i> commands.  Also, if there are more than one
+<i>background</i> commands in the file, the last is used, and the
+others are ignored.
+
+<br>&nbsp;<br></p><hr>
+<p><b>camera</b> 
+<br><b>&nbsp;&nbsp;&nbsp; eye_x eye_y eye_z</b> 
+<br><b>&nbsp;&nbsp;&nbsp; towards_x towards_y towards_z</b> 
+<br><b>&nbsp;&nbsp;&nbsp; up_x up_y up_z</b> 
+<br><b>&nbsp;&nbsp;&nbsp; xfov &nbsp; neardist fardist</b> 
+</p><p>This command defines a perspective camera in the scene. <i>(eye_x,eye_y,eye_z)</i> is the 
+position of the camera in world coordinates, <i>(towards_x,towards_y,towards_z)</i> is a vector 
+describing the direction the camera is pointing, and <i>(up_x,up_y,up_z)</i> is a vector in the 
+up direction. The half-width angle of the viewing frustum is given by 
+<i>xfov</i>, and the half-height angle is set based on the image aspect ratio
+according to <i>yfov = atan(tan(xfov)*height/width)</i>, 
+where <i>width</i> and <i>height</i> are the width and height of the output image (given on 
+the command line in raypro or the size of the window in rayview). 
+
+</p><p>The <i>camera</i> command is not required -- a default camera will be computed
+if none is present in the file.  If there is a <i>camera</i> command, 
+it must appear before of any <i>begin</i> commands.   Also, if there
+are more than one <i>camera</i> commands in the file, the last is used, 
+and the others are ignored. 
+
+
+<br>&nbsp;<br></p><hr>
+<p><b>include &nbsp; scenefile</b> 
+</p><p> This command includes the scene defined by the specified file into
+the current scene.  Specifically, the scene graph constructed while parsing 
+<i>scenefile</i> will be added to the current scene graph as a subtree rooted
+at the current parsing position.  So, this command can occur anywhere in 
+the scene file, and transformations of the scene graph hierarchy will affect
+included geometry in the same way that it would if the commands were copied
+into the file at the same location.  Yet, materials defined in <i>scenefile</i> 
+will not affect the indices to be used for materials in the current file.  
+
+
+
+</p></body></html>
