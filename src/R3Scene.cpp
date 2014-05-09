@@ -7,7 +7,38 @@
 #include "R3/R3.h"
 #include "R3Scene.h"
 
+//R3Player::R3Player(R3Node *node, double maxSpeed) {
+//  assert(node->shape->type == R3_BOX_SHAPE);
+//  R3Box *box = node->shape->box;
+//  max_speed = maxSpeed;
+//}
 
+R3Point R3Player::Center(void) {
+  R3Box *box = node->shape->box;
+  return (box->Min() + box->Max())/2;
+}
+
+// These are directions from the box's persepctive
+R3Vector R3Player::Towards(void) {
+  R3Box *box = node->shape->box;
+  R3Vector towards = R3Point(box->XMax(), box->YMin(), box->ZMin()) - box->Min();
+  towards.Normalize();
+  return towards;
+}
+
+R3Vector R3Player::Right(void) {
+  R3Box *box = node->shape->box;
+  R3Vector right = box->Min() - R3Point(box->XMin(), box->YMin(), box->ZMax());
+  right.Normalize();
+  return right;
+}
+
+R3Vector R3Player::Up(void) {
+  R3Box *box = node->shape->box;
+  R3Vector up = R3Point(box->XMin(), box->YMax(), box->ZMin()) - box->Min();
+  up.Normalize();
+  return up;
+}
 
 R3Scene::
 R3Scene(void)
@@ -32,6 +63,8 @@ R3Scene(void)
   root->material = NULL;
   root->shape = NULL;
   root->bbox = R3null_box;
+  
+  player = NULL;
 }
 
 
@@ -1057,6 +1090,57 @@ Read(const char *filename, R3Node *node)
 
       // Assign ambient color
       ambient = R3Rgb(r, g, b, 1);
+    }
+    else if (!strcmp(cmd, "player")) {
+      // Read data
+      int m;
+      R3Point p1, p2;
+      double max_speed;
+      double mass;
+      if (fscanf(fp, "%d%lf%lf%lf%lf%lf%lf%lf%lf", &m, &p1[0], &p1[1], &p1[2], &p2[0], &p2[1], &p2[2], &max_speed, &mass) != 9) {
+        fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
+        return 0;
+      }
+      
+      // Get material
+      R3Material *material = group_materials[depth];
+      if (m >= 0) {
+        if (m < (int) materials.size()) {
+          material = materials[m];
+        }
+        else {
+          fprintf(stderr, "Invalid material id at box command %d in file %s\n", command_number, filename);
+          return 0;
+        }
+      }
+      
+      
+      // Create box
+      R3Box *box = new R3Box(p1, p2);
+      
+      // Create shape
+      R3Shape *shape = new R3Shape();
+      shape->type = R3_BOX_SHAPE;
+      shape->box = box;
+      shape->sphere = NULL;
+      shape->cylinder = NULL;
+      shape->cone = NULL;
+      shape->mesh = NULL;
+      shape->segment = NULL;
+      
+      // Create shape node
+      R3Node *node = new R3Node();
+      node->transformation = R3identity_matrix; //R3Matrix(1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1);
+      node->material = material;
+      node->shape = shape;
+      node->bbox = *box;
+      
+      // Insert node
+      group_nodes[depth]->bbox.Union(node->bbox);
+      group_nodes[depth]->children.push_back(node);
+      node->parent = group_nodes[depth];
+      
+      player = new R3Player(node, max_speed, mass);
     }
     else {
       fprintf(stderr, "Unrecognized command %d in file %s: %s\n", command_number, filename, cmd);

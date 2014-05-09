@@ -626,8 +626,6 @@ operator=(const R3Matrix& a)
   return *this;
 }
 
-
-
 R3Matrix& R3Matrix::
 operator*=(double a)
 {

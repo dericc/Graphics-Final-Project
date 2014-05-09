@@ -128,7 +128,29 @@ struct R3ParticleSpring {
   double kd;
 };
 
+struct R3Player {
+public:
+  R3Player(R3Node *node, double max_speed, double mass) :
+    node(node), max_speed(max_speed),  mass(mass) {};
+  
+  const R3Node *node; //
+  const double max_speed;
+  const double mass;
+  
+  R3Point Center();
+  R3Vector Right();
+  R3Vector Towards();
+  R3Vector Up();
+  
+  void Jump();
+  void MoveLeft();
+  void MoveRight();
+  void MoveUp();
+  
+  R3Vector velocity; // current direction of motion
+  bool inAir;
 
+};
 
 // Scene graph definition
 
@@ -169,6 +191,7 @@ struct R3Scene {
   R3Box bbox;
   R3Rgb background;
   R3Rgb ambient;
+  R3Player *player;
 };
 
 

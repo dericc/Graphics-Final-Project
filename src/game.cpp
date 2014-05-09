@@ -50,7 +50,9 @@ static int save_video = 0;
 static int num_frames_to_record = -1; 
 static int quit = 0;
 
-
+static bool right = false;
+static bool left = false;
+static bool up = false;
 // GLUT variables 
 
 static int GLUTwindow = 0;
@@ -142,6 +144,60 @@ static double GetTime(void)
 ////////////////////////////////////////////////////////////
 // SCENE DRAWING CODE
 ////////////////////////////////////////////////////////////
+
+void UpdatePlayer(R3Scene *scene) {
+  R3Player *p = scene->player;
+  // Get current time (in seconds) since start of execution
+  double current_time = GetTime();
+  static double previous_time = 0;
+    bool moved = false;
+  // program just started up?
+  if (previous_time == 0) {
+    previous_time = current_time;
+    moved = true;
+  }
+  
+  // time passed since starting
+  double delta_time = current_time - previous_time;
+
+  // get the forces to move the box
+  R3Vector f = R3null_vector;
+  if (p->inAir) {
+    // do gravity things
+    // check if I hit the floor
+    // etc
+  }
+  
+  
+  double TAU = 1; // timescale for velocity relaxation
+  if (right && !left) {
+    const R3Vector forward = p->Towards();
+    R3Vector forwardVelocity = p->velocity;
+    forwardVelocity.Project(forward);
+    f += (p->max_speed * forward - forwardVelocity) / TAU;
+  }
+  if (left && !right) {
+    const R3Vector forward = p->Towards();
+    R3Vector forwardVelocity = p->velocity;
+    forwardVelocity.Project(forward);
+    f += (-p->max_speed * forward - forwardVelocity) / TAU;
+  }
+  
+  p->velocity += (f / p->mass) * delta_time;
+  // FUCK ALL OF THIS SHIT
+//  p->node->transformation.Translate(p->velocity * delta_time);
+
+  scene->camera.eye = p->Center() - 20* p->Right() + 3*p->Up();
+  scene->camera.towards = (p->Center()) - scene->camera.eye;
+  scene->camera.towards.Normalize();
+  scene->camera.right = p->Towards();
+  scene->camera.up = scene->camera.right;
+  scene->camera.up.Cross(scene->camera.towards);
+  camera = scene->camera;
+
+  previous_time = current_time;
+
+}
 
 void DrawShape(R3Shape *shape)
 {
@@ -790,6 +846,9 @@ void GLUTRedraw(void)
   glClearColor(background[0], background[1], background[2], background[3]);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  // Update Player
+  UpdatePlayer(scene);
+  
   // Load camera
   LoadCamera(&camera);
 
@@ -813,6 +872,7 @@ void GLUTRedraw(void)
 
   // Draw particle springs
   DrawParticleSprings(scene);
+  
 
   // Draw scene surfaces
   if (show_faces) {
@@ -975,12 +1035,21 @@ void GLUTSpecial(int key, int x, int y)
 
   // Process keyboard button event 
   switch (key) {
-  case GLUT_KEY_F1:
-    save_image = 1;
-    break;
-  case GLUT_KEY_F2:
-    save_video = save_video ^ 1;
-    break;
+    case GLUT_KEY_RIGHT:
+      right = true;
+      break;
+    case GLUT_KEY_LEFT:
+      left = true;
+      break;
+    case GLUT_KEY_UP:
+      up = true;
+      break;
+    case GLUT_KEY_F1:
+      save_image = 1;
+      break;
+    case GLUT_KEY_F2:
+      save_video = save_video ^ 1;
+      break;
   }
 
   // Remember mouse position 
@@ -994,7 +1063,34 @@ void GLUTSpecial(int key, int x, int y)
   glutPostRedisplay();
 }
 
-
+void GLUTSpecialUp(int key, int x, int y)
+{
+  // Invert y coordinate
+  y = GLUTwindow_height - y;
+  
+  // Process keyboard button event
+  switch (key) {
+    case GLUT_KEY_RIGHT:
+      right = false;
+      break;
+    case GLUT_KEY_LEFT:
+      left = false;
+      break;
+    case GLUT_KEY_UP:
+      up = false;
+      break;
+  }
+  
+  // Remember mouse position
+  GLUTmouse[0] = x;
+  GLUTmouse[1] = y;
+  
+  // Remember modifiers
+  GLUTmodifiers = glutGetModifiers();
+  
+  // Redraw
+  glutPostRedisplay();
+}
 
 void GLUTKeyboard(unsigned char key, int x, int y)
 {
@@ -1048,7 +1144,6 @@ void GLUTKeyboard(unsigned char key, int x, int y)
   case 27: // ESCAPE
     quit = 1;
     break;
-
   case ' ': {
     printf("camera %g %g %g  %g %g %g  %g %g %g  %g  %g %g \n",
            camera.eye[0], camera.eye[1], camera.eye[2], 
@@ -1135,6 +1230,7 @@ void GLUTInit(int *argc, char **argv)
   glutDisplayFunc(GLUTRedraw);
   glutKeyboardFunc(GLUTKeyboard);
   glutSpecialFunc(GLUTSpecial);
+  glutSpecialUpFunc(GLUTSpecialUp);
   glutMouseFunc(GLUTMouse);
   glutMotionFunc(GLUTMotion);
 
