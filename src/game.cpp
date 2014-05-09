@@ -172,12 +172,12 @@ void UpdatePlayer(R3Scene *scene) {
     f += -9.8 * p->Up();
   }
   else if (up) {
-    p->velocity += p->max_speed * p->Up();
+    p->velocity += 8 * p->Up();
     p->inAir = true;
   }
 
   // side to side
-  double TAU = 1; // timescale for velocity relaxation
+  double TAU = .5; // timescale for velocity relaxation
   const R3Vector forward = p->Towards();
   R3Vector forwardVelocity = p->velocity;
   forwardVelocity.Project(forward);
@@ -189,8 +189,8 @@ void UpdatePlayer(R3Scene *scene) {
   }
   // Drag
   else {
-    const double DRAG_COEFFICIENT = 3;
-    f += -1*forwardVelocity/2;// * DRAG_COEFFICIENT;
+    const double DRAG_COEFFICIENT = 2;
+    f += -1*forwardVelocity*DRAG_COEFFICIENT;// * DRAG_COEFFICIENT;
   }
   
   p->velocity += (f / p->mass) * delta_time;
@@ -202,7 +202,7 @@ void UpdatePlayer(R3Scene *scene) {
   p->node->shape->box->Translate(p->velocity * delta_time);
 
   // Camera Shit
-  scene->camera.eye = p->Center() - 20* p->Right() + 3*p->Up();
+  scene->camera.eye = p->Center() - 25* p->Right() + 5*p->Up();
   scene->camera.towards = (p->Center()) - scene->camera.eye;
   scene->camera.towards.Normalize();
   scene->camera.right = p->Towards();
