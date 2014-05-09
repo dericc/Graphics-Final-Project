@@ -40,6 +40,13 @@ R3Vector R3Player::Up(void) {
   return up;
 }
 
+void R3Camera::Rotate(R3Line axis, double angle) {
+  eye.Rotate(axis, angle);
+  right.Rotate(axis.Vector(), angle);
+  towards.Rotate(axis.Vector(), angle);
+  up.Rotate(axis.Vector(), angle);
+}
+
 R3Scene::
 R3Scene(void)
   : bbox(R3null_box),
@@ -1130,7 +1137,7 @@ Read(const char *filename, R3Node *node)
       
       // Create shape node
       R3Node *node = new R3Node();
-      node->transformation = R3identity_matrix; //R3Matrix(1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1);
+      node->transformation = R3identity_matrix;
       node->material = material;
       node->shape = shape;
       node->bbox = *box;

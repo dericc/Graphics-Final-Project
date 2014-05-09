@@ -73,6 +73,8 @@ struct R3Camera {
   R3Vector up;
   double xfov, yfov;
   double neardist, fardist;
+  
+  void Rotate(R3Line axis, double angle);
 };
 
 struct R3Node {

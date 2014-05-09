@@ -11,6 +11,7 @@
 #include "particle.h"
 #include "fglut/fglut.h"
 
+#define PI 3.14159
 
 ////////////////////////////////////////////////////////////
 // GLOBAL CONSTANTS
@@ -50,9 +51,12 @@ static int save_video = 0;
 static int num_frames_to_record = -1; 
 static int quit = 0;
 
+// Key pressed variables
+
 static bool right = false;
 static bool left = false;
 static bool up = false;
+
 // GLUT variables 
 
 static int GLUTwindow = 0;
@@ -155,44 +159,61 @@ void UpdatePlayer(R3Scene *scene) {
   if (previous_time == 0) {
     previous_time = current_time;
     moved = true;
+    p->velocity = R3null_vector;
   }
   
   // time passed since starting
   double delta_time = current_time - previous_time;
 
+  // Motion Shit
   // get the forces to move the box
   R3Vector f = R3null_vector;
   if (p->inAir) {
-    // do gravity things
-    // check if I hit the floor
-    // etc
+    f += -9.8 * p->Up();
   }
-  
-  
+  else if (up) {
+    p->velocity += p->max_speed * p->Up();
+    p->inAir = true;
+  }
+
+  // side to side
   double TAU = 1; // timescale for velocity relaxation
+  const R3Vector forward = p->Towards();
+  R3Vector forwardVelocity = p->velocity;
+  forwardVelocity.Project(forward);
   if (right && !left) {
-    const R3Vector forward = p->Towards();
-    R3Vector forwardVelocity = p->velocity;
-    forwardVelocity.Project(forward);
     f += (p->max_speed * forward - forwardVelocity) / TAU;
   }
-  if (left && !right) {
-    const R3Vector forward = p->Towards();
-    R3Vector forwardVelocity = p->velocity;
-    forwardVelocity.Project(forward);
+  else if (left && !right) {
     f += (-p->max_speed * forward - forwardVelocity) / TAU;
+  }
+  // Drag
+  else {
+    const double DRAG_COEFFICIENT = 3;
+    f += -1*forwardVelocity/2;// * DRAG_COEFFICIENT;
   }
   
   p->velocity += (f / p->mass) * delta_time;
-  // FUCK ALL OF THIS SHIT
-//  p->node->transformation.Translate(p->velocity * delta_time);
+  // check for collisions
+  // if we hit something forwards, then stop there
+  // if we are in the air and we hit something below, land
+  // if we are on the ground but there is nothing below us, fall
+  
+  p->node->shape->box->Translate(p->velocity * delta_time);
 
+  // Camera Shit
   scene->camera.eye = p->Center() - 20* p->Right() + 3*p->Up();
   scene->camera.towards = (p->Center()) - scene->camera.eye;
   scene->camera.towards.Normalize();
   scene->camera.right = p->Towards();
   scene->camera.up = scene->camera.right;
   scene->camera.up.Cross(scene->camera.towards);
+  
+  double MAX_ROTATION = PI/8;
+  double angle = -1*MAX_ROTATION * (forwardVelocity.Length() / p->max_speed);
+  if (forwardVelocity.Dot(p->Towards()) < 0) { angle *= -1; }
+  R3Line center_line(p->Center(), p->Up());
+  scene->camera.Rotate(center_line, angle);
   camera = scene->camera;
 
   previous_time = current_time;
