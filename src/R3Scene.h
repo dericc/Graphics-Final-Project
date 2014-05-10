@@ -192,6 +192,10 @@ struct R3Scene {
   // I/O functions
   int Read(const char *filename, R3Node *root = NULL);
 
+  void WriteMaterials(FILE *fp); 
+  void WriteNode(FILE *fp, R3Node *node); 
+  int Write(const char *filename, R3Node *node); 
+
  public:
   R3Node *root;
   vector<R3Particle *> particles;

@@ -7,6 +7,14 @@
 #include "R3/R3.h"
 #include "R3Scene.h"
 
+#include <iostream>
+
+#include <istream>
+#include <fstream>
+#include <iterator>
+
+vector<R3Material *> materials;
+
 //R3Player::R3Player(R3Node *node, double maxSpeed) {
 //  assert(node->shape->type == R3_BOX_SHAPE);
 //  R3Box *box = node->shape->box;
@@ -261,7 +269,81 @@ ReadShape(FILE *fp, int command_number, const char *filename)
   return shape;
 }
 
-        
+void R3Scene:: 
+WriteMaterials(FILE *fp) {
+
+  for (int i = 0; i < materials.size(); i++) {
+    R3Material *cMat = materials[i]; 
+
+    R3Rgb ka = cMat->ka; 
+    R3Rgb kd = cMat->kd; 
+    R3Rgb ks = cMat->ks; 
+    R3Rgb kt = cMat->kt; 
+    R3Rgb e = cMat->emission; 
+
+    fprintf(fp, "material %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %s \n", 
+        ka.Red(), ka.Green(), ka.Blue(), kd.Red(), kd.Green(), kd.Blue(), ks.Red(), ks.Green(), ks.Blue(), 
+        kt.Red(), kt.Green(), kt.Blue(), e.Red(), e.Green(), e.Blue(), cMat->shininess, cMat->indexofrefraction, "0"); 
+
+  }
+
+}
+
+void R3Scene::
+WriteNode(FILE *fp, R3Node *node) {
+
+  for (unsigned int i = 0; i < node->children.size(); i++)
+  { 
+
+    R3Node *cNode = node->children[i]; 
+
+    //Recursively writes all the previous nodes first
+    WriteNode(fp, node->children[i]); 
+
+    if (cNode->shape->type == R3_BOX_SHAPE) {
+      R3Box *cBox = cNode->shape->box; 
+
+      //Calculates for material IDs
+      R3Material *cMaterial = cNode->material; 
+      int materialID = -1; 
+
+      for (int j = 0; j < materials.size(); j++) {
+        if (cMaterial == materials[j]) 
+          materialID = j; 
+      }
+
+      fprintf(fp, "box %d %lf %lf %lf %lf %lf %lf \n", materialID, 
+        cBox->XMin(), cBox->YMin(), cBox->ZMin(), cBox->XMax(), cBox->YMax(), cBox->ZMax()); 
+    }
+
+  }
+
+}
+
+int R3Scene::
+Write(const char *filename, R3Node *node) {
+
+  const char *newfile = "../levels/output.scn"; 
+
+    // Open file
+  FILE *fp;
+  if (!(fp = fopen(newfile, "w"))) {
+    fprintf(stderr, "Unable to open file %s", newfile);
+    return 0;
+  }
+
+  WriteMaterials(fp); 
+
+  fprintf(fp, "\n"); 
+
+  WriteNode(fp, node); 
+
+  fclose(fp); 
+
+  return 1; 
+
+
+}     
         
 int R3Scene::
 Read(const char *filename, R3Node *node)
@@ -273,8 +355,8 @@ Read(const char *filename, R3Node *node)
     return 0;
   }
 
-  // Create array of materials
-  vector<R3Material *> materials;
+  // // Create array of materials
+  // vector<R3Material *> materials;
 
   // Create default material
   R3Material *default_material = new R3Material();
