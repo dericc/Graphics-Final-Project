@@ -15,8 +15,6 @@
 
 using namespace irrklang;
 
-#define PI 3.14159
-
 ////////////////////////////////////////////////////////////
 // GLOBAL CONSTANTS
 ////////////////////////////////////////////////////////////
@@ -161,22 +159,40 @@ void FilePath(char *buf, const char *filename)
 // SCENE DRAWING CODE
 ////////////////////////////////////////////////////////////
 
+// recursively collide player with the scene
 void CollidePlayer(R3Node *node)
 {
+
+  // get transformed player box
   R3Player *p = scene->player;
+  if (node == p->node)
+    return;
   R3Box player_box = *(p->node->shape->box);
   player_box.Transform(p->node->transformation);
 
-  if (node != p->node && node->shape != NULL && node->shape->type == R3_BOX_SHAPE)
+  // if the scene node is a box
+  if (node->is_obstacle || node->is_coin)
   {
-    R3Box scene_box = *(node->shape->box);
-    scene_box.Transform(node->transformation);
+    // get transformed scene box
+    R3Box scene_box;
+    if (node->is_obstacle)
+    {
+      scene_box = node->bbox;
+      scene_box.Transform(node->transformation);
+    }
+    else if (node->is_coin)
+    {
+      scene_box = node->bbox;
+      scene_box.Translate(node->coin->position.Vector());
+    }
 
+    // calculate to what depth the player is intersecting in each direction
     double xmin_d = abs(scene_box.XMax() - player_box.XMin());
     double xmax_d = abs(scene_box.XMin() - player_box.XMax());
     double ymin_d = abs(scene_box.YMax() - player_box.YMin());
     double ymax_d = abs(scene_box.YMin() - player_box.YMax());
 
+    // determine if there is an intersection for each direction (player edge is inside object)
     bool xmin_coll = player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin()
                 && ((player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin())
                 ||  (player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin()));
@@ -193,38 +209,52 @@ void CollidePlayer(R3Node *node)
                 && ((player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin())
                 ||  (player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin()));
 
-    R3Matrix tform = p->node->transformation;
-    if (xmin_coll && (!ymin_coll || xmin_d < ymin_d) && (!ymax_coll || xmin_d < ymax_d))
+    if (node->is_obstacle)
     {
-      tform.Translate(R3Vector(scene_box.XMax() - player_box.XMin(), 0, 0));
-      R3Vector v = p->velocity;
-      v.SetX(0);
-      p->velocity = v;
-    }
-    if (xmax_coll && (!ymin_coll || xmax_d < ymin_d) && (!ymax_coll || xmax_d < ymax_d))
-    {
-      tform.Translate(R3Vector(scene_box.XMin() - player_box.XMax(), 0, 0));
-      R3Vector v = p->velocity;
-      v.SetX(0);
-      p->velocity = v;
-    }
+      // get player transformation
+      R3Matrix tform = p->node->transformation;
 
-    if (ymin_coll && (!xmin_coll || ymin_d < xmin_d) && (!xmax_coll || ymin_d < xmax_d))
-    {
-      tform.Translate(R3Vector(0, scene_box.YMax() - player_box.YMin(), 0));
-      R3Vector v = p->velocity;
-      v.SetY(0);
-      p->velocity = v;
-      p->inAir = false;
+      // for each direction, check if it has the minimum depth of all other collisions before correcting player position and setting velocity to 0
+      if (xmin_coll && (!ymin_coll || xmin_d < ymin_d) && (!ymax_coll || xmin_d < ymax_d))
+      {
+        tform.Translate(R3Vector(scene_box.XMax() - player_box.XMin(), 0, 0));
+        R3Vector v = p->velocity;
+        v.SetX(0);
+        p->velocity = v;
+      }
+      if (xmax_coll && (!ymin_coll || xmax_d < ymin_d) && (!ymax_coll || xmax_d < ymax_d))
+      {
+        tform.Translate(R3Vector(scene_box.XMin() - player_box.XMax(), 0, 0));
+        R3Vector v = p->velocity;
+        v.SetX(0);
+        p->velocity = v;
+      }
+
+      if (ymin_coll && (!xmin_coll || ymin_d < xmin_d) && (!xmax_coll || ymin_d < xmax_d))
+      {
+        tform.Translate(R3Vector(0, scene_box.YMax() - player_box.YMin(), 0));
+        R3Vector v = p->velocity;
+        v.SetY(0);
+        p->velocity = v;
+        p->inAir = false;
+      }
+      if (ymax_coll && (!xmin_coll || ymax_d < xmin_d) && (!xmax_coll || ymax_d < xmax_d))
+      {
+        tform.Translate(R3Vector(0, scene_box.YMin() - player_box.YMax(), 0));
+        R3Vector v = p->velocity;
+        v.SetY(0);
+        p->velocity = v;
+      }
+      // update player tform
+      p->node->transformation = tform;
     }
-    if (ymax_coll && (!xmin_coll || ymax_d < xmin_d) && (!xmax_coll || ymax_d < xmax_d))
+    else if (node->is_coin)
     {
-      tform.Translate(R3Vector(0, scene_box.YMin() - player_box.YMax(), 0));
-      R3Vector v = p->velocity;
-      v.SetY(0);
-      p->velocity = v;
+      if (xmin_coll || xmax_coll || ymin_coll || ymax_coll)
+      {
+        p->n_coins++;
+      }
     }
-    p->node->transformation = tform;
   }
 
   for (unsigned int i = 0; i < node->children.size(); i++)
@@ -240,7 +270,7 @@ void UpdatePlayer(R3Scene *scene) {
   // Get current time (in seconds) since start of execution
   double current_time = GetTime();
   static double previous_time = 0;
-  
+
   // program just started up?
   if (previous_time == 0) {
     previous_time = current_time;
@@ -285,10 +315,12 @@ void UpdatePlayer(R3Scene *scene) {
   
   p->velocity += (f / p->mass) * delta_time;
 
+  // transform the player node
   R3Matrix tform = p->node->transformation;
   tform.Translate(p->velocity * delta_time);
   p->node->transformation = tform;
 
+  // set inair to true: it will be set to false if collision with ground detected
   p->inAir = true;
   CollidePlayer(scene->root);
 
@@ -313,6 +345,31 @@ void UpdatePlayer(R3Scene *scene) {
 
 }
 
+void UpdateCoins(R3Scene *scene)
+{
+  double current_time = GetTime();
+  static double previous_time = 0;
+  // program just started up?
+  if (previous_time == 0) {
+    previous_time = current_time;
+  }
+  
+  // time passed since starting
+  double delta_time = current_time - previous_time;
+  previous_time = current_time;
+
+  for (int i = 0; i < scene->NCoins(); i++)
+  {
+    R3Coin *coin = scene->Coin(i);
+    coin->t += delta_time;
+
+    R3Matrix tform = R3identity_matrix;
+    tform.Translate(coin->position.Vector());
+    tform.Rotate(R3_X, PI / 2);
+    tform.Rotate(R3_Z, coin->t * 4);
+    coin->node->transformation = tform;
+  }
+}
 
 void UpdatePlatforms(R3Scene *scene) {
   double current_time = GetTime();
@@ -327,25 +384,18 @@ void UpdatePlatforms(R3Scene *scene) {
     // program just started up?
     if (previous_time == 0) {
       previous_time = current_time;
-      R3Vector direction = cur->end - cur->start;
-      direction.Normalize();
-      cur->direction = direction;
+      cur->velocity = R3null_vector;
     }
-    else {
-     // do we need to reverse?
-      R3Point curMin = cur->node->shape->box->Min();
-      curMin.Transform(cur->node->transformation);
-      bool forward = cur->direction == cur->Forward();
-      if (forward && ((cur->end - curMin).Dot(cur->end - curMin+(cur->direction*cur->speed*delta_time)) < 0)) {
-        cur->direction = -1 * cur->Forward();
-      }
-      if (!forward && ((cur->start - curMin).Dot(cur->start - curMin+(cur->direction*cur->speed*delta_time)) < 0)) {
-        cur->direction = cur->Forward();
-      }
-      cur->node->transformation.Translate(cur->direction * cur->speed * delta_time);
-    }
+    R3Point pos = cur->node->shape->box->Min();
+    pos.Transform(cur->node->transformation);
+    
+    double K = 2; // spring constant
+    R3Vector displacement = cur->center - pos;
+    cur->velocity += K * displacement * delta_time;
+    cur->node->transformation.Translate(cur->velocity * delta_time);
   }
-
+  
+  previous_time = current_time;
 }
 
 void DrawShape(R3Shape *shape)
@@ -885,6 +935,47 @@ void DrawParticleSprings(R3Scene *scene)
   if (lighting) glEnable(GL_LIGHTING);
 }
 
+// draw heads up display
+void DrawHUD()
+{
+  // disable lighting and enable orthogonal projection
+  glDisable(GL_LIGHTING);
+  glMatrixMode(GL_PROJECTION);
+  glPushMatrix();
+  glLoadIdentity();
+  glOrtho(0.0, GLUTwindow_width, GLUTwindow_height, 0.0, -1.0, 10.0);
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  glLoadIdentity();
+  glDisable(GL_CULL_FACE);
+
+  glClear(GL_DEPTH_BUFFER_BIT);
+
+  // Draw coins as squares in top left
+  float spacing = 15.0;
+  float size = 30.0;
+  for (int i = 0; i < scene->player->n_coins; i++)
+  {
+    float xmin = spacing * (i + 1) + size * i;
+    float xmax = spacing * (i + 1) + size * (i + 1);
+    float ymin = spacing;
+    float ymax = spacing + size;
+    glBegin(GL_QUADS);
+      glColor3f(1.0f, 1.0f, 0.0);
+      glVertex2f(xmin, ymin);
+      glVertex2f(xmax, ymin);
+      glVertex2f(xmax, ymax);
+      glVertex2f(xmin, ymax);
+    glEnd();
+  }
+
+  // Making sure we can render 3d again
+  glMatrixMode(GL_MODELVIEW);
+  glPopMatrix();
+  glMatrixMode(GL_PROJECTION);
+  glPopMatrix();
+}
+
 
 
 ////////////////////////////////////////////////////////////
@@ -998,6 +1089,9 @@ void GLUTRedraw(void)
   UpdatePlatforms(scene);
   // Update Player
   UpdatePlayer(scene);
+
+  // Update Coins
+  UpdateCoins(scene);
   
   // Load camera
   LoadCamera(&camera);
@@ -1038,6 +1132,8 @@ void GLUTRedraw(void)
     DrawScene(scene);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   }
+
+  DrawHUD();
 
   // Save image
   if (save_image) {

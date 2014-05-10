@@ -1,7 +1,7 @@
 // Include file for the R3 scene stuff
 
 #define R3Rgb R2Pixel
-
+#define PI 3.1415926535
 
 
 // Constant definitions
@@ -77,6 +77,7 @@ struct R3Camera {
   void Rotate(R3Line axis, double angle);
 };
 
+struct R3Coin;
 struct R3Platform;
 
 struct R3Node {
@@ -86,17 +87,20 @@ struct R3Node {
   R3Matrix transformation;
   R3Material *material;
   R3Box bbox;
+  bool is_obstacle;
+  bool is_coin;
+  R3Coin *coin;
   bool isPlatform;
   R3Platform *platform;
 };
 
 struct R3Platform {
   R3Platform(R3Node *node, double speed, R3Point start, R3Point end)
-  : node(node), speed(speed), start(start), end(end) {};
+  : node(node), max_speed(speed), center((start+end)/2) {  };
   R3Node *node;
-  const double speed;
-  const R3Point start, end;
-  R3Vector direction;
+  const double max_speed;
+  const R3Point center; //center of the path
+  R3Vector velocity;
   
   R3Vector Forward(void); // normalized forward direction
 };
@@ -145,7 +149,7 @@ struct R3ParticleSpring {
 
 struct R3Player {
   R3Player(R3Node *node, double max_speed, double mass) :
-    node(node), max_speed(max_speed),  mass(mass) {};
+    node(node), max_speed(max_speed),  mass(mass), n_coins(0) {};
   
   R3Node *node; //
   const double max_speed;
@@ -163,6 +167,13 @@ struct R3Player {
   
   R3Vector velocity; // current direction of motion
   bool inAir;
+  int n_coins;
+};
+
+struct R3Coin {
+  R3Node *node;
+  R3Point position;
+  double t;
 };
 
 // Scene graph definition
@@ -188,6 +199,8 @@ struct R3Scene {
   R3ParticleSink *ParticleSink(int k) const;
   int NParticleSprings(void) const;
   R3ParticleSpring *ParticleSpring(int k) const;
+  int NCoins(void) const;
+  R3Coin *Coin(int k) const;
 
   // I/O functions
   int Read(const char *filename, R3Node *root = NULL);
@@ -203,6 +216,7 @@ struct R3Scene {
   vector<R3ParticleSource *> particle_sources;
   vector<R3ParticleSink *> particle_sinks;
   vector<R3ParticleSpring *> particle_springs;
+  vector<R3Coin *> coins;
   vector<R3Platform *> platforms;
   vector<R3Light *> lights;
   R3Vector gravity;
@@ -331,6 +345,25 @@ ParticleSpring(int k) const
   // Return kth particle spring
   return particle_springs[k];
 }
+
+
+
+inline int R3Scene::
+NCoins(void) const
+{
+  // Return number of particle springs
+  return coins.size();
+}
+
+
+
+inline R3Coin *R3Scene::
+Coin(int k) const
+{
+  // Return kth particle spring
+  return coins[k];
+}
+
 
 
 
