@@ -158,6 +158,9 @@ void CollidePlayer(R3Node *node)
          || player_box->XMax() < scene_box->XMax() && player_box->XMax() > scene_box->XMin()))
     {
       p->node->shape->box->Translate(R3Vector(0, scene_box->YMax() - player_box->YMin(), 0));
+      R3Vector v = p->velocity;
+      v.SetY(0);
+      p->velocity = v;
       p->inAir = false;
     }
   }
