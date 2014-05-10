@@ -328,6 +328,9 @@ WriteNode(FILE *fp, R3Node *node) {
     //Recursively writes all the previous nodes first
     WriteNode(fp, node->children[i]); 
 
+    //Skip redrawing the player node
+    if (cNode == player->node) continue; 
+
     if (cNode->shape->type == R3_BOX_SHAPE) {
       R3Box *cBox = cNode->shape->box; 
 
@@ -365,7 +368,7 @@ Write(const char *filename, R3Node *node) {
 
   WriteNode(fp, node); 
 
-
+  WritePlayer(fp); 
 
   fclose(fp); 
 
