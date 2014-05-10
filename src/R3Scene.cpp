@@ -1319,6 +1319,8 @@ else if (!strcmp(cmd, "platform")) {
   node->shape = shape;
   node->bbox = *box;
   node->isPlatform = true;
+  node->is_coin = false;
+  node->is_obstacle = true;
   
   // Insert node
   group_nodes[depth]->bbox.Union(node->bbox);
