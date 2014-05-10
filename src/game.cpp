@@ -11,6 +11,9 @@
 #include "fglut/fglut.h"
 
 #include <iostream>
+#include "../irrKlang/include/irrKlang.h"
+
+using namespace irrklang;
 
 #define PI 3.14159
 
@@ -77,6 +80,9 @@ enum {
 
 static bool key_state[256] = {false};
 
+// sound engine
+static ISoundEngine *sound_engine;
+static char current_directory[FILENAME_MAX];
 
 
 ////////////////////////////////////////////////////////////
@@ -136,6 +142,19 @@ static double GetTime(void)
 #endif
 }
 
+////////////////////////////////////////////////////////////
+// RANDOM-ASS FUNCTIONS
+////////////////////////////////////////////////////////////
+
+void FilePath(char *buf, const char *filename)
+{
+  int len = strlen(current_directory) + strlen(filename);
+  char path[len+1];
+  path[len] = '\0';
+  strncpy(path, current_directory, strlen(current_directory));
+  strncpy(path+strlen(current_directory), filename, strlen("/sounds/jump.wav"));
+  strncpy(buf, path, len+1);
+}
 
 
 ////////////////////////////////////////////////////////////
@@ -241,6 +260,9 @@ void UpdatePlayer(R3Scene *scene) {
   R3Vector f = R3null_vector;
   f += -9.8 * p->Up() * p->mass;
   if (up_key && !p->inAir) {
+    char path[FILENAME_MAX];
+    FilePath(path, "/sounds/jump.wav");
+    sound_engine->play2D(path, false);
     f += 700 * p->Up();
   }
 
@@ -1460,6 +1482,12 @@ main(int argc, char **argv)
   // Read scene
   scene = ReadScene(input_scene_name);
   if (!scene) exit(-1);
+
+  // Initialize sound shit
+  sound_engine = createIrrKlangDevice();
+  if (!sound_engine)
+    return 0; // if there was an error creating the sound engine
+  getcwd(current_directory, FILENAME_MAX);
 
   // Run GLUT interface
   GLUTMainLoop();

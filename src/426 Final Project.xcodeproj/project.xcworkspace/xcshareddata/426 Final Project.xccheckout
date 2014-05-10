@@ -5,36 +5,36 @@
 	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
 	<false/>
 	<key>IDESourceControlProjectIdentifier</key>
-	<string>4C880704-6041-420B-9DE0-27C280C18A2B</string>
+	<string>F000CEED-8258-4F0C-A125-578F95635FC2</string>
 	<key>IDESourceControlProjectName</key>
 	<string>426 Final Project</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
-		<key>1BE51F29-E435-4732-B10B-8E4758F32618</key>
-		<string>ssh://github.com/dericc/Graphics-Final-Project</string>
+		<key>32BB312C-8EBA-416B-93E7-54E2CDED66E5</key>
+		<string>https://github.com/dericc/Graphics-Final-Project.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
 	<string>src/426 Final Project.xcodeproj/project.xcworkspace</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
-		<key>1BE51F29-E435-4732-B10B-8E4758F32618</key>
+		<key>32BB312C-8EBA-416B-93E7-54E2CDED66E5</key>
 		<string>../../..</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
-	<string>ssh://github.com/dericc/Graphics-Final-Project</string>
+	<string>https://github.com/dericc/Graphics-Final-Project.git</string>
 	<key>IDESourceControlProjectVersion</key>
 	<integer>110</integer>
 	<key>IDESourceControlProjectWCCIdentifier</key>
-	<string>1BE51F29-E435-4732-B10B-8E4758F32618</string>
+	<string>32BB312C-8EBA-416B-93E7-54E2CDED66E5</string>
 	<key>IDESourceControlProjectWCConfigurations</key>
 	<array>
 		<dict>
 			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
 			<string>public.vcs.git</string>
 			<key>IDESourceControlWCCIdentifierKey</key>
-			<string>1BE51F29-E435-4732-B10B-8E4758F32618</string>
+			<string>32BB312C-8EBA-416B-93E7-54E2CDED66E5</string>
 			<key>IDESourceControlWCCName</key>
-			<string>Graphics-Final-Project</string>
+			<string>final</string>
 		</dict>
 	</array>
 </dict>
