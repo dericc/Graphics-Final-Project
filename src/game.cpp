@@ -161,6 +161,9 @@ void FilePath(char *buf, const char *filename)
 // SCENE DRAWING CODE
 ////////////////////////////////////////////////////////////
 
+static vector<R3Node *> del_nodes;
+static vector<R3Coin *> del_coins;
+
 // recursively collide player with the scene
 void CollidePlayer(R3Node *node)
 {
@@ -260,6 +263,7 @@ void CollidePlayer(R3Node *node)
       if (xmin_coll || xmax_coll || ymin_coll || ymax_coll || inside)
       {
         p->n_coins++;
+        del_nodes.push_back(node);
       }
     }
   }
