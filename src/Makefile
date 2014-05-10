@@ -68,6 +68,7 @@ fglut/libfglut.a:
 game: $(OBJS) $(LIBS) 
 	    rm -f $@ 
 	    $(CXX) $(CXXFLAGS) $^ -lm -o $@ $(GLLIBS) $(OPTS)
+	    install_name_tool -change /usr/local/lib/libirrklang.dylib irrKlang/bin/macosx-gcc/libirrklang.dylib game
 	    
 clean:
 	    rm -f *.o game
