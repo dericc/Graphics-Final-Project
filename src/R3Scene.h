@@ -151,7 +151,6 @@ public:
   
   R3Vector velocity; // current direction of motion
   bool inAir;
-
 };
 
 // Scene graph definition

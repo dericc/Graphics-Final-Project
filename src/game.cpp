@@ -11,6 +11,8 @@
 #include "particle.h"
 #include "fglut/fglut.h"
 
+#include <iostream>
+
 #define PI 3.14159
 
 ////////////////////////////////////////////////////////////
@@ -32,8 +34,6 @@ static char *output_image_name = NULL;
 static const char *video_prefix = "./video-frames/";
 static int integration_type = EULER_INTEGRATION;
 
-
-
 // Display variables
 
 static R3Scene *scene = NULL;
@@ -51,12 +51,6 @@ static int save_video = 0;
 static int num_frames_to_record = -1; 
 static int quit = 0;
 
-// Key pressed variables
-
-static bool right = false;
-static bool left = false;
-static bool up = false;
-
 // GLUT variables 
 
 static int GLUTwindow = 0;
@@ -65,8 +59,6 @@ static int GLUTwindow_width = 512;
 static int GLUTmouse[2] = { 0, 0 };
 static int GLUTbutton[3] = { 0, 0, 0 };
 static int GLUTmodifiers = 0;
-
-
 
 // GLUT command list
 
@@ -83,6 +75,10 @@ enum {
   SAVE_VIDEO_COMMAND,
   QUIT_COMMAND,
 };
+
+// ascii key state
+
+static bool key_state[256] = {false};
 
 
 
@@ -149,12 +145,35 @@ static double GetTime(void)
 // SCENE DRAWING CODE
 ////////////////////////////////////////////////////////////
 
+void CollidePlayer(R3Node *node)
+{
+  R3Player *p = scene->player;
+  R3Box *player_box = p->node->shape->box;
+
+  if (node != p->node && node->shape != NULL && node->shape->type == R3_BOX_SHAPE)
+  {
+    R3Box *scene_box = node->shape->box;
+    if (    player_box->YMin() < scene_box->YMax() && player_box->YMin() > scene_box->YMin()
+        && (player_box->XMin() < scene_box->XMax() && player_box->XMin() > scene_box->XMin()
+         || player_box->XMax() < scene_box->XMax() && player_box->XMax() > scene_box->XMin()))
+    {
+      p->node->shape->box->Translate(R3Vector(0, scene_box->YMax() - player_box->YMin(), 0));
+      p->inAir = false;
+    }
+  }
+
+  for (unsigned int i = 0; i < node->children.size(); i++)
+  { 
+    CollidePlayer(node->children[i]);
+  }
+}
+
 void UpdatePlayer(R3Scene *scene) {
   R3Player *p = scene->player;
   // Get current time (in seconds) since start of execution
   double current_time = GetTime();
   static double previous_time = 0;
-    bool moved = false;
+  bool moved = false;
   // program just started up?
   if (previous_time == 0) {
     previous_time = current_time;
@@ -165,15 +184,17 @@ void UpdatePlayer(R3Scene *scene) {
   // time passed since starting
   double delta_time = current_time - previous_time;
 
+  bool up_key = key_state['w'] || key_state['W'];
+  bool down_key = key_state['s'] || key_state['S'];
+  bool left_key = key_state['a'] || key_state['A'];
+  bool right_key = key_state['d'] || key_state['D'];
+
   // Motion Shit
   // get the forces to move the box
   R3Vector f = R3null_vector;
-  if (p->inAir) {
-    f += -9.8 * p->Up();
-  }
-  else if (up) {
-    p->velocity += 8 * p->Up();
-    p->inAir = true;
+  f += -9.8 * p->Up();
+  if (up_key && !p->inAir) {
+    f += 1000 * p->Up();
   }
 
   // side to side
@@ -181,10 +202,10 @@ void UpdatePlayer(R3Scene *scene) {
   const R3Vector forward = p->Towards();
   R3Vector forwardVelocity = p->velocity;
   forwardVelocity.Project(forward);
-  if (right && !left) {
+  if (right_key && !left_key) {
     f += (p->max_speed * forward - forwardVelocity) / TAU;
   }
-  else if (left && !right) {
+  else if (left_key && !right_key) {
     f += (-p->max_speed * forward - forwardVelocity) / TAU;
   }
   // Drag
@@ -194,15 +215,19 @@ void UpdatePlayer(R3Scene *scene) {
   }
   
   p->velocity += (f / p->mass) * delta_time;
+
+  p->node->shape->box->Translate(p->velocity * delta_time);
+
+  p->inAir = true;
+  CollidePlayer(scene->root);
   // check for collisions
   // if we hit something forwards, then stop there
   // if we are in the air and we hit something below, land
   // if we are on the ground but there is nothing below us, fall
   
-  p->node->shape->box->Translate(p->velocity * delta_time);
 
   // Camera Shit
-  scene->camera.eye = p->Center() - 25* p->Right() + 5*p->Up();
+  scene->camera.eye = p->Center() - 25 * p->Right() + 5 * p->Up();
   scene->camera.towards = (p->Center()) - scene->camera.eye;
   scene->camera.towards.Normalize();
   scene->camera.right = p->Towards();
@@ -1049,129 +1074,102 @@ void GLUTMouse(int button, int state, int x, int y)
 
 
 
-void GLUTSpecial(int key, int x, int y)
-{
-  // Invert y coordinate
-  y = GLUTwindow_height - y;
+// void GLUTSpecial(int key, int x, int y)
+// {
+//   // Invert y coordinate
+//   y = GLUTwindow_height - y;
 
-  // Process keyboard button event 
-  switch (key) {
-    case GLUT_KEY_RIGHT:
-      right = true;
-      break;
-    case GLUT_KEY_LEFT:
-      left = true;
-      break;
-    case GLUT_KEY_UP:
-      up = true;
-      break;
-    case GLUT_KEY_F1:
-      save_image = 1;
-      break;
-    case GLUT_KEY_F2:
-      save_video = save_video ^ 1;
-      break;
-  }
+//   // Process keyboard button event 
+//   switch (key) {
+//     case GLUT_KEY_F1:
+//       save_image = 1;
+//       break;
+//     case GLUT_KEY_F2:
+//       save_video = save_video ^ 1;
+//       break;
+//   }
 
-  // Remember mouse position 
-  GLUTmouse[0] = x;
-  GLUTmouse[1] = y;
+//   // Remember mouse position 
+//   GLUTmouse[0] = x;
+//   GLUTmouse[1] = y;
 
-  // Remember modifiers 
-  GLUTmodifiers = glutGetModifiers();
+//   // Remember modifiers 
+//   GLUTmodifiers = glutGetModifiers();
 
-  // Redraw
-  glutPostRedisplay();
-}
+//   // Redraw
+//   glutPostRedisplay();
+// }
 
-void GLUTSpecialUp(int key, int x, int y)
-{
-  // Invert y coordinate
-  y = GLUTwindow_height - y;
+// void GLUTSpecialUp(int key, int x, int y)
+// {
+//   // Invert y coordinate
+//   y = GLUTwindow_height - y;
   
-  // Process keyboard button event
-  switch (key) {
-    case GLUT_KEY_RIGHT:
-      right = false;
-      break;
-    case GLUT_KEY_LEFT:
-      left = false;
-      break;
-    case GLUT_KEY_UP:
-      up = false;
-      break;
-  }
+//   // Process keyboard button event
+//   switch (key) {
+//     case GLUT_KEY_RIGHT:
+//       right = false;
+//       break;
+//     case GLUT_KEY_LEFT:
+//       left = false;
+//       break;
+//     case GLUT_KEY_UP:
+//       up = false;
+//       break;
+//   }
   
-  // Remember mouse position
-  GLUTmouse[0] = x;
-  GLUTmouse[1] = y;
+//   // Remember mouse position
+//   GLUTmouse[0] = x;
+//   GLUTmouse[1] = y;
   
-  // Remember modifiers
-  GLUTmodifiers = glutGetModifiers();
+//   // Remember modifiers
+//   GLUTmodifiers = glutGetModifiers();
   
-  // Redraw
-  glutPostRedisplay();
-}
+//   // Redraw
+//   glutPostRedisplay();
+// }
 
 void GLUTKeyboard(unsigned char key, int x, int y)
 {
   // Invert y coordinate
   y = GLUTwindow_height - y;
 
+  key_state[key] = true;
+
   // Process keyboard button event 
   switch (key) {
-  case 'B':
-  case 'b':
-    show_bboxes = !show_bboxes;
-    break;
+  // case 'L':
+  // case 'l':
+  //   show_lights = !show_lights;
+  //   break;
 
-  case 'C':
-  case 'c':
-    show_camera = !show_camera;
-    break;
+  // case 'P':
+  // case 'p':
+  //   show_particles = !show_particles;
+  //   break;
 
-  case 'E':
-  case 'e':
-    show_edges = !show_edges;
-    break;
+  // case 'R':
+  // case 'r':
+  //   show_particle_springs = !show_particle_springs;
+  //   break;
 
-  case 'F':
-  case 'f':
-    show_faces = !show_faces;
-    break;
+  // case 'S':
+  // case 's':
+  //   show_particle_sources_and_sinks = !show_particle_sources_and_sinks;
+  //   break;
 
-  case 'L':
-  case 'l':
-    show_lights = !show_lights;
-    break;
-
-  case 'P':
-  case 'p':
-    show_particles = !show_particles;
-    break;
-
-  case 'R':
-  case 'r':
-    show_particle_springs = !show_particle_springs;
-    break;
-
-  case 'S':
-  case 's':
-    show_particle_sources_and_sinks = !show_particle_sources_and_sinks;
-    break;
-
-  case 'Q':
-  case 'q':
+  // case 'Q':
+  // case 'q':
   case 27: // ESCAPE
     quit = 1;
     break;
-  case ' ': {
-    printf("camera %g %g %g  %g %g %g  %g %g %g  %g  %g %g \n",
-           camera.eye[0], camera.eye[1], camera.eye[2], 
-           camera.towards[0], camera.towards[1], camera.towards[2], 
-           camera.up[0], camera.up[1], camera.up[2], 
-           camera.xfov, camera.neardist, camera.fardist); 
-    break; }
+  // case ' ': {
+  //   printf("camera %g %g %g  %g %g %g  %g %g %g  %g  %g %g \n",
+  //          camera.eye[0], camera.eye[1], camera.eye[2], 
+  //          camera.towards[0], camera.towards[1], camera.towards[2], 
+  //          camera.up[0], camera.up[1], camera.up[2], 
+  //          camera.xfov, camera.neardist, camera.fardist); 
+  //   break; }
   }
 
   // Remember mouse position 
@@ -1180,6 +1178,14 @@ void GLUTKeyboard(unsigned char key, int x, int y)
 
   // Remember modifiers 
   GLUTmodifiers = glutGetModifiers();
+
+  // Redraw
+  glutPostRedisplay();
+}
+
+void GLUTKeyboardUp(unsigned char key, int x, int y)
+{
+  key_state[key] = false;
 
   // Redraw
   glutPostRedisplay();
@@ -1250,8 +1256,9 @@ void GLUTInit(int *argc, char **argv)
   glutReshapeFunc(GLUTResize);
   glutDisplayFunc(GLUTRedraw);
   glutKeyboardFunc(GLUTKeyboard);
-  glutSpecialFunc(GLUTSpecial);
-  glutSpecialUpFunc(GLUTSpecialUp);
+  glutKeyboardUpFunc(GLUTKeyboardUp);
+  // glutSpecialFunc(GLUTSpecial);
+  // glutSpecialUpFunc(GLUTSpecialUp);
   glutMouseFunc(GLUTMouse);
   glutMotionFunc(GLUTMotion);
 
