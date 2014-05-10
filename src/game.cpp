@@ -333,7 +333,7 @@ void DrawShape(R3Shape *shape)
   else if (shape->type == R3_SPHERE_SHAPE) shape->sphere->Draw();
   else if (shape->type == R3_CYLINDER_SHAPE) shape->cylinder->Draw();
   else if (shape->type == R3_CONE_SHAPE) shape->cone->Draw();
-  else if (shape->type == R3_MESHdd`_SHAPE) shape->mesh->Draw();
+  else if (shape->type == R3_MESH_SHAPE) shape->mesh->Draw();
   else if (shape->type == R3_SEGMENT_SHAPE) shape->segment->Draw();
   else if (shape->type == R3_CIRCLE_SHAPE) shape->circle->Draw();
   else fprintf(stderr, "Unrecognized shape type: %d\n", shape->type);
