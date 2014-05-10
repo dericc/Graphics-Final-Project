@@ -374,7 +374,6 @@ Write(const char *filename, R3Node *node) {
 
   return 1; 
 
-
 }     
 
 int R3Scene::
