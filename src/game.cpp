@@ -12,6 +12,8 @@
 
 #include <iostream>
 
+#define TIME_SCALE 2
+
 ////////////////////////////////////////////////////////////
 // GLOBAL CONSTANTS
 ////////////////////////////////////////////////////////////
@@ -109,7 +111,7 @@ static double GetTime(void)
     QueryPerformanceCounter(&current_timevalue);
     return ((double) current_timevalue.QuadPart - 
             (double) start_timevalue.QuadPart) / 
-            (double) timefreq.QuadPart;
+            (double) timefreq.QuadPart * TIME_SCALE;
   }
 #else
   // Return number of seconds since start of execution
@@ -129,7 +131,7 @@ static double GetTime(void)
     gettimeofday(&current_timevalue, NULL);
     int secs = current_timevalue.tv_sec - start_timevalue.tv_sec;
     int usecs = current_timevalue.tv_usec - start_timevalue.tv_usec;
-    return (double) (secs + 1.0E-6F * usecs);
+    return (double) (secs + 1.0E-6F * usecs) * TIME_SCALE;
   }
 #endif
 }
@@ -190,6 +192,11 @@ void CollidePlayer(R3Node *node)
                 && ((player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin())
                 ||  (player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin()));
 
+    bool inside = (player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin())
+               && (player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin())
+               && (player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin())
+               && (player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin());
+
     if (node->is_obstacle)
     {
       // get player transformation
@@ -231,7 +238,7 @@ void CollidePlayer(R3Node *node)
     }
     else if (node->is_coin)
     {
-      if (xmin_coll || xmax_coll || ymin_coll || ymax_coll)
+      if (xmin_coll || xmax_coll || ymin_coll || ymax_coll || inside)
       {
         p->n_coins++;
       }
@@ -271,7 +278,7 @@ void UpdatePlayer(R3Scene *scene) {
   R3Vector f = R3null_vector;
   f += -9.8 * p->Up() * p->mass;
   if (up_key && !p->inAir) {
-    f += 700 * p->Up();
+    p->velocity += 15 * p->Up();
   }
 
   // side to side
