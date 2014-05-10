@@ -78,6 +78,7 @@ struct R3Camera {
 };
 
 struct R3Coin;
+struct R3Platform;
 
 struct R3Node {
   struct R3Node *parent;
@@ -89,9 +90,20 @@ struct R3Node {
   bool is_obstacle;
   bool is_coin;
   R3Coin *coin;
+  bool isPlatform;
+  R3Platform *platform;
 };
 
-
+struct R3Platform {
+  R3Platform(R3Node *node, double speed, R3Point start, R3Point end)
+  : node(node), max_speed(speed), center((start+end)/2) {  };
+  R3Node *node;
+  const double max_speed;
+  const R3Point center; //center of the path
+  R3Vector velocity;
+  
+  R3Vector Forward(void); // normalized forward direction
+};
 
 // Particle system definitions
 
@@ -136,7 +148,6 @@ struct R3ParticleSpring {
 };
 
 struct R3Player {
-public:
   R3Player(R3Node *node, double max_speed, double mass) :
     node(node), max_speed(max_speed),  mass(mass), n_coins(0) {};
   
@@ -194,6 +205,11 @@ struct R3Scene {
   // I/O functions
   int Read(const char *filename, R3Node *root = NULL);
 
+  void WritePlayer(FILE *fp); 
+  void WriteMaterials(FILE *fp); 
+  void WriteNode(FILE *fp, R3Node *node); 
+  int Write(const char *filename, R3Node *node); 
+
  public:
   R3Node *root;
   vector<R3Particle *> particles;
@@ -201,6 +217,7 @@ struct R3Scene {
   vector<R3ParticleSink *> particle_sinks;
   vector<R3ParticleSpring *> particle_springs;
   vector<R3Coin *> coins;
+  vector<R3Platform *> platforms;
   vector<R3Light *> lights;
   R3Vector gravity;
   R3Camera camera;

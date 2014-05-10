@@ -1,5 +1,4 @@
-// Source file for the scene file viewer
-
+// Source file for the scene file viewerddddddd
 
 
 ////////////////////////////////////////////////////////////
@@ -18,8 +17,6 @@
 ////////////////////////////////////////////////////////////
 
 static const double VIDEO_FRAME_DELAY = 1./25.; // 25 FPS 
-
-
 
 ////////////////////////////////////////////////////////////
 // GLOBAL VARIABLES
@@ -249,9 +246,12 @@ void CollidePlayer(R3Node *node)
 
 void UpdatePlayer(R3Scene *scene) {
   R3Player *p = scene->player;
+
+  if (p == NULL) return; 
   // Get current time (in seconds) since start of execution
   double current_time = GetTime();
   static double previous_time = 0;
+
   // program just started up?
   if (previous_time == 0) {
     previous_time = current_time;
@@ -271,7 +271,7 @@ void UpdatePlayer(R3Scene *scene) {
   R3Vector f = R3null_vector;
   f += -9.8 * p->Up() * p->mass;
   if (up_key && !p->inAir) {
-    f += 800 * p->Up();
+    f += 700 * p->Up();
   }
 
   // side to side
@@ -347,6 +347,33 @@ void UpdateCoins(R3Scene *scene)
     tform.Rotate(R3_Z, coin->t * 4);
     coin->node->transformation = tform;
   }
+}
+
+void UpdatePlatforms(R3Scene *scene) {
+  double current_time = GetTime();
+  static double previous_time = 0;
+  
+  // time passed since starting
+  double delta_time = current_time - previous_time;
+  
+  int numPlatforms = scene->platforms.size();
+  for (int i = 0; i < numPlatforms; ++i) {
+    R3Platform *cur = scene->platforms[i];
+    // program just started up?
+    if (previous_time == 0) {
+      previous_time = current_time;
+      cur->velocity = R3null_vector;
+    }
+    R3Point pos = cur->node->shape->box->Min();
+    pos.Transform(cur->node->transformation);
+    
+    double K = 2; // spring constant
+    R3Vector displacement = cur->center - pos;
+    cur->velocity += K * displacement * delta_time;
+    cur->node->transformation.Translate(cur->velocity * delta_time);
+  }
+  
+  previous_time = current_time;
 }
 
 void DrawShape(R3Shape *shape)
@@ -1037,6 +1064,7 @@ void GLUTRedraw(void)
   glClearColor(background[0], background[1], background[2], background[3]);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  UpdatePlatforms(scene);
   // Update Player
   UpdatePlayer(scene);
 
@@ -1293,6 +1321,11 @@ void GLUTKeyboard(unsigned char key, int x, int y)
   //   show_lights = !show_lights;
   //   break;
 
+  case 'P':
+  case 'p':
+    scene->Write("DoesNothingRightNow", scene->root); 
+    break;
+
   // case 'P':
   // case 'p':
   //   show_particles = !show_particles;
@@ -1445,6 +1478,8 @@ ReadScene(const char *filename)
     fprintf(stderr, "Unable to read scene from %s\n", filename);
     return NULL;
   }
+
+  // scene->Write(filename, scene->root); 
 
   // Remember initial camera
   camera = scene->camera;
