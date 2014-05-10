@@ -239,7 +239,7 @@ void UpdatePlayer(R3Scene *scene) {
   R3Vector f = R3null_vector;
   f += -9.8 * p->Up() * p->mass;
   if (up_key && !p->inAir) {
-    f += 1000 * p->Up();
+    f += 800 * p->Up();
   }
 
   // side to side
@@ -274,9 +274,11 @@ void UpdatePlayer(R3Scene *scene) {
   scene->camera.up = scene->camera.right;
   scene->camera.up.Cross(scene->camera.towards);
   
+  static double angle = 0;
   double MAX_ROTATION = PI/8;
-  double angle = -1*MAX_ROTATION * (forwardVelocity.Length() / p->max_speed);
-  if (forwardVelocity.Dot(p->Towards()) < 0) { angle *= -1; }
+  double new_angle = -1*MAX_ROTATION * (forwardVelocity.Length() / p->max_speed);
+  if (forwardVelocity.Dot(p->Towards()) < 0) { new_angle *= -1; }
+  angle = angle * 0.9 + new_angle * 0.1;
   R3Line center_line(p->Center(), p->Up());
   scene->camera.Rotate(center_line, angle);
   camera = scene->camera;
