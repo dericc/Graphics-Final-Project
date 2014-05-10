@@ -92,11 +92,11 @@ struct R3Node {
 
 struct R3Platform {
   R3Platform(R3Node *node, double speed, R3Point start, R3Point end)
-  : node(node), speed(speed), start(start), end(end) {};
+  : node(node), max_speed(speed), center((start+end)/2) {  };
   R3Node *node;
-  const double speed;
-  const R3Point start, end;
-  R3Vector direction;
+  const double max_speed;
+  const R3Point center; //center of the path
+  R3Vector velocity;
   
   R3Vector Forward(void); // normalized forward direction
 };

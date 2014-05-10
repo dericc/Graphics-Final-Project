@@ -12,7 +12,7 @@
 
 #include <iostream>
 
-#define PI 3.14159
+#define PI 3.141592653589793238
 
 ////////////////////////////////////////////////////////////
 // GLOBAL CONSTANTS
@@ -305,25 +305,18 @@ void UpdatePlatforms(R3Scene *scene) {
     // program just started up?
     if (previous_time == 0) {
       previous_time = current_time;
-      R3Vector direction = cur->end - cur->start;
-      direction.Normalize();
-      cur->direction = direction;
+      cur->velocity = R3null_vector;
     }
-    else {
-     // do we need to reverse?
-      R3Point curMin = cur->node->shape->box->Min();
-      curMin.Transform(cur->node->transformation);
-      bool forward = cur->direction == cur->Forward();
-      if (forward && ((cur->end - curMin).Dot(cur->end - curMin+(cur->direction*cur->speed*delta_time)) < 0)) {
-        cur->direction = -1 * cur->Forward();
-      }
-      if (!forward && ((cur->start - curMin).Dot(cur->start - curMin+(cur->direction*cur->speed*delta_time)) < 0)) {
-        cur->direction = cur->Forward();
-      }
-      cur->node->transformation.Translate(cur->direction * cur->speed * delta_time);
-    }
+    R3Point pos = cur->node->shape->box->Min();
+    pos.Transform(cur->node->transformation);
+    
+    double K = 2; // spring constant
+    R3Vector displacement = cur->center - pos;
+    cur->velocity += K * displacement * delta_time;
+    cur->node->transformation.Translate(cur->velocity * delta_time);
   }
-
+  
+  previous_time = current_time;
 }
 
 void DrawShape(R3Shape *shape)

@@ -56,12 +56,6 @@ void R3Camera::Rotate(R3Line axis, double angle) {
   up.Rotate(axis.Vector(), angle);
 }
 
-R3Vector R3Platform::Forward(void) {
-  R3Vector ret = end - start;
-  ret.Normalize();
-  return ret;
-}
-
 R3Scene::
 R3Scene(void)
   : bbox(R3null_box),
@@ -327,7 +321,7 @@ Write(const char *filename, R3Node *node) {
 
     // Open file
   FILE *fp;
-  if (!(fp = fopen(newfile, "w"))) {
+  if (!(fp = fopen(newfile, "w+"))) {
     fprintf(stderr, "Unable to open file %s", newfile);
     return 0;
   }
