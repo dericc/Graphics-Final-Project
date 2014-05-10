@@ -21,8 +21,6 @@
 
 static const double VIDEO_FRAME_DELAY = 1./25.; // 25 FPS 
 
-
-
 ////////////////////////////////////////////////////////////
 // GLOBAL VARIABLES
 ////////////////////////////////////////////////////////////
@@ -219,6 +217,8 @@ void CollidePlayer(R3Node *node)
 
 void UpdatePlayer(R3Scene *scene) {
   R3Player *p = scene->player;
+
+  if (p == NULL) return; 
   // Get current time (in seconds) since start of execution
   double current_time = GetTime();
   static double previous_time = 0;
@@ -1343,6 +1343,8 @@ ReadScene(const char *filename)
     fprintf(stderr, "Unable to read scene from %s\n", filename);
     return NULL;
   }
+
+  scene->Write(filename, scene->root); 
 
   // Remember initial camera
   camera = scene->camera;
