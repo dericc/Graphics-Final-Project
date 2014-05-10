@@ -14,8 +14,9 @@
 //}
 
 R3Point R3Player::Center(void) {
-  R3Box *box = node->shape->box;
-  return (box->Min() + box->Max())/2;
+  R3Box box = *(node->shape->box);
+  box.Transform(node->transformation);
+  return (box.Min() + box.Max())/2;
 }
 
 // These are directions from the box's persepctive

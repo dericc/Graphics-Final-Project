@@ -148,43 +148,46 @@ static double GetTime(void)
 void CollidePlayer(R3Node *node)
 {
   R3Player *p = scene->player;
-  R3Box *player_box = p->node->shape->box;
+  R3Box player_box = *(p->node->shape->box);
+  player_box.Transform(p->node->transformation);
 
   if (node != p->node && node->shape != NULL && node->shape->type == R3_BOX_SHAPE)
   {
-    R3Box *scene_box = node->shape->box;
+    R3Box scene_box = *(node->shape->box);
+    scene_box.Transform(node->transformation);
 
-    double xmin_d = abs(scene_box->XMax() - player_box->XMin());
-    double xmax_d = abs(scene_box->XMin() - player_box->XMax());
-    double ymin_d = abs(scene_box->YMax() - player_box->YMin());
-    double ymax_d = abs(scene_box->YMin() - player_box->YMax());
+    double xmin_d = abs(scene_box.XMax() - player_box.XMin());
+    double xmax_d = abs(scene_box.XMin() - player_box.XMax());
+    double ymin_d = abs(scene_box.YMax() - player_box.YMin());
+    double ymax_d = abs(scene_box.YMin() - player_box.YMax());
 
-    bool xmin_coll = player_box->XMin() <= scene_box->XMax() && player_box->XMin() >= scene_box->XMin()
-                && ((player_box->YMin() <= scene_box->YMax() && player_box->YMin() >= scene_box->YMin())
-                ||  (player_box->YMax() <= scene_box->YMax() && player_box->YMax() >= scene_box->YMin()));
+    bool xmin_coll = player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin()
+                && ((player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin())
+                ||  (player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin()));
 
-    bool xmax_coll = player_box->XMax() <= scene_box->XMax() && player_box->XMax() >= scene_box->XMin()
-                && ((player_box->YMin() <= scene_box->YMax() && player_box->YMin() >= scene_box->YMin())
-                ||  (player_box->YMax() <= scene_box->YMax() && player_box->YMax() >= scene_box->YMin()));
+    bool xmax_coll = player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin()
+                && ((player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin())
+                ||  (player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin()));
 
-    bool ymin_coll = player_box->YMin() <= scene_box->YMax() && player_box->YMin() >= scene_box->YMin()
-                && ((player_box->XMin() <= scene_box->XMax() && player_box->XMin() >= scene_box->XMin())
-                ||  (player_box->XMax() <= scene_box->XMax() && player_box->XMax() >= scene_box->XMin()));
+    bool ymin_coll = player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin()
+                && ((player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin())
+                ||  (player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin()));
 
-    bool ymax_coll = player_box->YMax() <= scene_box->YMax() && player_box->YMax() >= scene_box->YMin()
-                && ((player_box->XMin() <= scene_box->XMax() && player_box->XMin() >= scene_box->XMin())
-                ||  (player_box->XMax() <= scene_box->XMax() && player_box->XMax() >= scene_box->XMin()));
+    bool ymax_coll = player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin()
+                && ((player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin())
+                ||  (player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin()));
 
+    R3Matrix tform = p->node->transformation;
     if (xmin_coll && (!ymin_coll || xmin_d < ymin_d) && (!ymax_coll || xmin_d < ymax_d))
     {
-      player_box->Translate(R3Vector(scene_box->XMax() - player_box->XMin(), 0, 0));
+      tform.Translate(R3Vector(scene_box.XMax() - player_box.XMin(), 0, 0));
       R3Vector v = p->velocity;
       v.SetX(0);
       p->velocity = v;
     }
     if (xmax_coll && (!ymin_coll || xmax_d < ymin_d) && (!ymax_coll || xmax_d < ymax_d))
     {
-      player_box->Translate(R3Vector(scene_box->XMin() - player_box->XMax(), 0, 0));
+      tform.Translate(R3Vector(scene_box.XMin() - player_box.XMax(), 0, 0));
       R3Vector v = p->velocity;
       v.SetX(0);
       p->velocity = v;
@@ -192,7 +195,7 @@ void CollidePlayer(R3Node *node)
 
     if (ymin_coll && (!xmin_coll || ymin_d < xmin_d) && (!xmax_coll || ymin_d < xmax_d))
     {
-      player_box->Translate(R3Vector(0, scene_box->YMax() - player_box->YMin(), 0));
+      tform.Translate(R3Vector(0, scene_box.YMax() - player_box.YMin(), 0));
       R3Vector v = p->velocity;
       v.SetY(0);
       p->velocity = v;
@@ -200,15 +203,16 @@ void CollidePlayer(R3Node *node)
     }
     if (ymax_coll && (!xmin_coll || ymax_d < xmin_d) && (!xmax_coll || ymax_d < xmax_d))
     {
-      player_box->Translate(R3Vector(0, scene_box->YMin() - player_box->YMax(), 0));
+      tform.Translate(R3Vector(0, scene_box.YMin() - player_box.YMax(), 0));
       R3Vector v = p->velocity;
       v.SetY(0);
       p->velocity = v;
     }
+    p->node->transformation = tform;
   }
 
   for (unsigned int i = 0; i < node->children.size(); i++)
-  { 
+  {
     CollidePlayer(node->children[i]);
   }
 }
@@ -254,14 +258,16 @@ void UpdatePlayer(R3Scene *scene) {
     f += (-p->max_speed * forward - forwardVelocity) / TAU;
   }
   // Drag
-  else {
+  else if (!p->inAir) {
     const double DRAG_COEFFICIENT = 2;
     f += -1*forwardVelocity*DRAG_COEFFICIENT;// * DRAG_COEFFICIENT;
   }
   
   p->velocity += (f / p->mass) * delta_time;
 
-  p->node->shape->box->Translate(p->velocity * delta_time);
+  R3Matrix tform = p->node->transformation;
+  tform.Translate(p->velocity * delta_time);
+  p->node->transformation = tform;
 
   p->inAir = true;
   CollidePlayer(scene->root);
