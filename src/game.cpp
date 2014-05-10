@@ -83,6 +83,8 @@ static ISoundEngine *sound_engine;
 static char current_directory[FILENAME_MAX];
 
 
+
+
 ////////////////////////////////////////////////////////////
 // TIMER CODE
 ////////////////////////////////////////////////////////////
@@ -146,11 +148,16 @@ static double GetTime(void)
 
 void FilePath(char *buf, const char *filename)
 {
+  #ifdef (__linux)
+
+  #else
+    
+  #endif
   int len = strlen(current_directory) + strlen(filename);
   char path[len+1];
   path[len] = '\0';
   strncpy(path, current_directory, strlen(current_directory));
-  strncpy(path+strlen(current_directory), filename, strlen("/sounds/jump.wav"));
+  strncpy(path+strlen(current_directory), filename, strlen(filename));
   strncpy(buf, path, len+1);
 }
 
