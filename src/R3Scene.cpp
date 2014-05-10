@@ -277,6 +277,9 @@ ReadShape(FILE *fp, int command_number, const char *filename)
 void R3Scene:: 
 WritePlayer(FILE *fp) {
 
+  //Do nothing if no player
+  if (player == NULL) return; 
+
   R3Node *cNode = player->node; 
   //Calculates for material IDs
   R3Material *cMat = cNode->material; 
@@ -290,7 +293,7 @@ WritePlayer(FILE *fp) {
       materialID = j; 
   }
 
-  fprintf(fp, "player %d %lf %lf %lf %lf %lf %lf %lf %lf \n",
+  fprintf(fp, "player %d %lf %lf %lf \n %lf %lf %lf \n %lf %lf \n",
     materialID, cBox.XMin(), cBox.YMin(), cBox.ZMin(), cBox.XMax(), cBox.YMax(), cBox.ZMax(), 
     player->max_speed, player->mass); 
   
@@ -310,44 +313,88 @@ WriteMaterials(FILE *fp) {
     R3Rgb e = cMat->emission; 
 
     fprintf(fp, "material %lf %lf %lf \n %lf %lf %lf \n %lf %lf %lf \n %lf %lf %lf \n %lf %lf %lf \n %lf %lf %s \n", 
-      ka.Red(), ka.Green(), ka.Blue(), kd.Red(), kd.Green(), kd.Blue(), ks.Red(), ks.Green(), ks.Blue(), 
-      kt.Red(), kt.Green(), kt.Blue(), e.Red(), e.Green(), e.Blue(), cMat->shininess, cMat->indexofrefraction, "0"); 
+      ka.Red(), ka.Green(), ka.Blue(), 
+      kd.Red(), kd.Green(), kd.Blue(), 
+      ks.Red(), ks.Green(), ks.Blue(), 
+      kt.Red(), kt.Green(), kt.Blue(), 
+      e.Red(), e.Green(), e.Blue(), cMat->shininess, cMat->indexofrefraction, "0"); 
 
   }
 
+  fprintf(fp, "\n"); 
+}
+
+void R3Scene::
+WriteLights(FILE *fp) {
+
+  for (int i = 0; i < lights.size(); i++) {
+    R3Light *cLight = lights[i]; 
+
+    R3Rgb cColor = cLight->color; 
+    R3Vector cDirect = cLight->direction; 
+    R3Point cPos = cLight->position; 
+
+    if (cLight->type == R3_DIRECTIONAL_LIGHT) {
+      fprintf(fp, "dir_light %lf %lf %lf \n %lf %lf %lf \n", 
+        cColor.Red(), cColor.Green(), cColor.Blue(), 
+        cDirect.X(), cDirect.Y(), cDirect.Z()); 
+    }
+
+    if (cLight->type == R3_POINT_LIGHT) {
+      fprintf(fp, "point_light %lf %lf %lf \n %lf %lf %lf \n %lf %lf %lf \n", 
+        cColor.Red(), cColor.Green(), cColor.Blue(), 
+        cPos.X(), cPos.Y(), cPos.Z(), 
+        cLight->constant_attenuation, cLight->linear_attenuation, cLight->quadratic_attenuation); 
+    }
+
+    if (cLight->type == R3_SPOT_LIGHT) {
+
+    }
+
+    if (cLight->type == R3_AREA_LIGHT) {
+
+    }
+  }
+
+  fprintf(fp, "\n"); 
 }
 
 void R3Scene::
 WriteNode(FILE *fp, R3Node *node) {
 
+
   for (unsigned int i = 0; i < node->children.size(); i++)
   { 
-
-    R3Node *cNode = node->children[i]; 
-
     //Recursively writes all the previous nodes first
     WriteNode(fp, node->children[i]); 
 
-    //Skip redrawing the player node
-    if (cNode == player->node) continue; 
+  }
 
-    if (cNode->shape->type == R3_BOX_SHAPE) {
-      R3Box *cBox = cNode->shape->box; 
+  //Skip redrawing the player node
+  if (player != NULL) {
+    if (node == player->node) return; 
+  }
+    //Skip nodes without shapes
+
+  if (node->shape == NULL) return; 
+
+
+  if (node->shape->type == R3_BOX_SHAPE) {
+    R3Box *cBox = node->shape->box; 
 
       //Calculates for material IDs
-      R3Material *cMaterial = cNode->material; 
-      int materialID = -1; 
+    R3Material *cMaterial = node->material; 
+    int materialID = -1; 
 
-      for (int j = 0; j < materials.size(); j++) {
-        if (cMaterial == materials[j]) 
-          materialID = j; 
-      }
-
-      fprintf(fp, "box %d %lf %lf %lf %lf %lf %lf \n", materialID, 
-        cBox->XMin(), cBox->YMin(), cBox->ZMin(), cBox->XMax(), cBox->YMax(), cBox->ZMax()); 
+    for (int j = 0; j < materials.size(); j++) {
+      if (cMaterial == materials[j]) 
+        materialID = j; 
     }
 
+    fprintf(fp, "box %d %lf %lf %lf %lf %lf %lf \n", materialID, 
+      cBox->XMin(), cBox->YMin(), cBox->ZMin(), cBox->XMax(), cBox->YMax(), cBox->ZMax()); 
   }
+
 }
 
 int R3Scene::
@@ -362,11 +409,13 @@ Write(const char *filename, R3Node *node) {
     return 0;
   }
 
+  WriteLights(fp); 
+
   WriteMaterials(fp); 
 
-  fprintf(fp, "\n"); 
-
+  //Main node loop of objects
   WriteNode(fp, node); 
+  fprintf(fp, "\n"); 
 
   WritePlayer(fp); 
 
@@ -375,6 +424,8 @@ Write(const char *filename, R3Node *node) {
   return 1; 
 
 }     
+
+
 
 int R3Scene::
 Read(const char *filename, R3Node *node)
@@ -1036,6 +1087,7 @@ materials.push_back(material);
 }
 else if (!strcmp(cmd, "dir_light")) {
       // Read data
+
   R3Rgb c;
   R3Vector d;
   if (fscanf(fp, "%lf%lf%lf%lf%lf%lf", 
@@ -1282,7 +1334,6 @@ else if (!strcmp(cmd, "player")) {
       group_nodes[depth]->bbox.Union(node->bbox);
       group_nodes[depth]->children.push_back(node);
       node->parent = group_nodes[depth];
-      
       
       // Create platform
       R3Platform *p = new R3Platform(node, speed, p1, p3);
