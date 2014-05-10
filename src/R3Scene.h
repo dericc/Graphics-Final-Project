@@ -192,6 +192,7 @@ struct R3Scene {
   // I/O functions
   int Read(const char *filename, R3Node *root = NULL);
 
+  void WritePlayer(FILE *fp); 
   void WriteMaterials(FILE *fp); 
   void WriteNode(FILE *fp, R3Node *node); 
   int Write(const char *filename, R3Node *node); 

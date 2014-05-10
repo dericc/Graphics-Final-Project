@@ -1218,6 +1218,11 @@ void GLUTKeyboard(unsigned char key, int x, int y)
   //   show_lights = !show_lights;
   //   break;
 
+  case 'P':
+  case 'p':
+    scene->Write("DoesNothingRightNow", scene->root); 
+    break;
+
   // case 'P':
   // case 'p':
   //   show_particles = !show_particles;
@@ -1371,7 +1376,7 @@ ReadScene(const char *filename)
     return NULL;
   }
 
-  scene->Write(filename, scene->root); 
+  // scene->Write(filename, scene->root); 
 
   // Remember initial camera
   camera = scene->camera;
