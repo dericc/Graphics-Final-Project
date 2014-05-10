@@ -77,6 +77,8 @@ struct R3Camera {
   void Rotate(R3Line axis, double angle);
 };
 
+struct R3Platform;
+
 struct R3Node {
   struct R3Node *parent;
   vector<struct R3Node *> children;
@@ -84,9 +86,20 @@ struct R3Node {
   R3Matrix transformation;
   R3Material *material;
   R3Box bbox;
+  bool isPlatform;
+  R3Platform *platform;
 };
 
-
+struct R3Platform {
+  R3Platform(R3Node *node, double speed, R3Point start, R3Point end)
+  : node(node), speed(speed), start(start), end(end) {};
+  R3Node *node;
+  const double speed;
+  const R3Point start, end;
+  R3Vector direction;
+  
+  R3Vector Forward(void); // normalized forward direction
+};
 
 // Particle system definitions
 
@@ -131,7 +144,6 @@ struct R3ParticleSpring {
 };
 
 struct R3Player {
-public:
   R3Player(R3Node *node, double max_speed, double mass) :
     node(node), max_speed(max_speed),  mass(mass) {};
   
@@ -186,6 +198,7 @@ struct R3Scene {
   vector<R3ParticleSource *> particle_sources;
   vector<R3ParticleSink *> particle_sinks;
   vector<R3ParticleSpring *> particle_springs;
+  vector<R3Platform *> platforms;
   vector<R3Light *> lights;
   R3Vector gravity;
   R3Camera camera;

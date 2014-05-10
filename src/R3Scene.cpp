@@ -47,6 +47,12 @@ void R3Camera::Rotate(R3Line axis, double angle) {
   up.Rotate(axis.Vector(), angle);
 }
 
+R3Vector R3Platform::Forward(void) {
+  R3Vector ret = end - start;
+  ret.Normalize();
+  return ret;
+}
+
 R3Scene::
 R3Scene(void)
   : bbox(R3null_box),
@@ -1148,6 +1154,60 @@ Read(const char *filename, R3Node *node)
       node->parent = group_nodes[depth];
       
       player = new R3Player(node, max_speed, mass);
+    }
+    else if (!strcmp(cmd, "platform")) {
+      // Read data
+      int m;
+      R3Point p1, p2, p3;
+      double speed;
+      if (fscanf(fp, "%d%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf", &m, &p1[0], &p1[1], &p1[2], &p2[0], &p2[1], &p2[2], &p3[0], &p3[1], &p3[2], &speed) != 11) {
+        fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
+        return 0;
+      }
+      
+      // Get material
+      R3Material *material = group_materials[depth];
+      if (m >= 0) {
+        if (m < (int) materials.size()) {
+          material = materials[m];
+        }
+        else {
+          fprintf(stderr, "Invalid material id at box command %d in file %s\n", command_number, filename);
+          return 0;
+        }
+      }
+      
+      // Create box
+      R3Box *box = new R3Box(p1, p2);
+      
+      // Create shape
+      R3Shape *shape = new R3Shape();
+      shape->type = R3_BOX_SHAPE;
+      shape->box = box;
+      shape->sphere = NULL;
+      shape->cylinder = NULL;
+      shape->cone = NULL;
+      shape->mesh = NULL;
+      shape->segment = NULL;
+      
+      // Create shape node
+      R3Node *node = new R3Node();
+      node->transformation = R3identity_matrix;
+      node->material = material;
+      node->shape = shape;
+      node->bbox = *box;
+      node->isPlatform = true;
+      
+      // Insert node
+      group_nodes[depth]->bbox.Union(node->bbox);
+      group_nodes[depth]->children.push_back(node);
+      node->parent = group_nodes[depth];
+      
+      
+      // Create platform
+      R3Platform *p = new R3Platform(node, speed, p1, p3);
+      platforms.push_back(p);
+      node->platform = p;
     }
     else {
       fprintf(stderr, "Unrecognized command %d in file %s: %s\n", command_number, filename, cmd);

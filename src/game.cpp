@@ -1,5 +1,4 @@
-// Source file for the scene file viewer
-
+// Source file for the scene file viewerddddddd
 
 
 ////////////////////////////////////////////////////////////
@@ -218,11 +217,10 @@ void UpdatePlayer(R3Scene *scene) {
   // Get current time (in seconds) since start of execution
   double current_time = GetTime();
   static double previous_time = 0;
-  bool moved = false;
+  
   // program just started up?
   if (previous_time == 0) {
     previous_time = current_time;
-    moved = true;
     p->velocity = R3null_vector;
   }
   
@@ -239,7 +237,7 @@ void UpdatePlayer(R3Scene *scene) {
   R3Vector f = R3null_vector;
   f += -9.8 * p->Up() * p->mass;
   if (up_key && !p->inAir) {
-    f += 800 * p->Up();
+    f += 700 * p->Up();
   }
 
   // side to side
@@ -287,6 +285,41 @@ void UpdatePlayer(R3Scene *scene) {
 
 }
 
+
+void UpdatePlatforms(R3Scene *scene) {
+  double current_time = GetTime();
+  static double previous_time = 0;
+  
+  // time passed since starting
+  double delta_time = current_time - previous_time;
+  
+  int numPlatforms = scene->platforms.size();
+  for (int i = 0; i < numPlatforms; ++i) {
+    R3Platform *cur = scene->platforms[i];
+    // program just started up?
+    if (previous_time == 0) {
+      previous_time = current_time;
+      R3Vector direction = cur->end - cur->start;
+      direction.Normalize();
+      cur->direction = direction;
+    }
+    else {
+     // do we need to reverse?
+      R3Point curMin = cur->node->shape->box->Min();
+      curMin.Transform(cur->node->transformation);
+      bool forward = cur->direction == cur->Forward();
+      if (forward && ((cur->end - curMin).Dot(cur->end - curMin+(cur->direction*cur->speed*delta_time)) < 0)) {
+        cur->direction = -1 * cur->Forward();
+      }
+      if (!forward && ((cur->start - curMin).Dot(cur->start - curMin+(cur->direction*cur->speed*delta_time)) < 0)) {
+        cur->direction = cur->Forward();
+      }
+      cur->node->transformation.Translate(cur->direction * cur->speed * delta_time);
+    }
+  }
+
+}
+
 void DrawShape(R3Shape *shape)
 {
   // Check shape type
@@ -294,7 +327,7 @@ void DrawShape(R3Shape *shape)
   else if (shape->type == R3_SPHERE_SHAPE) shape->sphere->Draw();
   else if (shape->type == R3_CYLINDER_SHAPE) shape->cylinder->Draw();
   else if (shape->type == R3_CONE_SHAPE) shape->cone->Draw();
-  else if (shape->type == R3_MESH_SHAPE) shape->mesh->Draw();
+  else if (shape->type == R3_MESHdd`_SHAPE) shape->mesh->Draw();
   else if (shape->type == R3_SEGMENT_SHAPE) shape->segment->Draw();
   else if (shape->type == R3_CIRCLE_SHAPE) shape->circle->Draw();
   else fprintf(stderr, "Unrecognized shape type: %d\n", shape->type);
@@ -934,6 +967,7 @@ void GLUTRedraw(void)
   glClearColor(background[0], background[1], background[2], background[3]);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  UpdatePlatforms(scene);
   // Update Player
   UpdatePlayer(scene);
   
