@@ -153,15 +153,57 @@ void CollidePlayer(R3Node *node)
   if (node != p->node && node->shape != NULL && node->shape->type == R3_BOX_SHAPE)
   {
     R3Box *scene_box = node->shape->box;
-    if (    player_box->YMin() < scene_box->YMax() && player_box->YMin() > scene_box->YMin()
-        && (player_box->XMin() < scene_box->XMax() && player_box->XMin() > scene_box->XMin()
-         || player_box->XMax() < scene_box->XMax() && player_box->XMax() > scene_box->XMin()))
+
+    double xmin_d = abs(scene_box->XMax() - player_box->XMin());
+    double xmax_d = abs(scene_box->XMin() - player_box->XMax());
+    double ymin_d = abs(scene_box->YMax() - player_box->YMin());
+    double ymax_d = abs(scene_box->YMin() - player_box->YMax());
+
+    bool xmin_coll = player_box->XMin() <= scene_box->XMax() && player_box->XMin() >= scene_box->XMin()
+                && ((player_box->YMin() <= scene_box->YMax() && player_box->YMin() >= scene_box->YMin())
+                ||  (player_box->YMax() <= scene_box->YMax() && player_box->YMax() >= scene_box->YMin()));
+
+    bool xmax_coll = player_box->XMax() <= scene_box->XMax() && player_box->XMax() >= scene_box->XMin()
+                && ((player_box->YMin() <= scene_box->YMax() && player_box->YMin() >= scene_box->YMin())
+                ||  (player_box->YMax() <= scene_box->YMax() && player_box->YMax() >= scene_box->YMin()));
+
+    bool ymin_coll = player_box->YMin() <= scene_box->YMax() && player_box->YMin() >= scene_box->YMin()
+                && ((player_box->XMin() <= scene_box->XMax() && player_box->XMin() >= scene_box->XMin())
+                ||  (player_box->XMax() <= scene_box->XMax() && player_box->XMax() >= scene_box->XMin()));
+
+    bool ymax_coll = player_box->YMax() <= scene_box->YMax() && player_box->YMax() >= scene_box->YMin()
+                && ((player_box->XMin() <= scene_box->XMax() && player_box->XMin() >= scene_box->XMin())
+                ||  (player_box->XMax() <= scene_box->XMax() && player_box->XMax() >= scene_box->XMin()));
+
+    if (xmin_coll && (!ymin_coll || xmin_d < ymin_d) && (!ymax_coll || xmin_d < ymax_d))
     {
-      p->node->shape->box->Translate(R3Vector(0, scene_box->YMax() - player_box->YMin(), 0));
+      player_box->Translate(R3Vector(scene_box->XMax() - player_box->XMin(), 0, 0));
+      R3Vector v = p->velocity;
+      v.SetX(0);
+      p->velocity = v;
+    }
+    if (xmax_coll && (!ymin_coll || xmax_d < ymin_d) && (!ymax_coll || xmax_d < ymax_d))
+    {
+      player_box->Translate(R3Vector(scene_box->XMin() - player_box->XMax(), 0, 0));
+      R3Vector v = p->velocity;
+      v.SetX(0);
+      p->velocity = v;
+    }
+
+    if (ymin_coll && (!xmin_coll || ymin_d < xmin_d) && (!xmax_coll || ymin_d < xmax_d))
+    {
+      player_box->Translate(R3Vector(0, scene_box->YMax() - player_box->YMin(), 0));
       R3Vector v = p->velocity;
       v.SetY(0);
       p->velocity = v;
       p->inAir = false;
+    }
+    if (ymax_coll && (!xmin_coll || ymax_d < xmin_d) && (!xmax_coll || ymax_d < xmax_d))
+    {
+      player_box->Translate(R3Vector(0, scene_box->YMin() - player_box->YMax(), 0));
+      R3Vector v = p->velocity;
+      v.SetY(0);
+      p->velocity = v;
     }
   }
 
@@ -195,7 +237,7 @@ void UpdatePlayer(R3Scene *scene) {
   // Motion Shit
   // get the forces to move the box
   R3Vector f = R3null_vector;
-  f += -9.8 * p->Up();
+  f += -9.8 * p->Up() * p->mass;
   if (up_key && !p->inAir) {
     f += 1000 * p->Up();
   }
@@ -223,11 +265,6 @@ void UpdatePlayer(R3Scene *scene) {
 
   p->inAir = true;
   CollidePlayer(scene->root);
-  // check for collisions
-  // if we hit something forwards, then stop there
-  // if we are in the air and we hit something below, land
-  // if we are on the ground but there is nothing below us, fall
-  
 
   // Camera Shit
   scene->camera.eye = p->Center() - 25 * p->Right() + 5 * p->Up();
