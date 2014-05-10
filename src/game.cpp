@@ -244,6 +244,10 @@ void CollidePlayer(R3Node *node)
         v.SetY(0);
         p->velocity = v;
         p->inAir = false;
+        if (node->isPlatform) {
+          p->onPlatform = true;
+          p->platform = node->platform;
+        }
       }
       if (ymax_coll && (!xmin_coll || ymax_d < xmin_d) && (!xmax_coll || ymax_d < xmax_d))
       {
@@ -301,6 +305,9 @@ void UpdatePlayer(R3Scene *scene) {
     FilePath(path, "/sounds/jump.wav");
     sound_engine->play2D(path, false);
     f += 700 * p->Up();
+    if (p->onPlatform) {
+      p->velocity += p->platform->velocity;
+    }
   }
 
   // side to side
@@ -321,15 +328,20 @@ void UpdatePlayer(R3Scene *scene) {
   }
   
   p->velocity += (f / p->mass) * delta_time;
-
+  
   // transform the player node
   R3Matrix tform = p->node->transformation;
   tform.Translate(p->velocity * delta_time);
   p->node->transformation = tform;
-
+  
   // set inair to true: it will be set to false if collision with ground detected
   p->inAir = true;
+  p->onPlatform = false;
   CollidePlayer(scene->root);
+  
+  if (p->onPlatform) {
+    p->node->transformation.Translate(p->platform->velocity * delta_time);
+  }
 
   // Camera Shit
   scene->camera.eye = p->Center() - 25 * p->Right() + 5 * p->Up();

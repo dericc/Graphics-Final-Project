@@ -168,6 +168,9 @@ struct R3Player {
   R3Vector velocity; // current direction of motion
   bool inAir;
   int n_coins;
+  
+  bool onPlatform;
+  R3Platform *platform;
 };
 
 struct R3Coin {

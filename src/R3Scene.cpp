@@ -15,12 +15,6 @@
 
 vector<R3Material *> materials;
 
-//R3Player::R3Player(R3Node *node, double maxSpeed) {
-//  assert(node->shape->type == R3_BOX_SHAPE);
-//  R3Box *box = node->shape->box;
-//  max_speed = maxSpeed;
-//}
-
 R3Point R3Player::Center(void) {
   R3Box box = *(node->shape->box);
   box.Transform(node->transformation);
