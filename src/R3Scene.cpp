@@ -518,6 +518,8 @@ Read(const char *filename, R3Node *node)
       node->bbox.Union(p1);
       node->bbox.Union(p2);
       node->bbox.Union(p3);
+      node->is_obstacle = true;
+      node->is_coin = false;
 
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -564,6 +566,8 @@ Read(const char *filename, R3Node *node)
       node->material = material;
       node->shape = shape;
       node->bbox = *box;
+      node->is_obstacle = true;
+      node->is_coin = false;
 
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -611,6 +615,8 @@ Read(const char *filename, R3Node *node)
       node->material = material;
       node->shape = shape;
       node->bbox = sphere->BBox();
+      node->is_obstacle = true;
+      node->is_coin = false;
 
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -658,6 +664,8 @@ Read(const char *filename, R3Node *node)
       node->material = material;
       node->shape = shape;
       node->bbox = cylinder->BBox();
+      node->is_obstacle = true;
+      node->is_coin = false;
 
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -722,6 +730,8 @@ Read(const char *filename, R3Node *node)
       node->material = material;
       node->shape = shape;
       node->bbox = mesh->bbox;
+      node->is_obstacle = true;
+      node->is_coin = false;
 
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -769,6 +779,8 @@ Read(const char *filename, R3Node *node)
       node->material = material;
       node->shape = shape;
       node->bbox = cone->BBox();
+      node->is_obstacle = true;
+      node->is_coin = false;
 
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -815,6 +827,8 @@ Read(const char *filename, R3Node *node)
       node->material = material;
       node->shape = shape;
       node->bbox = segment->BBox();
+      node->is_obstacle = true;
+      node->is_coin = false;
 
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -1122,7 +1136,6 @@ Read(const char *filename, R3Node *node)
         }
       }
       
-      
       // Create box
       R3Box *box = new R3Box(p1, p2);
       
@@ -1142,6 +1155,8 @@ Read(const char *filename, R3Node *node)
       node->material = material;
       node->shape = shape;
       node->bbox = *box;
+      node->is_obstacle = false;
+      node->is_coin = false;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -1149,6 +1164,67 @@ Read(const char *filename, R3Node *node)
       node->parent = group_nodes[depth];
       
       player = new R3Player(node, max_speed, mass);
+    }
+    else if (!strcmp(cmd, "coin")) {
+      // Read data
+      int m;
+      R3Point p;
+      if (fscanf(fp, "%d%lf%lf%lf", &m, &p[0], &p[1], &p[2]) != 4) {
+        fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
+        return 0;
+      }
+      
+      // Get material
+      R3Material *material = group_materials[depth];
+      if (m >= 0) {
+        if (m < (int) materials.size()) {
+          material = materials[m];
+        }
+        else {
+          fprintf(stderr, "Invalid material id at box command %d in file %s\n", command_number, filename);
+          return 0;
+        }
+      }
+      
+      // Create box
+      R3Cylinder *cyl = new R3Cylinder(R3null_point, 0.5, 0.2);
+      
+      // Create shape
+      R3Shape *shape = new R3Shape();
+      shape->type = R3_CYLINDER_SHAPE;
+      shape->box = NULL;
+      shape->sphere = NULL;
+      shape->cylinder = cyl;
+      shape->cone = NULL;
+      shape->mesh = NULL;
+      shape->segment = NULL;
+
+      R3Coin *coin = new R3Coin();
+      coin->position = p;
+      coin->t = 0;
+
+      R3Matrix tform = R3identity_matrix;
+      tform.Translate(p.Vector());
+      tform.Rotate(R3_X, PI / 2);
+      
+      // Create shape node
+      R3Node *node = new R3Node();
+      node->transformation = tform;
+      node->material = material;
+      node->shape = shape;
+      node->bbox = cyl->BBox();
+      node->is_obstacle = false;
+      node->is_coin = true;
+      node->coin = coin;
+
+      coin->node = node;
+      
+      coins.push_back(coin);
+
+      // Insert node
+      group_nodes[depth]->bbox.Union(node->bbox);
+      group_nodes[depth]->children.push_back(node);
+      node->parent = group_nodes[depth];
     }
     else {
       fprintf(stderr, "Unrecognized command %d in file %s: %s\n", command_number, filename, cmd);
