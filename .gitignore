@@ -32,3 +32,5 @@ Makefile
 cmake_install.cmake
 install_manifest.txt
 src/game
+
+src/game
