@@ -152,6 +152,7 @@ static double GetTime(void)
 
 void FilePath(char *buf, const char *filename)
 {
+<<<<<<< HEAD
   #ifdef __linux
 
   #else
@@ -167,6 +168,19 @@ void FilePath(char *buf, const char *filename)
       buf[strlen(path)] = '\0';
     }
   #endif
+=======
+  // #ifdef (__linux)
+
+  // #else
+    
+  // #endif
+  int len = strlen(current_directory) + strlen(filename);
+  char path[len+1];
+  path[len] = '\0';
+  strncpy(path, current_directory, strlen(current_directory));
+  strncpy(path+strlen(current_directory), filename, strlen(filename));
+  strncpy(buf, path, len+1);
+>>>>>>> d59ea585622ec36f950957163acfc7fec8458a49
 }
 
 
@@ -286,6 +300,7 @@ void UpdatePlayer(R3Scene *scene) {
   R3Player *p = scene->player;
 
   if (p == NULL) return; 
+  
   // Get current time (in seconds) since start of execution
   double current_time = GetTime();
   static double previous_time = 0;
