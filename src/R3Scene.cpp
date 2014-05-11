@@ -75,7 +75,10 @@ ambient(0,0,0,1)
   root->bbox = R3null_box;
   
   player = NULL;
-  death_y = 0;
+  death_y = -5;
+
+  // Create sidebar
+  sidebar = new R3Sidebar();
 }
 
 
@@ -1438,7 +1441,7 @@ Read(const char *filename, R3Node *node)
       node->material = material;
       node->shape = shape;
       node->bbox = *box;
-      node->isPlatform = true;
+      node->is_platform = true;
       node->is_coin = false;
       node->is_obstacle = true;
       node->del = false;

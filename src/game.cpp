@@ -282,7 +282,7 @@ void CollidePlayer(R3Node *node)
         v.SetY(0);
         p->velocity = v;
         p->inAir = false;
-        if (node->isPlatform) {
+        if (node->is_platform) {
           p->onPlatform = true;
           p->platform = node->platform;
         }
@@ -425,6 +425,17 @@ void UpdatePlayer(R3Scene *scene) {
 
 }
 
+void UpdateCoin(R3Coin *coin, double delta_time)
+{
+  coin->t += delta_time;
+
+  R3Matrix tform = R3identity_matrix;
+  tform.Translate(coin->position.Vector());
+  tform.Rotate(R3_X, PI / 2);
+  tform.Rotate(R3_Z, coin->t * 4);
+  coin->node->transformation = tform;
+}
+
 void UpdateCoins(R3Scene *scene)
 {
   double current_time = GetTime();
@@ -441,14 +452,19 @@ void UpdateCoins(R3Scene *scene)
   for (int i = 0; i < scene->NCoins(); i++)
   {
     R3Coin *coin = scene->Coin(i);
-    coin->t += delta_time;
-
-    R3Matrix tform = R3identity_matrix;
-    tform.Translate(coin->position.Vector());
-    tform.Rotate(R3_X, PI / 2);
-    tform.Rotate(R3_Z, coin->t * 4);
-    coin->node->transformation = tform;
+    UpdateCoin(coin, delta_time);
   }
+}
+
+
+void UpdatePlatform(R3Platform *platform, double delta_time) {
+  R3Point pos = platform->node->shape->box->Min();
+  pos.Transform(platform->node->transformation);
+  
+  double K = 2; // spring constant
+  R3Vector displacement = platform->center - pos;
+  platform->velocity += K * displacement * delta_time;
+  platform->node->transformation.Translate(platform->velocity * delta_time);
 }
 
 void DeleteNodes(R3Node *node) {
@@ -489,21 +505,41 @@ void UpdatePlatforms(R3Scene *scene) {
   int numPlatforms = scene->platforms.size();
   for (int i = 0; i < numPlatforms; ++i) {
     R3Platform *cur = scene->platforms[i];
-    // program just started up?
     if (previous_time == 0) {
       previous_time = current_time;
       cur->velocity = R3null_vector;
     }
-    R3Point pos = cur->node->shape->box->Min();
-    pos.Transform(cur->node->transformation);
-    
-    double K = 2; // spring constant
-    R3Vector displacement = cur->center - pos;
-    cur->velocity += K * displacement * delta_time;
-    cur->node->transformation.Translate(cur->velocity * delta_time);
+    UpdatePlatform(cur, delta_time);
   }
   
   previous_time = current_time;
+}
+
+void UpdateSidebar(R3Scene *scene) {
+  double current_time = GetTime();
+  static double previous_time = 0;
+  
+  // program just started up?
+  if (previous_time == 0) {
+    previous_time = current_time;
+  }
+  
+  // time passed since starting
+  double delta_time = current_time - previous_time;
+  previous_time = current_time;
+
+  // for each button
+  for (int i = 0; i < scene->sidebar->buttons.size(); i++)
+  {
+    R3Button *button = scene->sidebar->buttons[i];
+    if (button->node->is_coin) {
+      R3Coin *coin = button->node->coin;
+      UpdateCoin(coin, delta_time);
+    } else if (button->node->is_platform) {
+      R3Platform *platform = button->node->platform;
+      UpdatePlatform(platform, delta_time);
+    }
+  }
 }
 
 void DrawShape(R3Shape *shape)
@@ -1059,6 +1095,15 @@ void DrawHUD()
 
   glClear(GL_DEPTH_BUFFER_BIT);
 
+  // Level editor stuff
+  if (level_editor)
+  {
+    for (int i = 0; i < scene->sidebar->buttons.size(); i++)
+    {
+
+    }
+  }
+
   // Draw coins as squares in top left
   float spacing = 15.0;
   float size = 30.0;
@@ -1203,6 +1248,8 @@ void GLUTRedraw(void)
   // Update Player
   if (level_editor != 1) {
     UpdatePlayer(scene);
+  } else {
+    UpdateSidebar(scene);
   }
 
   // Update Coins
