@@ -90,7 +90,7 @@ struct R3Node {
   bool is_obstacle;
   bool is_coin;
   R3Coin *coin;
-  bool isPlatform;
+  bool is_platform;
   R3Platform *platform;
 };
 
@@ -182,16 +182,7 @@ struct R3Coin {
   double t;
 };
 
-struct Button {
-  void (*action)(R3Scene *scene);
-};
-
-struct Sidebar {
-  vector<Button> buttons;
-  double width;
-  double height;
-  Button *Clicked(int x, int y);
-};
+struct R3Sidebar;
 
 // Scene graph definition
 
@@ -246,9 +237,21 @@ struct R3Scene {
   R3Rgb background;
   R3Rgb ambient;
   R3Player *player;
+  R3Sidebar *sidebar;
 };
 
+struct R3Button {
+  void (*action)(R3Scene *scene);
+  R3Node *node;
+};
 
+struct R3Sidebar {
+  vector<R3Button *> buttons;
+  double width;
+  double height;
+  R3Button *Clicked(int x, int y);
+  R3Button *last_clicked;
+};
 
 // Inline functions 
 
