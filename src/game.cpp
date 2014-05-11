@@ -84,7 +84,13 @@ static ISoundEngine *sound_engine;
 static char current_directory[FILENAME_MAX];
 
 
+////////////////////////////////////////////////////////////
+// LEVEL EDITOR COMMANDS
+////////////////////////////////////////////////////////////
 
+// enum {
+//   MAKE_BOX,
+// };
 
 ////////////////////////////////////////////////////////////
 // TIMER CODE
@@ -180,11 +186,11 @@ void FilePath(char *buf, const char *filename)
   #endif
 }
 
-void PlaySound(const char *filename)
+void PlaySound(const char *filename, bool looped)
 {
   char path[FILENAME_MAX];
   FilePath(path, filename);
-  sound_engine->play2D(path, false);
+  sound_engine->play2D(path, looped);
 }
 
 
@@ -289,7 +295,7 @@ void CollidePlayer(R3Node *node)
     {
       if (xmin_coll || xmax_coll || ymin_coll || ymax_coll)
       {
-        PlaySound("/../sounds/coin.wav");
+        PlaySound("/../sounds/coin.wav", false);
         p->n_coins++;
       }
     }
@@ -329,7 +335,7 @@ void UpdatePlayer(R3Scene *scene) {
   R3Vector f = R3null_vector;
   f += -9.8 * p->Up() * p->mass;
   if (up_key && !p->inAir) {
-    PlaySound("/../sounds/jump.wav");
+    PlaySound("/../sounds/jump.wav", false);
     f += 700 * p->Up();
     if (p->onPlatform) {
       p->velocity += p->platform->velocity;
@@ -376,6 +382,22 @@ void UpdatePlayer(R3Scene *scene) {
   scene->camera.right = p->Towards();
   scene->camera.up = scene->camera.right;
   scene->camera.up.Cross(scene->camera.towards);
+
+  R3Box player_box = *p->node->shape->box;
+  player_box.Transform(p->node->transformation);
+  if (player_box.Max().Y() <= scene->death_y && !p->isDead) {
+    p->isDead = true;
+    PlaySound("/../sounds/death.wav", false);
+  }
+
+  // stuff for checking mouse position and translating it to world coords
+  R3Point min_player_pos = player_box.Min();
+  R3Point max_player_pos = player_box.Max();
+  int x = GLUTmouse[0];
+  int y = GLUTmouse[1];
+  if (x > min_player_pos.X() && x < max_player_pos.X()
+   && y > min_player_pos.Y() && y < max_player_pos.Y())
+    PlaySound("/../sounds/coin.wav", false);
   
   static double angle = 0;
   double MAX_ROTATION = PI/8;
@@ -1632,7 +1654,12 @@ main(int argc, char **argv)
   sound_engine = createIrrKlangDevice();
   if (!sound_engine)
     return 0; // if there was an error creating the sound engine
-  getcwd(current_directory, FILENAME_MAX);
+  
+  char path[FILENAME_MAX];
+  FilePath(path, "/../sounds/maxo.wav");
+  ISound *soundtrack = sound_engine->play2D(path, true, false, true);
+  soundtrack->setVolume(0.35);
+  soundtrack->setIsPaused(false);
 
   // Run GLUT interface
   GLUTMainLoop();

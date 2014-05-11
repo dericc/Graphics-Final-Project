@@ -151,7 +151,7 @@ struct R3ParticleSpring {
 
 struct R3Player {
   R3Player(R3Node *node, double max_speed, double mass) :
-    node(node), max_speed(max_speed),  mass(mass), n_coins(0) {};
+    node(node), max_speed(max_speed),  mass(mass), isDead(false), n_coins(0) {};
   
   R3Node *node; //
   const double max_speed;
@@ -169,6 +169,7 @@ struct R3Player {
   
   R3Vector velocity; // current direction of motion
   bool inAir;
+  bool isDead;
   int n_coins;
   
   bool onPlatform;
@@ -219,6 +220,7 @@ struct R3Scene {
   int Write(const char *filename, R3Node *node); 
 
  public:
+  int death_y;
   R3Node *root;
   vector<R3Particle *> particles;
   vector<R3ParticleSource *> particle_sources;

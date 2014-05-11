@@ -75,6 +75,7 @@ ambient(0,0,0,1)
   root->bbox = R3null_box;
   
   player = NULL;
+  death_y = 0;
 }
 
 
