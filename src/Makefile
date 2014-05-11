@@ -45,6 +45,11 @@ endif
 
 OBJS=game.o particle.o R3Scene.o
 LIBS=R3/libR3.a R2/libR2.a jpeg/libjpeg.a fglut/libfglut.a
+ifeq (,$(findstring Darwin,$(UNAME)))
+	OPTS =  -I"../irrKlang/include" -L"../irrKlang/bin/linux-gcc-64" ../irrKlang/bin/linux-gcc-64/libIrrKlang.so
+else 
+	OPTS =  -I"../irrKlang/include" -L"../irrKlang/bin/macosx-gcc" ../irrKlang/bin/macosx-gcc/libirrklang.dylib
+endif
 
 all: game
 
@@ -60,9 +65,10 @@ jpeg/libjpeg.a:
 fglut/libfglut.a: 
 	$(MAKE) -C fglut
 
-game: $(OBJS) $(LIBS)
+game: $(OBJS) $(LIBS) 
 	    rm -f $@ 
-	    $(CXX) $(CXXFLAGS) $^ -lm -o $@ $(GLLIBS)
+	    $(CXX) $(CXXFLAGS) $^ -lm -o $@ $(GLLIBS) $(OPTS)
+	    install_name_tool -change /usr/local/lib/libirrklang.dylib irrKlang/bin/macosx-gcc/libirrklang.dylib game
 	    
 clean:
 	    rm -f *.o game
