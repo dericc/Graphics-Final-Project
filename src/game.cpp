@@ -371,9 +371,12 @@ void UpdatePlayer(R3Scene *scene) {
   p->velocity += (f / p->mass) * delta_time;
   
   // transform the player node
-  R3Matrix tform = p->node->transformation;
-  tform.Translate(p->velocity * delta_time);
-  p->node->transformation = tform;
+  if (!p->isDead)
+  {
+    R3Matrix tform = p->node->transformation;
+    tform.Translate(p->velocity * delta_time);
+    p->node->transformation = tform;
+  }
   
   // set inair to true: it will be set to false if collision with ground detected
   p->inAir = true;
@@ -394,19 +397,21 @@ void UpdatePlayer(R3Scene *scene) {
 
   R3Box player_box = *p->node->shape->box;
   player_box.Transform(p->node->transformation);
-  if (player_box.Max().Y() <= scene->death_y && !p->isDead) {
+  if (player_box.Min().Y() <= scene->death_y && !p->isDead)
+  {
     p->isDead = true;
+    p->node->is_visible = false;
     PlaySound("/../sounds/death.wav", false);
   }
 
   // stuff for checking mouse position and translating it to world coords
-  R3Point min_player_pos = player_box.Min();
-  R3Point max_player_pos = player_box.Max();
-  int x = GLUTmouse[0];
-  int y = GLUTmouse[1];
-  if (x > min_player_pos.X() && x < max_player_pos.X()
-   && y > min_player_pos.Y() && y < max_player_pos.Y())
-    PlaySound("/../sounds/coin.wav", false);
+  // R3Point min_player_pos = player_box.Min();
+  // R3Point max_player_pos = player_box.Max();
+  // int x = GLUTmouse[0];
+  // int y = GLUTmouse[1];
+  // if (x > min_player_pos.X() && x < max_player_pos.X()
+  //  && y > min_player_pos.Y() && y < max_player_pos.Y())
+  //   PlaySound("/../sounds/coin.wav", false);
   
   static double angle = 0;
   double MAX_ROTATION = PI/8;
@@ -525,7 +530,7 @@ void UpdateSidebar(R3Scene *scene) {
   previous_time = current_time;
 
   // for each button
-  for (int i = 0; i < scene->sidebar->buttons.size(); i++)
+  for (unsigned int i = 0; i < scene->sidebar->buttons.size(); i++)
   {
     R3Button *button = scene->sidebar->buttons[i];
     if (button->node->is_coin) {
@@ -792,7 +797,7 @@ void DrawNode(R3Scene *scene, R3Node *node)
   if (node->material) LoadMaterial(node->material);
 
   // Draw shape
-  if (node->shape) DrawShape(node->shape);
+  if (node->is_visible && node->shape) DrawShape(node->shape);
 
   // Draw children nodes
   for (int i = 0; i < (int) node->children.size(); i++) 
@@ -1094,7 +1099,7 @@ void DrawHUD()
   // Level editor stuff
   if (level_editor)
   {
-    for (int i = 0; i < scene->sidebar->buttons.size(); i++)
+    for (unsigned int i = 0; i < scene->sidebar->buttons.size(); i++)
     {
 
     }
