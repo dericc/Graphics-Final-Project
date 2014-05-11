@@ -95,6 +95,10 @@ static char current_directory[FILENAME_MAX];
 #  include <sys/time.h>
 #endif
 
+#ifdef __MACH__
+#  include <mach-o/dyld.h>
+#endif
+
 static double GetTime(void)
 {
 #ifdef _WIN32
@@ -148,17 +152,21 @@ static double GetTime(void)
 
 void FilePath(char *buf, const char *filename)
 {
-  #ifdef (__linux)
+  #ifdef __linux
 
   #else
-    
+    char path[FILENAME_MAX + 1];
+    path[FILENAME_MAX] = '\0';
+    uint32_t size = sizeof(path);
+    if (_NSGetExecutablePath(path, &size) == 0)
+    {
+      int i = strlen(path) + strlen(filename) - 5;
+      strncpy(path+strlen(path) - 5, filename, strlen(filename));
+      path[i] = '\0';
+      strncpy(buf, path, strlen(path));
+      buf[strlen(path)] = '\0';
+    }
   #endif
-  int len = strlen(current_directory) + strlen(filename);
-  char path[len+1];
-  path[len] = '\0';
-  strncpy(path, current_directory, strlen(current_directory));
-  strncpy(path+strlen(current_directory), filename, strlen(filename));
-  strncpy(buf, path, len+1);
 }
 
 
@@ -302,7 +310,7 @@ void UpdatePlayer(R3Scene *scene) {
   f += -9.8 * p->Up() * p->mass;
   if (up_key && !p->inAir) {
     char path[FILENAME_MAX];
-    FilePath(path, "/sounds/jump.wav");
+    FilePath(path, "/../sounds/jump.wav");
     sound_engine->play2D(path, false);
     f += 700 * p->Up();
     if (p->onPlatform) {
