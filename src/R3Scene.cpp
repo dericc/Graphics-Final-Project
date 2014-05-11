@@ -287,8 +287,6 @@ WritePlayer(FILE *fp) {
   
 }
 
-
-
 void R3Scene:: 
 WriteMaterials(FILE *fp) {
 
@@ -312,7 +310,6 @@ WriteMaterials(FILE *fp) {
 
   fprintf(fp, "\n"); 
 }
-
 
 void R3Scene:: 
 WritePlatforms(FILE *fp) {
@@ -379,7 +376,6 @@ WriteLights(FILE *fp) {
   fprintf(fp, "\n"); 
 }
 
-
 void R3Scene::
 WriteNode(FILE *fp, R3Node *node) {
 
@@ -430,11 +426,8 @@ Write(const char *filename, R3Node *node) {
     return 0;
   }
 
-
   WriteMaterials(fp); 
-
   WriteLights(fp); 
-
 
   //Main node loop of objects
   WriteNode(fp, node); 
@@ -442,8 +435,6 @@ Write(const char *filename, R3Node *node) {
 
   WritePlatforms(fp); 
   WritePlayer(fp); 
-
-
 
   fclose(fp); 
 
