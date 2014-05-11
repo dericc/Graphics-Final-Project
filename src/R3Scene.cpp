@@ -287,7 +287,6 @@ WritePlayer(FILE *fp) {
   
 }
 
-
 void R3Scene:: 
 WriteMaterials(FILE *fp) {
 
@@ -309,6 +308,36 @@ WriteMaterials(FILE *fp) {
 
   }
 
+  fprintf(fp, "\n"); 
+}
+
+void R3Scene:: 
+WritePlatforms(FILE *fp) {
+
+  for (int i = 0; i < platforms.size(); i++) {
+
+    R3Platform *cPlatform = platforms[i]; 
+    R3Node *cNode = cPlatform->node; 
+
+    R3Material *cMaterial = cNode->material; 
+    int materialID = -1; 
+    for (int j = 0; j < materials.size(); j++) {
+      if (cMaterial == materials[j]) 
+        materialID = j; 
+    }
+
+    R3Box *cBox = cNode->shape->box; 
+
+    R3Point p1 = cBox->Min(); 
+    R3Point p2 = cBox->Max(); 
+    R3Point p3 = cPlatform->end; 
+
+    fprintf(fp, "platform %d %lf %lf %lf \n %lf %lf %lf \n %lf %lf %lf \n %lf \n", 
+      materialID, p1.X(), p1.Y(), p1.Z(), 
+      p2.X(), p2.Y(), p2.Z(), 
+      p3.X(), p3.Y(), p3.Z(), 
+      cPlatform->max_speed); 
+  }
   fprintf(fp, "\n"); 
 }
 
@@ -346,7 +375,6 @@ WriteLights(FILE *fp) {
 
   fprintf(fp, "\n"); 
 }
-
 
 void R3Scene::
 WriteNode(FILE *fp, R3Node *node) {
@@ -389,7 +417,7 @@ WriteNode(FILE *fp, R3Node *node) {
 int R3Scene::
 Write(const char *filename, R3Node *node) {
 
-  const char *newfile = "levels/output.scn"; 
+  const char *newfile = "../levels/output.scn"; 
 
     // Open file
   FILE *fp;
@@ -398,14 +426,14 @@ Write(const char *filename, R3Node *node) {
     return 0;
   }
 
-  WriteLights(fp); 
-
   WriteMaterials(fp); 
+  WriteLights(fp); 
 
   //Main node loop of objects
   WriteNode(fp, node); 
   fprintf(fp, "\n"); 
 
+  WritePlatforms(fp); 
   WritePlayer(fp); 
 
   fclose(fp); 
