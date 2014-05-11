@@ -280,7 +280,7 @@ WritePlayer(FILE *fp) {
 
   int materialID = -1; 
 
-  for (int j = 0; j < materials.size(); j++) {
+  for (unsigned int j = 0; j < materials.size(); j++) {
     if (cMat == materials[j]) 
       materialID = j; 
   }
@@ -294,7 +294,7 @@ WritePlayer(FILE *fp) {
 void R3Scene:: 
 WriteMaterials(FILE *fp) {
 
-  for (int i = 0; i < materials.size(); i++) {
+  for (unsigned int i = 0; i < materials.size(); i++) {
     R3Material *cMat = materials[i]; 
 
     R3Rgb ka = cMat->ka; 
@@ -318,14 +318,14 @@ WriteMaterials(FILE *fp) {
 void R3Scene:: 
 WritePlatforms(FILE *fp) {
 
-  for (int i = 0; i < platforms.size(); i++) {
+  for (unsigned int i = 0; i < platforms.size(); i++) {
 
     R3Platform *cPlatform = platforms[i]; 
     R3Node *cNode = cPlatform->node; 
 
     R3Material *cMaterial = cNode->material; 
     int materialID = -1; 
-    for (int j = 0; j < materials.size(); j++) {
+    for (unsigned int j = 0; j < materials.size(); j++) {
       if (cMaterial == materials[j]) 
         materialID = j; 
     }
@@ -348,14 +348,14 @@ WritePlatforms(FILE *fp) {
 void R3Scene::
 WriteCoins(FILE *fp) {
 
-  for (int i = 0; i < coins.size(); i++) {
+  for (unsigned int i = 0; i < coins.size(); i++) {
 
     R3Coin *cCoin = coins[i]; 
     R3Node *cNode = cCoin->node; 
 
     R3Material *cMaterial = cNode->material; 
     int materialID = -1; 
-    for (int j = 0; j < materials.size(); j++) {
+    for (unsigned int j = 0; j < materials.size(); j++) {
       if (cMaterial == materials[j]) 
         materialID = j; 
     }
@@ -372,7 +372,7 @@ WriteCoins(FILE *fp) {
 void R3Scene::
 WriteLights(FILE *fp) {
 
-  for (int i = 0; i < lights.size(); i++) {
+  for (unsigned int i = 0; i < lights.size(); i++) {
     R3Light *cLight = lights[i]; 
 
     R3Rgb cColor = cLight->color; 
@@ -421,7 +421,7 @@ WriteNode(FILE *fp, R3Node *node) {
   }
 
   //Skip redrawing the platform nodes
-  for (int j = 0; j < platforms.size(); j++) {
+  for (unsigned int j = 0; j < platforms.size(); j++) {
     
     R3Node *platNode = platforms[j]->node; 
     if (node == platNode) return; 
@@ -438,7 +438,7 @@ WriteNode(FILE *fp, R3Node *node) {
     R3Material *cMaterial = node->material; 
     int materialID = -1; 
 
-    for (int j = 0; j < materials.size(); j++) {
+    for (unsigned int j = 0; j < materials.size(); j++) {
       if (cMaterial == materials[j]) 
         materialID = j; 
     }
@@ -740,6 +740,7 @@ Read(const char *filename, R3Node *node)
       node->bbox.Union(p3);
       node->is_obstacle = true;
       node->is_coin = false;
+      node->del = false;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -836,6 +837,7 @@ Read(const char *filename, R3Node *node)
       node->bbox = sphere->BBox();
       node->is_obstacle = true;
       node->is_coin = false;
+      node->del = false;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -885,6 +887,7 @@ Read(const char *filename, R3Node *node)
       node->bbox = cylinder->BBox();
       node->is_obstacle = true;
       node->is_coin = false;
+      node->del = false;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -951,6 +954,7 @@ Read(const char *filename, R3Node *node)
       node->bbox = mesh->bbox;
       node->is_obstacle = true;
       node->is_coin = false;
+      node->del = false;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -1000,6 +1004,7 @@ Read(const char *filename, R3Node *node)
       node->bbox = cone->BBox();
       node->is_obstacle = true;
       node->is_coin = false;
+      node->del = false;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -1048,6 +1053,7 @@ Read(const char *filename, R3Node *node)
       node->bbox = segment->BBox();
       node->is_obstacle = true;
       node->is_coin = false;
+      node->del = false;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -1375,6 +1381,7 @@ Read(const char *filename, R3Node *node)
       node->bbox = *box;
       node->is_obstacle = false;
       node->is_coin = false;
+      node->del = false;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -1428,6 +1435,7 @@ Read(const char *filename, R3Node *node)
       node->is_platform = true;
       node->is_coin = false;
       node->is_obstacle = true;
+      node->del = false;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -1477,6 +1485,7 @@ Read(const char *filename, R3Node *node)
       R3Coin *coin = new R3Coin();
       coin->position = p;
       coin->t = 0;
+      coin->del = false;
       
       R3Matrix tform = R3identity_matrix;
       tform.Translate(p.Vector());
@@ -1490,6 +1499,7 @@ Read(const char *filename, R3Node *node)
       node->bbox = cyl->BBox();
       node->is_obstacle = false;
       node->is_coin = true;
+      node->del = false;
       node->coin = coin;
       
       coin->node = node;

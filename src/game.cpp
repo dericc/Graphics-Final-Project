@@ -12,9 +12,12 @@
 
 #include <iostream>
 #include <unistd.h>
+#include <errno.h>
 #include "../irrKlang/include/irrKlang.h"
 
 using namespace irrklang;
+
+#define TIME_SCALE 2
 
 ////////////////////////////////////////////////////////////
 // GLOBAL CONSTANTS
@@ -82,7 +85,9 @@ static bool key_state[256] = {false};
 
 // sound engine
 static ISoundEngine *sound_engine;
-static char current_directory[FILENAME_MAX];
+
+// executable path
+static char exec_path[FILENAME_MAX + 1];
 
 
 ////////////////////////////////////////////////////////////
@@ -129,7 +134,7 @@ static double GetTime(void)
     QueryPerformanceCounter(&current_timevalue);
     return ((double) current_timevalue.QuadPart - 
             (double) start_timevalue.QuadPart) / 
-            (double) timefreq.QuadPart;
+            (double) timefreq.QuadPart * TIME_SCALE;
   }
 #else
   // Return number of seconds since start of execution
@@ -149,7 +154,7 @@ static double GetTime(void)
     gettimeofday(&current_timevalue, NULL);
     int secs = current_timevalue.tv_sec - start_timevalue.tv_sec;
     int usecs = current_timevalue.tv_usec - start_timevalue.tv_usec;
-    return (double) (secs + 1.0E-6F * usecs);
+    return (double) (secs + 1.0E-6F * usecs) * TIME_SCALE;
   }
 #endif
 }
@@ -158,38 +163,33 @@ static double GetTime(void)
 // SOUND FUNCTIONS
 ////////////////////////////////////////////////////////////
 
-void FilePath(char *buf, const char *filename)
+void GetExecPath()
 {
   #ifdef __linux
-    char path[FILENAME_MAX + 1];
-    path[FILENAME_MAX] = '\0';
-    uint32_t size = sizeof(path);
-    if (readlink("/proc/self/exe", path, strlen(path)) == 0)
+    if (readlink("/proc/self/exe", exec_path, FILENAME_MAX + 1) == -1)
     {
-      int i = strlen(path) + strlen(filename) - 5;
-      strncpy(path+strlen(path) - 5, filename, strlen(filename));
-      path[i] = '\0';
-      strncpy(buf, path, strlen(path));
-      buf[strlen(path)] = '\0';
+      exit(1);
     }
+    cout << exec_path << endl;
   #else
-    char path[FILENAME_MAX + 1];
-    path[FILENAME_MAX] = '\0';
-    uint32_t size = sizeof(path);
-    if (_NSGetExecutablePath(path, &size) == 0)
+    uint32_t size = sizeof(exec_path);
+    if (_NSGetExecutablePath(exec_path, &size) != 0)
     {
-      int i = strlen(path) + strlen(filename) - 5;
-      strncpy(path+strlen(path) - 5, filename, strlen(filename));
-      path[i] = '\0';
-      strncpy(buf, path, strlen(path));
-      buf[strlen(path)] = '\0';
+      exit(1);
     }
   #endif
 }
 
+void FilePath(char *buf, const char *filename)
+{
+  strncpy(buf, exec_path, strlen(exec_path) - 5);
+  strncpy(buf + strlen(exec_path) - 5, filename, strlen(filename));
+  buf[strlen(exec_path) + strlen(filename) - 5] = '\0';
+}
+
 void PlaySound(const char *filename, bool looped)
 {
-  char path[FILENAME_MAX];
+  char path[FILENAME_MAX + 1];
   FilePath(path, filename);
   sound_engine->play2D(path, looped);
 }
@@ -222,7 +222,7 @@ void CollidePlayer(R3Node *node)
     }
     else if (node->is_coin)
     {
-      scene_box = node->bbox;
+      scene_box = R3Box(R3Point(-0.5, -0.5, -0.5), R3Point(0.5, 0.5, 0.5));
       scene_box.Translate(node->coin->position.Vector());
     }
 
@@ -248,6 +248,11 @@ void CollidePlayer(R3Node *node)
     bool ymax_coll = player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin()
                 && ((player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin())
                 ||  (player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin()));
+
+    bool inside = (player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin())
+               && (player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin())
+               && (player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin())
+               && (player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin());
 
     if (node->is_obstacle)
     {
@@ -294,10 +299,12 @@ void CollidePlayer(R3Node *node)
     }
     else if (node->is_coin)
     {
-      if (xmin_coll || xmax_coll || ymin_coll || ymax_coll)
+      if (xmin_coll || xmax_coll || ymin_coll || ymax_coll || inside)
       {
         PlaySound("/../sounds/coin.wav", false);
         p->n_coins++;
+        node->del = true;
+        node->coin->del = true;
       }
     }
   }
@@ -336,8 +343,8 @@ void UpdatePlayer(R3Scene *scene) {
   R3Vector f = R3null_vector;
   f += -9.8 * p->Up() * p->mass;
   if (up_key && !p->inAir) {
+    p->velocity += 15 * p->Up();
     PlaySound("/../sounds/jump.wav", false);
-    f += 700 * p->Up();
     if (p->onPlatform) {
       p->velocity += p->platform->velocity;
     }
@@ -444,6 +451,7 @@ void UpdateCoins(R3Scene *scene)
   }
 }
 
+<<<<<<< HEAD
 void UpdatePlatform(R3Platform *platform, double delta_time) {
   R3Point pos = platform->node->shape->box->Min();
   pos.Transform(platform->node->transformation);
@@ -452,6 +460,34 @@ void UpdatePlatform(R3Platform *platform, double delta_time) {
   R3Vector displacement = platform->center - pos;
   platform->velocity += K * displacement * delta_time;
   platform->node->transformation.Translate(platform->velocity * delta_time);
+=======
+void DeleteNodes(R3Node *node) {
+  for (vector<R3Node *>::iterator it = node->children.begin(); it != node->children.end();)
+  {
+    if ((*it)->del)
+    {
+      node->children.erase(it);
+    }
+    else
+    {
+      it++;
+    }
+  }
+  for (vector<R3Node *>::iterator it = node->children.begin(); it != node->children.end(); it++)
+  {
+    DeleteNodes(*it);
+  }
+}
+
+void DeleteCoins() {
+  for (vector<R3Coin *>::iterator it = scene->coins.begin(); it != scene->coins.end();)
+  {
+    if ((*it)->del)
+      scene->coins.erase(it);
+    else
+      it++;
+  }
+>>>>>>> 283e7360943e739290c0fed5c7e15aa310183f16
 }
 
 void UpdatePlatforms(R3Scene *scene) {
@@ -1213,6 +1249,10 @@ void GLUTRedraw(void)
 
   // Update Coins
   UpdateCoins(scene);
+
+  // delete objects
+  DeleteNodes(scene->root);
+  DeleteCoins();
   
   // Load camera
   LoadCamera(&camera);
@@ -1576,6 +1616,7 @@ void GLUTInit(int *argc, char **argv)
   glutInitWindowSize(GLUTwindow_width, GLUTwindow_height);
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH); // | GLUT_STENCIL
   GLUTwindow = glutCreateWindow("OpenGL Viewer");
+  glutFullScreen();
 
   // Initialize GLUT callback functions 
   glutIdleFunc(GLUTIdle);
@@ -1693,6 +1734,8 @@ main(int argc, char **argv)
 {
   // Parse program arguments
   if (!ParseArgs(argc, argv)) exit(1);
+
+  GetExecPath();
 
   // Initialize GLUT
   GLUTInit(&argc, argv);

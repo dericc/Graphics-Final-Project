@@ -92,6 +92,7 @@ struct R3Node {
   R3Coin *coin;
   bool is_platform;
   R3Platform *platform;
+  bool del;
 };
 
 struct R3Platform {
@@ -180,9 +181,23 @@ struct R3Coin {
   R3Node *node;
   R3Point position;
   double t;
+  bool del;
 };
 
+<<<<<<< HEAD
 struct R3Sidebar;
+=======
+// struct Button {
+//   void (*action)(R3Scene *scene);
+// };
+
+// struct Sidebar {
+//   vector<Button> buttons;
+//   double width;
+//   double height;
+//   Button *Clicked(int x, int y);
+// };
+>>>>>>> 283e7360943e739290c0fed5c7e15aa310183f16
 
 // Scene graph definition
 
