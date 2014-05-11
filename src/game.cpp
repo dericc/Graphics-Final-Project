@@ -1159,8 +1159,11 @@ void GLUTRedraw(void)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   UpdatePlatforms(scene);
+  
   // Update Player
-  UpdatePlayer(scene);
+  if (level_editor != 1) {
+    UpdatePlayer(scene);
+  }
 
   // Update Coins
   UpdateCoins(scene);
