@@ -342,6 +342,30 @@ WritePlatforms(FILE *fp) {
 }
 
 void R3Scene::
+WriteCoins(FILE *fp) {
+
+  for (int i = 0; i < coins.size(); i++) {
+
+    R3Coin *cCoin = coins[i]; 
+    R3Node *cNode = cCoin->node; 
+
+    R3Material *cMaterial = cNode->material; 
+    int materialID = -1; 
+    for (int j = 0; j < materials.size(); j++) {
+      if (cMaterial == materials[j]) 
+        materialID = j; 
+    }
+
+    R3Point cPos = cCoin->position; 
+
+    fprintf(fp, "coin %d %lf %lf %lf \n", 
+      materialID, cPos.X(), cPos.Y(), cPos.Z()); 
+  }
+
+  fprintf(fp, "\n"); 
+}
+
+void R3Scene::
 WriteLights(FILE *fp) {
 
   for (int i = 0; i < lights.size(); i++) {
@@ -391,9 +415,16 @@ WriteNode(FILE *fp, R3Node *node) {
   if (player != NULL) {
     if (node == player->node) return; 
   }
-    //Skip nodes without shapes
 
+  //Skip redrawing the platform nodes
+  for (int j = 0; j < platforms.size(); j++) {
+    
+    R3Node *platNode = platforms[j]->node; 
+    if (node == platNode) return; 
+  }
+    //Skip nodes without shapes
   if (node->shape == NULL) return; 
+
 
 
   if (node->shape->type == R3_BOX_SHAPE) {
@@ -434,12 +465,12 @@ Write(const char *filename, R3Node *node) {
   fprintf(fp, "\n"); 
 
   WritePlatforms(fp); 
+  WriteCoins(fp); 
   WritePlayer(fp); 
 
   fclose(fp); 
 
   return 1; 
-
 }  
 
 int R3Scene::

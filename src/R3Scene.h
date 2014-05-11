@@ -214,6 +214,7 @@ struct R3Scene {
   void WriteMaterials(FILE *fp); 
   void WriteLights(FILE *fp); 
   void WritePlatforms(FILE *fp); 
+  void WriteCoins(FILE *fp); 
   void WriteNode(FILE *fp, R3Node *node); 
   int Write(const char *filename, R3Node *node); 
 
