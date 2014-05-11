@@ -737,6 +737,7 @@ Read(const char *filename, R3Node *node)
       node->bbox.Union(p3);
       node->is_obstacle = true;
       node->is_coin = false;
+      node->is_visible = true;
       node->del = false;
       
       // Insert node
@@ -785,6 +786,8 @@ Read(const char *filename, R3Node *node)
       node->shape = shape;
       node->bbox = *box;
       node->is_obstacle = true;
+      node->is_visible = true;
+      node->is_coin = false;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -835,6 +838,7 @@ Read(const char *filename, R3Node *node)
       node->is_obstacle = true;
       node->is_coin = false;
       node->del = false;
+      node->is_visible = true;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -885,6 +889,7 @@ Read(const char *filename, R3Node *node)
       node->is_obstacle = true;
       node->is_coin = false;
       node->del = false;
+      node->is_visible = true;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -952,6 +957,7 @@ Read(const char *filename, R3Node *node)
       node->is_obstacle = true;
       node->is_coin = false;
       node->del = false;
+      node->is_visible = true;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -1002,6 +1008,7 @@ Read(const char *filename, R3Node *node)
       node->is_obstacle = true;
       node->is_coin = false;
       node->del = false;
+      node->is_visible = true;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -1051,6 +1058,7 @@ Read(const char *filename, R3Node *node)
       node->is_obstacle = true;
       node->is_coin = false;
       node->del = false;
+      node->is_visible = true;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -1379,6 +1387,7 @@ Read(const char *filename, R3Node *node)
       node->is_obstacle = false;
       node->is_coin = false;
       node->del = false;
+      node->is_visible = true;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -1433,6 +1442,7 @@ Read(const char *filename, R3Node *node)
       node->is_coin = false;
       node->is_obstacle = true;
       node->del = false;
+      node->is_visible = true;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -1497,6 +1507,7 @@ Read(const char *filename, R3Node *node)
       node->is_obstacle = false;
       node->is_coin = true;
       node->del = false;
+      node->is_visible = true;
       node->coin = coin;
       
       coin->node = node;
@@ -1507,6 +1518,16 @@ Read(const char *filename, R3Node *node)
       group_nodes[depth]->bbox.Union(node->bbox);
       group_nodes[depth]->children.push_back(node);
       node->parent = group_nodes[depth];
+    }
+    else if (!strcmp(cmd, "death_y")) {
+      // Read data
+      double y;
+      if (fscanf(fp, "%lf", &y) != 1) {
+        fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
+        return 0;
+      }
+      
+      death_y = y;
     }
     else {
       fprintf(stderr, "Unrecognized command %d in file %s: %s\n", command_number, filename, cmd);
