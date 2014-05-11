@@ -222,7 +222,7 @@ void CollidePlayer(R3Node *node)
     }
     else if (node->is_coin)
     {
-      scene_box = node->bbox;
+      scene_box = R3Box(R3Point(-0.5, -0.5, -0.5), R3Point(0.5, 0.5, 0.5));
       scene_box.Translate(node->coin->position.Vector());
     }
 
@@ -1569,6 +1569,7 @@ void GLUTInit(int *argc, char **argv)
   glutInitWindowSize(GLUTwindow_width, GLUTwindow_height);
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH); // | GLUT_STENCIL
   GLUTwindow = glutCreateWindow("OpenGL Viewer");
+  glutFullScreen();
 
   // Initialize GLUT callback functions 
   glutIdleFunc(GLUTIdle);
