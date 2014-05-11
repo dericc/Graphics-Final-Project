@@ -1194,8 +1194,11 @@ void GLUTRedraw(void)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   UpdatePlatforms(scene);
+  
   // Update Player
-  UpdatePlayer(scene);
+  if (level_editor != 1) {
+    UpdatePlayer(scene);
+  }
 
   // Update Coins
   UpdateCoins(scene);
@@ -1691,7 +1694,6 @@ main(int argc, char **argv)
 
   // Read scene
   scene = ReadScene(input_scene_name);
-  
   if (!scene) exit(-1);
 
   // Initialize sound shit
@@ -1699,11 +1701,11 @@ main(int argc, char **argv)
   if (!sound_engine)
     return 0; // if there was an error creating the sound engine
   
-  char path[FILENAME_MAX];
-  FilePath(path, "/../sounds/maxo.wav");
-  ISound *soundtrack = sound_engine->play2D(path, true, false, true);
-  soundtrack->setVolume(0.35);
-  soundtrack->setIsPaused(false);
+//  char path[FILENAME_MAX];
+//  FilePath(path, "/../sounds/maxo.wav");
+//  ISound *soundtrack = sound_engine->play2D(path, true, false, true);
+//  soundtrack->setVolume(0.35);
+//  soundtrack->setIsPaused(false);
 
   // Run GLUT interface
   GLUTMainLoop();
