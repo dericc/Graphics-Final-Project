@@ -53,6 +53,7 @@ static int save_video = 0;
 static int num_frames_to_record = -1; 
 static int quit = 0;
 static int level_editor = 0;
+static int soundtrack_enabled = 0;
 
 // GLUT variables 
 
@@ -1689,6 +1690,7 @@ ParseArgs(int argc, char **argv)
   while (argc > 0) {
     if ((*argv)[0] == '-') {
       if (!strcmp(*argv, "-help")) { print_usage = 1; }
+      else if (!strcmp(*argv, "-soundtrack_enabled")) { soundtrack_enabled = 1; }
       else if (!strcmp(*argv, "-level_editor")) { level_editor = 1; }
       else if (!strcmp(*argv, "-exit_immediately")) { quit = 1; }
       else if (!strcmp(*argv, "-output_image")) { argc--; argv++; output_image_name = *argv; }
@@ -1748,12 +1750,15 @@ main(int argc, char **argv)
   sound_engine = createIrrKlangDevice();
   if (!sound_engine)
     return 0; // if there was an error creating the sound engine
-  
-//  char path[FILENAME_MAX];
-//  FilePath(path, "/../sounds/maxo.wav");
-//  ISound *soundtrack = sound_engine->play2D(path, true, false, true);
-//  soundtrack->setVolume(0.35);
-//  soundtrack->setIsPaused(false);
+
+  if (soundtrack_enabled)
+  {
+    char path[FILENAME_MAX];
+    FilePath(path, "/../sounds/maxo.wav");
+    ISound *soundtrack = sound_engine->play2D(path, true, false, true);
+    soundtrack->setVolume(0.35);
+    soundtrack->setIsPaused(false);
+  }
 
   // Run GLUT interface
   GLUTMainLoop();

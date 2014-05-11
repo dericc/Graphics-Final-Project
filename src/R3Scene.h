@@ -186,7 +186,6 @@ struct R3Coin {
 
 struct R3Sidebar;
 
-
 // Scene graph definition
 
 struct R3Scene {
