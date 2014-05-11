@@ -384,7 +384,7 @@ void UpdatePlayer(R3Scene *scene) {
   }
 
   // Camera Shit
-  scene->camera.eye = p->Center() - 25 * p->Right() + 5 * p->Up();
+  scene->camera.eye = p->Center() - 40 * p->Right() + 10 * p->Up();
   scene->camera.towards = (p->Center()) - scene->camera.eye;
   scene->camera.towards.Normalize();
   scene->camera.right = p->Towards();
