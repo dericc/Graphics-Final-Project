@@ -11,6 +11,7 @@
 #include "fglut/fglut.h"
 
 #include <iostream>
+#include <unistd.h>
 #include "../irrKlang/include/irrKlang.h"
 
 using namespace irrklang;
@@ -85,7 +86,13 @@ static ISoundEngine *sound_engine;
 static char current_directory[FILENAME_MAX];
 
 
+////////////////////////////////////////////////////////////
+// LEVEL EDITOR COMMANDS
+////////////////////////////////////////////////////////////
 
+// enum {
+//   MAKE_BOX,
+// };
 
 ////////////////////////////////////////////////////////////
 // TIMER CODE
@@ -95,6 +102,10 @@ static char current_directory[FILENAME_MAX];
 #  include <windows.h>
 #else
 #  include <sys/time.h>
+#endif
+
+#ifdef __MACH__
+#  include <mach-o/dyld.h>
 #endif
 
 static double GetTime(void)
@@ -145,22 +156,43 @@ static double GetTime(void)
 }
 
 ////////////////////////////////////////////////////////////
-// RANDOM-ASS FUNCTIONS
+// SOUND FUNCTIONS
 ////////////////////////////////////////////////////////////
 
 void FilePath(char *buf, const char *filename)
 {
   #ifdef __linux
-
+    char path[FILENAME_MAX + 1];
+    path[FILENAME_MAX] = '\0';
+    uint32_t size = sizeof(path);
+    if (readlink("/proc/self/exe", path, strlen(path)) == 0)
+    {
+      int i = strlen(path) + strlen(filename) - 5;
+      strncpy(path+strlen(path) - 5, filename, strlen(filename));
+      path[i] = '\0';
+      strncpy(buf, path, strlen(path));
+      buf[strlen(path)] = '\0';
+    }
   #else
-    
+    char path[FILENAME_MAX + 1];
+    path[FILENAME_MAX] = '\0';
+    uint32_t size = sizeof(path);
+    if (_NSGetExecutablePath(path, &size) == 0)
+    {
+      int i = strlen(path) + strlen(filename) - 5;
+      strncpy(path+strlen(path) - 5, filename, strlen(filename));
+      path[i] = '\0';
+      strncpy(buf, path, strlen(path));
+      buf[strlen(path)] = '\0';
+    }
   #endif
-  int len = strlen(current_directory) + strlen(filename);
-  char path[len+1];
-  path[len] = '\0';
-  strncpy(path, current_directory, strlen(current_directory));
-  strncpy(path+strlen(current_directory), filename, strlen(filename));
-  strncpy(buf, path, len+1);
+}
+
+void PlaySound(const char *filename, bool looped)
+{
+  char path[FILENAME_MAX];
+  FilePath(path, filename);
+  sound_engine->play2D(path, looped);
 }
 
 
@@ -270,6 +302,7 @@ void CollidePlayer(R3Node *node)
     {
       if (xmin_coll || xmax_coll || ymin_coll || ymax_coll || inside)
       {
+        PlaySound("/../sounds/coin.wav", false);
         p->n_coins++;
         node->del = true;
         node->coin->del = true;
@@ -287,6 +320,7 @@ void UpdatePlayer(R3Scene *scene) {
   R3Player *p = scene->player;
 
   if (p == NULL) return; 
+
   // Get current time (in seconds) since start of execution
   double current_time = GetTime();
   static double previous_time = 0;
@@ -311,9 +345,7 @@ void UpdatePlayer(R3Scene *scene) {
   f += -9.8 * p->Up() * p->mass;
   if (up_key && !p->inAir) {
     p->velocity += 15 * p->Up();
-    char path[FILENAME_MAX];
-    FilePath(path, "/sounds/jump.wav");
-    sound_engine->play2D(path, false);
+    PlaySound("/../sounds/jump.wav", false);
     if (p->onPlatform) {
       p->velocity += p->platform->velocity;
     }
@@ -359,6 +391,22 @@ void UpdatePlayer(R3Scene *scene) {
   scene->camera.right = p->Towards();
   scene->camera.up = scene->camera.right;
   scene->camera.up.Cross(scene->camera.towards);
+
+  R3Box player_box = *p->node->shape->box;
+  player_box.Transform(p->node->transformation);
+  if (player_box.Max().Y() <= scene->death_y && !p->isDead) {
+    p->isDead = true;
+    PlaySound("/../sounds/death.wav", false);
+  }
+
+  // stuff for checking mouse position and translating it to world coords
+  R3Point min_player_pos = player_box.Min();
+  R3Point max_player_pos = player_box.Max();
+  int x = GLUTmouse[0];
+  int y = GLUTmouse[1];
+  if (x > min_player_pos.X() && x < max_player_pos.X()
+   && y > min_player_pos.Y() && y < max_player_pos.Y())
+    PlaySound("/../sounds/coin.wav", false);
   
   static double angle = 0;
   double MAX_ROTATION = PI/8;
@@ -1006,6 +1054,10 @@ void DrawHUD()
   // Draw coins as squares in top left
   float spacing = 15.0;
   float size = 30.0;
+
+  //Cancels if no player
+  if (scene->player == NULL) return; 
+
   for (int i = 0; i < scene->player->n_coins; i++)
   {
     float xmin = spacing * (i + 1) + size * i;
@@ -1639,7 +1691,12 @@ main(int argc, char **argv)
   sound_engine = createIrrKlangDevice();
   if (!sound_engine)
     return 0; // if there was an error creating the sound engine
-  getcwd(current_directory, FILENAME_MAX);
+  
+  char path[FILENAME_MAX];
+  FilePath(path, "/../sounds/maxo.wav");
+  ISound *soundtrack = sound_engine->play2D(path, true, false, true);
+  soundtrack->setVolume(0.35);
+  soundtrack->setIsPaused(false);
 
   // Run GLUT interface
   GLUTMainLoop();
