@@ -86,6 +86,9 @@ static bool key_state[256] = {false};
 // sound engine
 static ISoundEngine *sound_engine;
 
+// executable path
+static char exec_path[FILENAME_MAX + 1];
+
 
 ////////////////////////////////////////////////////////////
 // LEVEL EDITOR COMMANDS
@@ -160,39 +163,33 @@ static double GetTime(void)
 // SOUND FUNCTIONS
 ////////////////////////////////////////////////////////////
 
-void FilePath(char *buf, const char *filename)
+void GetExecPath()
 {
   #ifdef __linux
-
-    char path[FILENAME_MAX + 1];
-    path[FILENAME_MAX] = '\0';
-    if (readlink("/proc/self/exe", path, FILENAME_MAX + 1) != -1)
+    if (readlink("/proc/self/exe", exec_path, FILENAME_MAX + 1) == -1)
     {
-      int i = strlen(path) + strlen(filename) - 5;
-      strncpy(path+strlen(path) - 5, filename, strlen(filename));
-      path[i] = '\0';
-      strncpy(buf, path, strlen(path));
-      buf[strlen(path)] = '\0';
-      cout << buf << endl;
+      exit(1);
     }
+    cout << exec_path << endl;
   #else
-    char path[FILENAME_MAX + 1];
-    path[FILENAME_MAX] = '\0';
-    uint32_t size = sizeof(path);
-    if (_NSGetExecutablePath(path, &size) == 0)
+    uint32_t size = sizeof(exec_path);
+    if (_NSGetExecutablePath(exec_path, &size) != 0)
     {
-      int i = strlen(path) + strlen(filename) - 5;
-      strncpy(path+strlen(path) - 5, filename, strlen(filename));
-      path[i] = '\0';
-      strncpy(buf, path, strlen(path));
-      buf[strlen(path)] = '\0';
+      exit(1);
     }
   #endif
 }
 
+void FilePath(char *buf, const char *filename)
+{
+  strncpy(buf, exec_path, strlen(exec_path) - 5);
+  strncpy(buf + strlen(exec_path) - 5, filename, strlen(filename));
+  buf[strlen(exec_path) + strlen(filename) - 5] = '\0';
+}
+
 void PlaySound(const char *filename, bool looped)
 {
-  char path[FILENAME_MAX];
+  char path[FILENAME_MAX + 1];
   FilePath(path, filename);
   sound_engine->play2D(path, looped);
 }
@@ -453,11 +450,15 @@ void DeleteNodes(R3Node *node) {
   for (vector<R3Node *>::iterator it = node->children.begin(); it != node->children.end();)
   {
     if ((*it)->del)
+    {
       node->children.erase(it);
+    }
     else
+    {
       it++;
+    }
   }
-  for (vector<R3Node *>::iterator it = node->children.begin(); it != node->children.end();)
+  for (vector<R3Node *>::iterator it = node->children.begin(); it != node->children.end(); it++)
   {
     DeleteNodes(*it);
   }
@@ -1682,6 +1683,8 @@ main(int argc, char **argv)
 {
   // Parse program arguments
   if (!ParseArgs(argc, argv)) exit(1);
+
+  GetExecPath();
 
   // Initialize GLUT
   GLUTInit(&argc, argv);
