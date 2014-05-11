@@ -286,7 +286,7 @@ void UpdatePlayer(R3Scene *scene) {
   R3Player *p = scene->player;
 
   if (p == NULL) return; 
-  
+
   // Get current time (in seconds) since start of execution
   double current_time = GetTime();
   static double previous_time = 0;
@@ -982,6 +982,10 @@ void DrawHUD()
   // Draw coins as squares in top left
   float spacing = 15.0;
   float size = 30.0;
+
+  //Cancels if no player
+  if (scene->player == NULL) return; 
+
   for (int i = 0; i < scene->player->n_coins; i++)
   {
     float xmin = spacing * (i + 1) + size * i;

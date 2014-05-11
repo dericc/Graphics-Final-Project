@@ -336,7 +336,7 @@ WriteLights(FILE *fp) {
     }
 
     if (cLight->type == R3_SPOT_LIGHT) {
-
+      
     }
 
     if (cLight->type == R3_AREA_LIGHT) {
