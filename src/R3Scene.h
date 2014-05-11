@@ -96,10 +96,12 @@ struct R3Node {
 
 struct R3Platform {
   R3Platform(R3Node *node, double speed, R3Point start, R3Point end)
-  : node(node), max_speed(speed), center((start+end)/2) {  };
+  : node(node), max_speed(speed), center((start+end)/2), start(start), end(end) {  };
   R3Node *node;
   const double max_speed;
   const R3Point center; //center of the path
+  const R3Point start; 
+  const R3Point end;  
   R3Vector velocity;
   
   R3Vector Forward(void); // normalized forward direction
@@ -211,6 +213,7 @@ struct R3Scene {
   void WritePlayer(FILE *fp); 
   void WriteMaterials(FILE *fp); 
   void WriteLights(FILE *fp); 
+  void WritePlatforms(FILE *fp); 
   void WriteNode(FILE *fp, R3Node *node); 
   int Write(const char *filename, R3Node *node); 
 
