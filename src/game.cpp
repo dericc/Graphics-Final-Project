@@ -1650,7 +1650,6 @@ main(int argc, char **argv)
 
   // Read scene
   scene = ReadScene(input_scene_name);
-  
   if (!scene) exit(-1);
 
   // Initialize sound shit
@@ -1658,11 +1657,11 @@ main(int argc, char **argv)
   if (!sound_engine)
     return 0; // if there was an error creating the sound engine
   
-  char path[FILENAME_MAX];
-  FilePath(path, "/../sounds/maxo.wav");
-  ISound *soundtrack = sound_engine->play2D(path, true, false, true);
-  soundtrack->setVolume(0.35);
-  soundtrack->setIsPaused(false);
+//  char path[FILENAME_MAX];
+//  FilePath(path, "/../sounds/maxo.wav");
+//  ISound *soundtrack = sound_engine->play2D(path, true, false, true);
+//  soundtrack->setVolume(0.35);
+//  soundtrack->setIsPaused(false);
 
   // Run GLUT interface
   GLUTMainLoop();
