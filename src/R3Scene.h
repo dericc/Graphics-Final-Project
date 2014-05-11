@@ -184,20 +184,8 @@ struct R3Coin {
   bool del;
 };
 
-<<<<<<< HEAD
 struct R3Sidebar;
-=======
-// struct Button {
-//   void (*action)(R3Scene *scene);
-// };
 
-// struct Sidebar {
-//   vector<Button> buttons;
-//   double width;
-//   double height;
-//   Button *Clicked(int x, int y);
-// };
->>>>>>> 283e7360943e739290c0fed5c7e15aa310183f16
 
 // Scene graph definition
 

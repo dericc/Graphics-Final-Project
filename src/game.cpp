@@ -451,7 +451,7 @@ void UpdateCoins(R3Scene *scene)
   }
 }
 
-<<<<<<< HEAD
+
 void UpdatePlatform(R3Platform *platform, double delta_time) {
   R3Point pos = platform->node->shape->box->Min();
   pos.Transform(platform->node->transformation);
@@ -460,7 +460,8 @@ void UpdatePlatform(R3Platform *platform, double delta_time) {
   R3Vector displacement = platform->center - pos;
   platform->velocity += K * displacement * delta_time;
   platform->node->transformation.Translate(platform->velocity * delta_time);
-=======
+}
+
 void DeleteNodes(R3Node *node) {
   for (vector<R3Node *>::iterator it = node->children.begin(); it != node->children.end();)
   {
@@ -487,7 +488,6 @@ void DeleteCoins() {
     else
       it++;
   }
->>>>>>> 283e7360943e739290c0fed5c7e15aa310183f16
 }
 
 void UpdatePlatforms(R3Scene *scene) {

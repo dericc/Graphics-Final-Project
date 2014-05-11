@@ -1442,7 +1442,7 @@ Read(const char *filename, R3Node *node)
       group_nodes[depth]->children.push_back(node);
       node->parent = group_nodes[depth];
       
-      `
+      
       // Create platform
       R3Platform *p = new R3Platform(node, speed, p1, p3);
       platforms.push_back(p);
