@@ -49,6 +49,7 @@ static int save_image = 0;
 static int save_video = 0;
 static int num_frames_to_record = -1; 
 static int quit = 0;
+static int level_editor = 0;
 
 // GLUT variables 
 
@@ -1598,6 +1599,7 @@ ParseArgs(int argc, char **argv)
   while (argc > 0) {
     if ((*argv)[0] == '-') {
       if (!strcmp(*argv, "-help")) { print_usage = 1; }
+      else if (!strcmp(*argv, "-level_editor")) { level_editor = 1; }
       else if (!strcmp(*argv, "-exit_immediately")) { quit = 1; }
       else if (!strcmp(*argv, "-output_image")) { argc--; argv++; output_image_name = *argv; }
       else if (!strcmp(*argv, "-video_prefix")) { argc--; argv++; video_prefix = *argv; }
@@ -1648,6 +1650,7 @@ main(int argc, char **argv)
 
   // Read scene
   scene = ReadScene(input_scene_name);
+  
   if (!scene) exit(-1);
 
   // Initialize sound shit
