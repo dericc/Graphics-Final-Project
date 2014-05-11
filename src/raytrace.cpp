@@ -369,6 +369,8 @@ R3Intersection ComputeIntersection(R3Scene *scene, R3Node *node, R3Ray ray, doub
         break;
       case R3_SEGMENT_SHAPE:
         break;
+      case R3_CIRCLE_SHAPE:
+        break;
       case R3_NUM_SHAPE_TYPES:
         break;
     }

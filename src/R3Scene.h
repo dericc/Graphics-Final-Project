@@ -92,6 +92,7 @@ struct R3Node {
   R3Coin *coin;
   bool is_platform;
   R3Platform *platform;
+  bool is_visible;
   bool del;
 };
 
