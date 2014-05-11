@@ -11,6 +11,7 @@
 #include "fglut/fglut.h"
 
 #include <iostream>
+#include <unistd.h>
 #include "../irrKlang/include/irrKlang.h"
 
 using namespace irrklang;
@@ -153,7 +154,17 @@ static double GetTime(void)
 void FilePath(char *buf, const char *filename)
 {
   #ifdef __linux
-
+    char path[FILENAME_MAX + 1];
+    path[FILENAME_MAX] = '\0';
+    uint32_t size = sizeof(path);
+    if (readlink("/proc/self/exe", path, strlen(path)) == 0)
+    {
+      int i = strlen(path) + strlen(filename) - 5;
+      strncpy(path+strlen(path) - 5, filename, strlen(filename));
+      path[i] = '\0';
+      strncpy(buf, path, strlen(path));
+      buf[strlen(path)] = '\0';
+    }
   #else
     char path[FILENAME_MAX + 1];
     path[FILENAME_MAX] = '\0';
