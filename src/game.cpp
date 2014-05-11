@@ -529,7 +529,7 @@ void UpdateSidebar(R3Scene *scene) {
   previous_time = current_time;
 
   // for each button
-  for (int i = 0; i < scene->sidebar->buttons.size(); i++)
+  for (unsigned int i = 0; i < scene->sidebar->buttons.size(); i++)
   {
     R3Button *button = scene->sidebar->buttons[i];
     if (button->node->is_coin) {
@@ -1098,7 +1098,7 @@ void DrawHUD()
   // Level editor stuff
   if (level_editor)
   {
-    for (int i = 0; i < scene->sidebar->buttons.size(); i++)
+    for (unsigned int i = 0; i < scene->sidebar->buttons.size(); i++)
     {
 
     }
