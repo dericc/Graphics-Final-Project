@@ -12,6 +12,7 @@
 
 #include <iostream>
 #include <unistd.h>
+#include <errno.h>
 #include "../irrKlang/include/irrKlang.h"
 
 using namespace irrklang;
@@ -83,7 +84,6 @@ static bool key_state[256] = {false};
 
 // sound engine
 static ISoundEngine *sound_engine;
-static char current_directory[FILENAME_MAX];
 
 
 ////////////////////////////////////////////////////////////
@@ -162,16 +162,17 @@ static double GetTime(void)
 void FilePath(char *buf, const char *filename)
 {
   #ifdef __linux
+
     char path[FILENAME_MAX + 1];
     path[FILENAME_MAX] = '\0';
-    uint32_t size = sizeof(path);
-    if (readlink("/proc/self/exe", path, strlen(path)) == 0)
+    if (readlink("/proc/self/exe", path, FILENAME_MAX + 1) != -1)
     {
       int i = strlen(path) + strlen(filename) - 5;
       strncpy(path+strlen(path) - 5, filename, strlen(filename));
       path[i] = '\0';
       strncpy(buf, path, strlen(path));
       buf[strlen(path)] = '\0';
+      cout << buf << endl;
     }
   #else
     char path[FILENAME_MAX + 1];
