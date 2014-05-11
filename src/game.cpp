@@ -85,6 +85,8 @@ static ISoundEngine *sound_engine;
 static char current_directory[FILENAME_MAX];
 
 
+
+
 ////////////////////////////////////////////////////////////
 // TIMER CODE
 ////////////////////////////////////////////////////////////
@@ -148,11 +150,16 @@ static double GetTime(void)
 
 void FilePath(char *buf, const char *filename)
 {
+  #ifdef __linux
+
+  #else
+    
+  #endif
   int len = strlen(current_directory) + strlen(filename);
   char path[len+1];
   path[len] = '\0';
   strncpy(path, current_directory, strlen(current_directory));
-  strncpy(path+strlen(current_directory), filename, strlen("/sounds/jump.wav"));
+  strncpy(path+strlen(current_directory), filename, strlen(filename));
   strncpy(buf, path, len+1);
 }
 
@@ -160,9 +167,6 @@ void FilePath(char *buf, const char *filename)
 ////////////////////////////////////////////////////////////
 // SCENE DRAWING CODE
 ////////////////////////////////////////////////////////////
-
-static vector<R3Node *> del_nodes;
-static vector<R3Coin *> del_coins;
 
 // recursively collide player with the scene
 void CollidePlayer(R3Node *node)
@@ -247,6 +251,10 @@ void CollidePlayer(R3Node *node)
         v.SetY(0);
         p->velocity = v;
         p->inAir = false;
+        if (node->isPlatform) {
+          p->onPlatform = true;
+          p->platform = node->platform;
+        }
       }
       if (ymax_coll && (!xmin_coll || ymax_d < xmin_d) && (!xmax_coll || ymax_d < xmax_d))
       {
@@ -263,7 +271,8 @@ void CollidePlayer(R3Node *node)
       if (xmin_coll || xmax_coll || ymin_coll || ymax_coll || inside)
       {
         p->n_coins++;
-        del_nodes.push_back(node);
+        node->del = true;
+        node->coin->del = true;
       }
     }
   }
@@ -305,6 +314,9 @@ void UpdatePlayer(R3Scene *scene) {
     char path[FILENAME_MAX];
     FilePath(path, "/sounds/jump.wav");
     sound_engine->play2D(path, false);
+    if (p->onPlatform) {
+      p->velocity += p->platform->velocity;
+    }
   }
 
   // side to side
@@ -325,15 +337,20 @@ void UpdatePlayer(R3Scene *scene) {
   }
   
   p->velocity += (f / p->mass) * delta_time;
-
+  
   // transform the player node
   R3Matrix tform = p->node->transformation;
   tform.Translate(p->velocity * delta_time);
   p->node->transformation = tform;
-
+  
   // set inair to true: it will be set to false if collision with ground detected
   p->inAir = true;
+  p->onPlatform = false;
   CollidePlayer(scene->root);
+  
+  if (p->onPlatform) {
+    p->node->transformation.Translate(p->platform->velocity * delta_time);
+  }
 
   // Camera Shit
   scene->camera.eye = p->Center() - 25 * p->Right() + 5 * p->Up();
@@ -379,6 +396,30 @@ void UpdateCoins(R3Scene *scene)
     tform.Rotate(R3_X, PI / 2);
     tform.Rotate(R3_Z, coin->t * 4);
     coin->node->transformation = tform;
+  }
+}
+
+void DeleteNodes(R3Node *node) {
+  for (vector<R3Node *>::iterator it = node->children.begin(); it != node->children.end();)
+  {
+    if ((*it)->del)
+      node->children.erase(it);
+    else
+      it++;
+  }
+  for (vector<R3Node *>::iterator it = node->children.begin(); it != node->children.end();)
+  {
+    DeleteNodes(*it);
+  }
+}
+
+void DeleteCoins() {
+  for (vector<R3Coin *>::iterator it = scene->coins.begin(); it != scene->coins.end();)
+  {
+    if ((*it)->del)
+      scene->coins.erase(it);
+    else
+      it++;
   }
 }
 
@@ -1103,6 +1144,10 @@ void GLUTRedraw(void)
 
   // Update Coins
   UpdateCoins(scene);
+
+  // delete objects
+  DeleteNodes(scene->root);
+  DeleteCoins();
   
   // Load camera
   LoadCamera(&camera);

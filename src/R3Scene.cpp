@@ -15,12 +15,6 @@
 
 vector<R3Material *> materials;
 
-//R3Player::R3Player(R3Node *node, double maxSpeed) {
-//  assert(node->shape->type == R3_BOX_SHAPE);
-//  R3Box *box = node->shape->box;
-//  max_speed = maxSpeed;
-//}
-
 R3Point R3Player::Center(void) {
   R3Box box = *(node->shape->box);
   box.Transform(node->transformation);
@@ -633,6 +627,7 @@ Read(const char *filename, R3Node *node)
       node->bbox.Union(p3);
       node->is_obstacle = true;
       node->is_coin = false;
+      node->del = false;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -729,6 +724,7 @@ Read(const char *filename, R3Node *node)
       node->bbox = sphere->BBox();
       node->is_obstacle = true;
       node->is_coin = false;
+      node->del = false;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -778,6 +774,7 @@ Read(const char *filename, R3Node *node)
       node->bbox = cylinder->BBox();
       node->is_obstacle = true;
       node->is_coin = false;
+      node->del = false;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -844,6 +841,7 @@ Read(const char *filename, R3Node *node)
       node->bbox = mesh->bbox;
       node->is_obstacle = true;
       node->is_coin = false;
+      node->del = false;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -893,6 +891,7 @@ Read(const char *filename, R3Node *node)
       node->bbox = cone->BBox();
       node->is_obstacle = true;
       node->is_coin = false;
+      node->del = false;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -941,6 +940,7 @@ Read(const char *filename, R3Node *node)
       node->bbox = segment->BBox();
       node->is_obstacle = true;
       node->is_coin = false;
+      node->del = false;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -1268,6 +1268,7 @@ Read(const char *filename, R3Node *node)
       node->bbox = *box;
       node->is_obstacle = false;
       node->is_coin = false;
+      node->del = false;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -1321,6 +1322,7 @@ Read(const char *filename, R3Node *node)
       node->isPlatform = true;
       node->is_coin = false;
       node->is_obstacle = true;
+      node->del = false;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -1370,6 +1372,7 @@ Read(const char *filename, R3Node *node)
       R3Coin *coin = new R3Coin();
       coin->position = p;
       coin->t = 0;
+      coin->del = false;
       
       R3Matrix tform = R3identity_matrix;
       tform.Translate(p.Vector());
@@ -1383,6 +1386,7 @@ Read(const char *filename, R3Node *node)
       node->bbox = cyl->BBox();
       node->is_obstacle = false;
       node->is_coin = true;
+      node->del = false;
       node->coin = coin;
       
       coin->node = node;

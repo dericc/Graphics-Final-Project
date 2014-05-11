@@ -92,6 +92,7 @@ struct R3Node {
   R3Coin *coin;
   bool isPlatform;
   R3Platform *platform;
+  bool del;
 };
 
 struct R3Platform {
@@ -168,12 +169,16 @@ struct R3Player {
   R3Vector velocity; // current direction of motion
   bool inAir;
   int n_coins;
+  
+  bool onPlatform;
+  R3Platform *platform;
 };
 
 struct R3Coin {
   R3Node *node;
   R3Point position;
   double t;
+  bool del;
 };
 
 // Scene graph definition
