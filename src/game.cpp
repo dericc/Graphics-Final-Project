@@ -147,7 +147,7 @@ static double GetTime(void)
 }
 
 ////////////////////////////////////////////////////////////
-// RANDOM-ASS FUNCTIONS
+// SOUND FUNCTIONS
 ////////////////////////////////////////////////////////////
 
 void FilePath(char *buf, const char *filename)
@@ -167,6 +167,13 @@ void FilePath(char *buf, const char *filename)
       buf[strlen(path)] = '\0';
     }
   #endif
+}
+
+void PlaySound(const char *filename)
+{
+  char path[FILENAME_MAX];
+  FilePath(path, filename);
+  sound_engine->play2D(path, false);
 }
 
 
@@ -271,6 +278,7 @@ void CollidePlayer(R3Node *node)
     {
       if (xmin_coll || xmax_coll || ymin_coll || ymax_coll)
       {
+        PlaySound("/../sounds/coin.wav");
         p->n_coins++;
       }
     }
@@ -310,9 +318,7 @@ void UpdatePlayer(R3Scene *scene) {
   R3Vector f = R3null_vector;
   f += -9.8 * p->Up() * p->mass;
   if (up_key && !p->inAir) {
-    char path[FILENAME_MAX];
-    FilePath(path, "/../sounds/jump.wav");
-    sound_engine->play2D(path, false);
+    PlaySound("/../sounds/jump.wav");
     f += 700 * p->Up();
     if (p->onPlatform) {
       p->velocity += p->platform->velocity;
