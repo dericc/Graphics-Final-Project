@@ -321,8 +321,44 @@ WritePlayer(FILE *fp) {
   fprintf(fp, "player %d %lf %lf %lf \n %lf %lf %lf \n %lf %lf \n",
     materialID, cBox.XMin(), cBox.YMin(), cBox.ZMin(), cBox.XMax(), cBox.YMax(), cBox.ZMax(), 
     player->max_speed, player->mass); 
+
+  fprintf(fp, "\n"); 
   
 }
+
+void R3Scene:: 
+WriteEnemies(FILE *fp) {
+
+  for (unsigned int i = 0; i < enemies.size(); i++) {
+    R3Enemy *cEnemy = enemies[i]; 
+    R3Node *cNode = cEnemy->node; 
+    
+    R3Material *cMat = cNode->material; 
+    int materialID = -1; 
+
+    for (unsigned int j = 0; j < materials.size(); j++) {
+      if (cMat == materials[j]) 
+        materialID = j; 
+    }
+
+    R3Box cBox = *(cNode->shape->box); 
+    cBox.Transform(cNode->transformation);
+
+    int moveLeftInt; 
+    if (cEnemy->moveLeft)
+      moveLeftInt = 1; 
+    else 
+      moveLeftInt = 0; 
+
+    fprintf(fp, "enemy %d %lf %lf %lf \n %lf %lf %lf \n %d %lf %lf \n", 
+      materialID, cBox.XMin(), cBox.YMin(), cBox.ZMin(), cBox.XMax(), cBox.YMax(), cBox.ZMax(), 
+      moveLeftInt, cEnemy->speed, cEnemy->mass); 
+
+  }
+
+  fprintf(fp, "\n"); 
+}
+
 
 void R3Scene:: 
 WriteMaterials(FILE *fp) {
@@ -336,13 +372,13 @@ WriteMaterials(FILE *fp) {
     R3Rgb kt = cMat->kt; 
     R3Rgb e = cMat->emission; 
 
+
     fprintf(fp, "material %lf %lf %lf \n %lf %lf %lf \n %lf %lf %lf \n %lf %lf %lf \n %lf %lf %lf \n %lf %lf %s \n", 
       ka.Red(), ka.Green(), ka.Blue(), 
       kd.Red(), kd.Green(), kd.Blue(), 
       ks.Red(), ks.Green(), ks.Blue(), 
       kt.Red(), kt.Green(), kt.Blue(), 
       e.Red(), e.Green(), e.Blue(), cMat->shininess, cMat->indexofrefraction, "0"); 
-
   }
 
   fprintf(fp, "\n"); 
@@ -453,6 +489,10 @@ WriteNode(FILE *fp, R3Node *node) {
     if (node == player->node) return; 
   }
 
+  //Skip redrawing enemy nodes
+  if (node->is_enemy) 
+    return; 
+
   //Skip redrawing the platform nodes
   for (unsigned int j = 0; j < platforms.size(); j++) {
     
@@ -504,6 +544,7 @@ Write(const char *filename, R3Node *node) {
   WritePlatforms(fp); 
   WriteCoins(fp); 
   WritePlayer(fp); 
+  WriteEnemies(fp);
 
   fclose(fp); 
 
@@ -1181,6 +1222,8 @@ Read(const char *filename, R3Node *node)
       material->indexofrefraction = ir;
       material->texture = NULL;
       
+      material->texture_name = texture_name; 
+
       // Read texture
       if (strcmp(texture_name, "0")) {
         // Get texture filename

@@ -51,6 +51,7 @@ struct R3Material {
   R2Image *texture;
   int texture_index;
   int id;
+  char* texture_name; 
 };
 
 struct R3Light {
@@ -93,7 +94,7 @@ struct R3Node {
   R3Coin *coin;
   bool is_platform;
   R3Platform *platform;
-  bool is_enemy = false; 
+  bool is_enemy; 
   R3Enemy *enemy; 
   bool is_visible;
   bool del;
@@ -243,6 +244,7 @@ struct R3Scene {
   int Read(const char *filename, R3Node *root = NULL);
 
   void WritePlayer(FILE *fp); 
+  void WriteEnemies(FILE *fp); 
   void WriteMaterials(FILE *fp); 
   void WriteLights(FILE *fp); 
   void WritePlatforms(FILE *fp); 
