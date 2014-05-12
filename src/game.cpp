@@ -41,6 +41,7 @@ static int integration_type = EULER_INTEGRATION;
 
 static R3Scene *scene = NULL;
 static R3Camera camera;
+static R3Camera minimap_cam;
 static int show_faces = 1;
 static int show_edges = 0;
 static int show_bboxes = 0;
@@ -53,6 +54,7 @@ static int save_image = 0;
 static int save_video = 0;
 static int num_frames_to_record = -1; 
 static int quit = 0;
+static int minimap = 1;
 static int level_editor = 0;
 static int soundtrack_enabled = 0;
 static int camera_mode = 0;
@@ -1602,7 +1604,17 @@ void GLUTRedraw(void)
     DrawScene(scene);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   }
-
+  
+  if (minimap) {
+    // Resize window
+    glViewport(10, 10, 400, 400);
+    glEnable(GL_LIGHTING);
+    LoadCamera(&minimap_cam);
+    DrawScene(scene);
+    LoadCamera(&camera);
+    glViewport(0, 0, GLUTwindow_width, GLUTwindow_height);
+  }
+  
   DrawHUD();
 
   // Save image
@@ -2050,7 +2062,15 @@ ParseArgs(int argc, char **argv)
   return 1;
 }
 
-
+R3Camera GetMinimapCam(R3Scene *scene) {
+  R3Camera ret(camera);
+  ret.towards = R3posz_vector;
+  ret.up = R3posy_vector;
+  ret.right = R3posx_vector;
+  ret.eye = scene->root->bbox.Centroid();
+  ret.eye.Translate(-1*ret.towards*(scene->root->bbox.XLength()/2)/tan(ret.xfov));
+  return ret;
+}
 
 ////////////////////////////////////////////////////////////
 // MAIN
@@ -2076,6 +2096,8 @@ main(int argc, char **argv)
   scene->sidebar->buttons.push_back(camera_button);
 
   if (!scene) exit(-1);
+  
+  minimap_cam = GetMinimapCam(scene);
 
   // Initialize sound shit
   sound_engine = createIrrKlangDevice();
