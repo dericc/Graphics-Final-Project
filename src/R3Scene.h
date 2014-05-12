@@ -51,6 +51,7 @@ struct R3Material {
   R2Image *texture;
   int texture_index;
   int id;
+  char texture_name[256]; 
 };
 
 struct R3Light {
@@ -207,7 +208,8 @@ struct R3Enemy {
   R3Vector Up();
 
   bool inAir;
-  bool is_dead;
+  bool isDead;
+  bool del; 
   
   bool onPlatform;
   R3Platform *platform;
@@ -253,13 +255,14 @@ struct R3Scene {
   // I/O functions
   int Read(const char *filename, R3Node *root = NULL);
 
-  void WritePlayer(FILE *fp);
-  void WriteMaterials(FILE *fp);
-  void WriteLights(FILE *fp);
-  void WritePlatforms(FILE *fp);
-  void WriteCoins(FILE *fp);
-  void WriteNode(FILE *fp, R3Node *node);
-  int Write(const char *filename, R3Node *node);
+  void WritePlayer(FILE *fp); 
+  void WriteEnemies(FILE *fp); 
+  void WriteMaterials(FILE *fp); 
+  void WriteLights(FILE *fp); 
+  void WritePlatforms(FILE *fp); 
+  void WriteCoins(FILE *fp); 
+  void WriteNode(FILE *fp, R3Node *node); 
+  int Write(const char *filename, R3Node *node); 
 
  public:
   int death_y;
