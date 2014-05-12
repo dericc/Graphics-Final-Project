@@ -51,7 +51,7 @@ struct R3Material {
   R2Image *texture;
   int texture_index;
   int id;
-  char* texture_name; 
+  char texture_name[256]; 
 };
 
 struct R3Light {
@@ -83,6 +83,8 @@ struct R3Platform;
 struct R3Enemy; 
 
 struct R3Node {
+  R3Node(void)
+  : is_obstacle(false), is_coin(false), is_enemy(false), is_goal(false) {};
   struct R3Node *parent;
   vector<struct R3Node *> children;
   R3Shape *shape;
@@ -97,6 +99,7 @@ struct R3Node {
   bool is_enemy; 
   R3Enemy *enemy; 
   bool is_visible;
+  bool is_goal;
   bool del;
 };
 
@@ -175,7 +178,7 @@ struct R3Player {
   
   R3Vector velocity; // current direction of motion
   bool inAir;
-  bool isDead;
+  bool is_dead;
   int n_coins;
   
   bool onPlatform;
@@ -191,7 +194,7 @@ struct R3Coin {
 
 struct R3Enemy {
   R3Enemy(R3Node *node, bool moveLeft, double speed, double mass) :
-    node(node), moveLeft(moveLeft), speed(speed), mass(mass), isDead(false) {};
+    node(node), moveLeft(moveLeft), speed(speed), mass(mass), is_dead(false) {};
   
   R3Node *node; 
   bool moveLeft; // current direction of motion: left or right
@@ -210,6 +213,15 @@ struct R3Enemy {
   
   bool onPlatform;
   R3Platform *platform;
+};
+
+// goal for player to get to
+struct R3Goal {
+  R3Goal(R3Node *node) :
+    node(node), is_active(false) {};
+
+  R3Node *node;
+  bool is_active; // is the goal active?
 };
 
 struct R3Sidebar;
@@ -269,6 +281,7 @@ struct R3Scene {
   R3Rgb background;
   R3Rgb ambient;
   R3Player *player;
+  R3Goal *goal;
   R3Sidebar *sidebar;
   R3Plane movement_plane;
 };

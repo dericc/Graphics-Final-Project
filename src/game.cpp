@@ -248,7 +248,7 @@ void KillEnemy(R3Enemy *e) {
     e->node->is_visible = false;
     e->del = true; 
     e->node->del = true; 
-    PlaySound("/../sounds/death.wav", false);
+    // PlaySound("/../sounds/death.wav", false);
   }
 }
 
@@ -736,7 +736,17 @@ void UpdateEnemies(R3Scene *scene) {
     f += -9.8 * p->Up() * p->mass;
     if (!p->inAir) {
       p->velocity += 10 * p->Up();
-      // PlaySound("/../sounds/jump.wav", false);
+      char path[FILENAME_MAX + 1];
+      FilePath(path, "/../sounds/jump.wav");
+      ISound *soundtrack = sound_engine->play2D(path, false, false, true);
+      double dist = 1.0f;
+      if (scene->player)
+      {
+        double r = R3Distance(scene->player->Center(), p->Center()) / 10;
+        dist = (1.0f / (1.0f + r * r));
+      }
+      soundtrack->setVolume(dist);
+      soundtrack->setIsPaused(false);
       if (p->onPlatform) {
         p->velocity += p->platform->velocity;
       }
@@ -747,6 +757,17 @@ void UpdateEnemies(R3Scene *scene) {
     const R3Vector forward = p->Towards();
     R3Vector forwardVelocity = p->velocity;
     forwardVelocity.Project(forward);
+
+    R3Box enemy_box = *(p->node->shape->box);
+    enemy_box.Transform(p->node->transformation);
+
+    R3Box player_box = *(scene->player->node->shape->box); 
+    player_box.Transform(scene->player->node->transformation); 
+
+    double direction = enemy_box.XMin() - player_box.XMin();
+    if (direction < 0) {p->moveLeft = false;}
+    else {p->moveLeft = true;}
+
     if (!p->moveLeft) {
       f += (p->speed * forward - forwardVelocity) / TAU;
     }
@@ -756,13 +777,13 @@ void UpdateEnemies(R3Scene *scene) {
     // Drag
     else if (!p->inAir) {
       const double DRAG_COEFFICIENT = 2;
-      f += -1*forwardVelocity*DRAG_COEFFICIENT;// * DRAG_COEFFICIENT;
+      f += -1*forwardVelocity*DRAG_COEFFICIENT; // * DRAG_COEFFICIENT;
     }
     
     p->velocity += (f / p->mass) * delta_time;
     
     // transform the player node
-    if (!p->isDead)
+    if (!p->is_dead)
     {
       R3Matrix tform = p->node->transformation;
       tform.Translate(p->velocity * delta_time);
@@ -777,7 +798,6 @@ void UpdateEnemies(R3Scene *scene) {
     if (p->onPlatform) {
       p->node->transformation.Translate(p->platform->velocity * delta_time);
     }
-
   }
 
   previous_time = current_time;
@@ -868,6 +888,16 @@ void DrawShape(R3Shape *shape)
   else if (shape->type == R3_SEGMENT_SHAPE) shape->segment->Draw();
   else if (shape->type == R3_CIRCLE_SHAPE) shape->circle->Draw();
   else fprintf(stderr, "Unrecognized shape type: %d\n", shape->type);
+}
+
+void DrawGoal(R3Shape *shape)
+{
+  glDisable(GL_LIGHTING);
+  glColor3d(1 - scene->background[0], 1 - scene->background[1], 1 - scene->background[2]);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  shape->box->Draw();
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  glEnable(GL_LIGHTING);
 }
 
 
@@ -1111,7 +1141,8 @@ void DrawNode(R3Scene *scene, R3Node *node)
   if (node->material) LoadMaterial(node->material);
 
   // Draw shape
-  if (node->is_visible && node->shape) DrawShape(node->shape);
+  if (node->is_goal && node->shape && node->is_goal) DrawGoal(node->shape);
+  else if (node->is_visible && node->shape) DrawShape(node->shape);
 
   // Draw children nodes
   for (int i = 0; i < (int) node->children.size(); i++) 
