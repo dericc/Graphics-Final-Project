@@ -244,7 +244,7 @@ void KillEnemy(R3Enemy *e) {
     e->node->is_visible = false;
     e->del = true; 
     e->node->del = true; 
-    PlaySound("/../sounds/death.wav", false);
+    // PlaySound("/../sounds/death.wav", false);
   }
 }
 
@@ -740,6 +740,17 @@ void UpdateEnemies(R3Scene *scene) {
     const R3Vector forward = p->Towards();
     R3Vector forwardVelocity = p->velocity;
     forwardVelocity.Project(forward);
+
+    R3Box enemy_box = *(p->node->shape->box);
+    enemy_box.Transform(p->node->transformation);
+
+    R3Box player_box = *(scene->player->node->shape->box); 
+    player_box.Transform(scene->player->node->transformation); 
+
+    double direction = enemy_box.XMin() - player_box.XMin();
+    if (direction < 0) {p->moveLeft = false;}
+    else {p->moveLeft = true;}
+
     if (!p->moveLeft) {
       f += (p->speed * forward - forwardVelocity) / TAU;
     }
