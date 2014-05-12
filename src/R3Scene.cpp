@@ -372,13 +372,12 @@ WriteMaterials(FILE *fp) {
     R3Rgb kt = cMat->kt; 
     R3Rgb e = cMat->emission; 
 
-
     fprintf(fp, "material %lf %lf %lf \n %lf %lf %lf \n %lf %lf %lf \n %lf %lf %lf \n %lf %lf %lf \n %lf %lf %s \n", 
       ka.Red(), ka.Green(), ka.Blue(), 
       kd.Red(), kd.Green(), kd.Blue(), 
       ks.Red(), ks.Green(), ks.Blue(), 
       kt.Red(), kt.Green(), kt.Blue(), 
-      e.Red(), e.Green(), e.Blue(), cMat->shininess, cMat->indexofrefraction, "0"); 
+      e.Red(), e.Green(), e.Blue(), cMat->shininess, cMat->indexofrefraction, cMat->texture_name); 
   }
 
   fprintf(fp, "\n"); 
@@ -1221,8 +1220,8 @@ Read(const char *filename, R3Node *node)
       material->shininess = n;
       material->indexofrefraction = ir;
       material->texture = NULL;
-      
-      material->texture_name = texture_name; 
+
+      strcpy(material->texture_name, texture_name); 
 
       // Read texture
       if (strcmp(texture_name, "0")) {
@@ -1241,6 +1240,8 @@ Read(const char *filename, R3Node *node)
           return 0;
         }
       }
+
+
       
       // Insert material
       materials.push_back(material);

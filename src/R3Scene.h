@@ -51,7 +51,7 @@ struct R3Material {
   R2Image *texture;
   int texture_index;
   int id;
-  char* texture_name; 
+  char texture_name[256]; 
 };
 
 struct R3Light {
