@@ -93,7 +93,7 @@ struct R3Node {
   R3Coin *coin;
   bool is_platform;
   R3Platform *platform;
-  bool is_enemy; 
+  bool is_enemy = false; 
   R3Enemy *enemy; 
   bool is_visible;
   bool del;
