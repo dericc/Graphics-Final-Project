@@ -93,12 +93,42 @@ static char exec_path[FILENAME_MAX + 1];
 
 
 ////////////////////////////////////////////////////////////
-// LEVEL EDITOR COMMANDS
+// LEVEL EDITOR STUFF
 ////////////////////////////////////////////////////////////
 
-// enum {
-//   MAKE_BOX,
-// };
+void CreateShape(R3ShapeType type, R3Scene *s, R3Point p)
+{
+  if (type == R3_BOX_SHAPE)
+  {
+    // Create box
+    R3Box *box = new R3Box(p + R3Vector(-1, -1, -1), p + R3Vector(1, 1, 1));
+    
+    // Create shape
+    R3Shape *shape = new R3Shape();
+    shape->type = R3_BOX_SHAPE;
+    shape->box = box;
+    shape->sphere = NULL;
+    shape->cylinder = NULL;
+    shape->cone = NULL;
+    shape->mesh = NULL;
+    shape->segment = NULL;
+    
+    // Create shape node
+    R3Node *node = new R3Node();
+    node->transformation = R3identity_matrix;
+    node->material = NULL;
+    node->shape = shape;
+    node->bbox = *box;
+    node->is_obstacle = true;
+    node->is_visible = true;
+    node->is_coin = false;
+
+    // Add to scene
+    s->root->bbox.Union(node->bbox);
+    s->root->children.push_back(node);
+    node->parent = s->root;
+  }
+}
 
 ////////////////////////////////////////////////////////////
 // TIMER CODE
@@ -1401,11 +1431,13 @@ void GLUTMouse(int button, int state, int x, int y)
       int width = glutGet(GLUT_WINDOW_WIDTH);
       int height = glutGet(GLUT_WINDOW_HEIGHT);
       R3Ray ray = RayThoughPixel(scene->camera, x, y, width, height);
-      R3Box box = *scene->player->node->shape->box;
-      box.Transform(scene->player->node->transformation);
-      R3Intersection intersection = ComputeIntersection(&box, ray);
-      if (intersection.hit)
-        PlaySound("/../sounds/secret.wav", false);
+      // R3Box box = *scene->player->node->shape->box;
+      // box.Transform(scene->player->node->transformation);
+      // R3Intersection intersection = ComputeIntersection(&box, ray);
+      // if (intersection.hit)
+      //   PlaySound("/../sounds/secret.wav", false);
+      R3Point click_location = RayPlaneIntersection(scene->movement_plane, ray);
+      CreateShape(R3_BOX_SHAPE, scene, click_location);
     }
     else if (button == GLUT_MIDDLE_BUTTON) {
     }

@@ -241,6 +241,7 @@ struct R3Scene {
   R3Rgb ambient;
   R3Player *player;
   R3Sidebar *sidebar;
+  R3Plane movement_plane;
 };
 
 struct R3Button {

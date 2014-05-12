@@ -817,6 +817,14 @@ R3Intersection ComputeIntersection(R3MeshFace *tri, R3Ray &ray, double min_t)
   }
 }
 
+// return point of intersection between ray and plane
+R3Point RayPlaneIntersection(R3Plane plane, R3Ray ray)
+{
+  double t = -(ray.Start().Vector().Dot(plane.Normal()) + plane.D()) 
+    / (ray.Vector().Dot(plane.Normal()));
+  return ray.Point(t);
+}
+
 // compute area between three points
 double Area(R3Point p1, R3Point p2, R3Point p3)
 {

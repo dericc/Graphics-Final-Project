@@ -275,7 +275,7 @@ WritePlayer(FILE *fp) {
   //Do nothing if no player
   if (player == NULL) return; 
 
-  R3Node *cNode = player->node; 
+  R3Node *cNode = player->node;
   //Calculates for material IDs
   R3Material *cMat = cNode->material; 
   R3Box cBox = *(cNode->shape->box); 
@@ -1401,6 +1401,9 @@ Read(const char *filename, R3Node *node)
       node->parent = group_nodes[depth];
       
       player = new R3Player(node, max_speed, mass);
+
+      // set movement plane
+      movement_plane = R3Plane(player->node->bbox.Centroid(), R3Vector(0, 0, 1));
     }
     else if (!strcmp(cmd, "platform")) {
       // Read data
