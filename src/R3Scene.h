@@ -51,6 +51,7 @@ struct R3Material {
   R2Image *texture;
   int texture_index;
   int id;
+  char texture_name[256]; 
 };
 
 struct R3Light {
@@ -79,6 +80,7 @@ struct R3Camera {
 
 struct R3Coin;
 struct R3Platform;
+struct R3Enemy; 
 
 struct R3Node {
   struct R3Node *parent;
@@ -92,6 +94,8 @@ struct R3Node {
   R3Coin *coin;
   bool is_platform;
   R3Platform *platform;
+  bool is_enemy; 
+  R3Enemy *enemy; 
   bool is_visible;
   bool del;
 };
@@ -185,8 +189,30 @@ struct R3Coin {
   bool del;
 };
 
-struct R3Sidebar;
+struct R3Enemy {
+  R3Enemy(R3Node *node, bool moveLeft, double speed, double mass) :
+    node(node), moveLeft(moveLeft), speed(speed), mass(mass), isDead(false) {};
+  
+  R3Node *node; 
+  bool moveLeft; // current direction of motion: left or right
+  double speed; 
+  R3Vector velocity; // current direction of motion
+  const double mass;
 
+  R3Point Center();
+  R3Vector Right();
+  R3Vector Towards();
+  R3Vector Up();
+
+  bool inAir;
+  bool isDead;
+  bool del; 
+  
+  bool onPlatform;
+  R3Platform *platform;
+};
+
+struct R3Sidebar;
 
 // Scene graph definition
 
@@ -218,6 +244,7 @@ struct R3Scene {
   int Read(const char *filename, R3Node *root = NULL);
 
   void WritePlayer(FILE *fp); 
+  void WriteEnemies(FILE *fp); 
   void WriteMaterials(FILE *fp); 
   void WriteLights(FILE *fp); 
   void WritePlatforms(FILE *fp); 
@@ -235,6 +262,7 @@ struct R3Scene {
   vector<R3Coin *> coins;
   vector<R3Platform *> platforms;
   vector<R3Light *> lights;
+  vector<R3Enemy *> enemies; 
   R3Vector gravity;
   R3Camera camera;
   R3Box bbox;
@@ -242,11 +270,12 @@ struct R3Scene {
   R3Rgb ambient;
   R3Player *player;
   R3Sidebar *sidebar;
+  R3Plane movement_plane;
 };
 
 struct R3Button {
   void (*action)(R3Scene *scene);
-  R3Node *node;
+  
 };
 
 struct R3Sidebar {

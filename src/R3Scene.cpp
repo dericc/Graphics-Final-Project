@@ -50,6 +50,39 @@ void R3Camera::Rotate(R3Line axis, double angle) {
   up.Rotate(axis.Vector(), angle);
 }
 
+
+
+R3Point R3Enemy::Center(void) {
+  R3Box box = *(node->shape->box);
+  box.Transform(node->transformation);
+  return (box.Min() + box.Max())/2;
+}
+
+// These are directions from the box's persepctive
+R3Vector R3Enemy::Towards(void) {
+  R3Box *box = node->shape->box;
+  R3Vector towards = R3Point(box->XMax(), box->YMin(), box->ZMin()) - box->Min();
+  towards.Normalize();
+  return towards;
+}
+
+R3Vector R3Enemy::Right(void) {
+  R3Box *box = node->shape->box;
+  R3Vector right = box->Min() - R3Point(box->XMin(), box->YMin(), box->ZMax());
+  right.Normalize();
+  return right;
+}
+
+R3Vector R3Enemy::Up(void) {
+  R3Box *box = node->shape->box;
+  R3Vector up = R3Point(box->XMin(), box->YMax(), box->ZMin()) - box->Min();
+  up.Normalize();
+  return up;
+}
+
+//R3Sidebar::
+//R3Sidebar(void)
+
 R3Scene::
 R3Scene(void)
 : bbox(R3null_box),
@@ -272,7 +305,7 @@ WritePlayer(FILE *fp) {
   //Do nothing if no player
   if (player == NULL) return; 
 
-  R3Node *cNode = player->node; 
+  R3Node *cNode = player->node;
   //Calculates for material IDs
   R3Material *cMat = cNode->material; 
   R3Box cBox = *(cNode->shape->box); 
@@ -288,8 +321,44 @@ WritePlayer(FILE *fp) {
   fprintf(fp, "player %d %lf %lf %lf \n %lf %lf %lf \n %lf %lf \n",
     materialID, cBox.XMin(), cBox.YMin(), cBox.ZMin(), cBox.XMax(), cBox.YMax(), cBox.ZMax(), 
     player->max_speed, player->mass); 
+
+  fprintf(fp, "\n"); 
   
 }
+
+void R3Scene:: 
+WriteEnemies(FILE *fp) {
+
+  for (unsigned int i = 0; i < enemies.size(); i++) {
+    R3Enemy *cEnemy = enemies[i]; 
+    R3Node *cNode = cEnemy->node; 
+    
+    R3Material *cMat = cNode->material; 
+    int materialID = -1; 
+
+    for (unsigned int j = 0; j < materials.size(); j++) {
+      if (cMat == materials[j]) 
+        materialID = j; 
+    }
+
+    R3Box cBox = *(cNode->shape->box); 
+    cBox.Transform(cNode->transformation);
+
+    int moveLeftInt; 
+    if (cEnemy->moveLeft)
+      moveLeftInt = 1; 
+    else 
+      moveLeftInt = 0; 
+
+    fprintf(fp, "enemy %d %lf %lf %lf \n %lf %lf %lf \n %d %lf %lf \n", 
+      materialID, cBox.XMin(), cBox.YMin(), cBox.ZMin(), cBox.XMax(), cBox.YMax(), cBox.ZMax(), 
+      moveLeftInt, cEnemy->speed, cEnemy->mass); 
+
+  }
+
+  fprintf(fp, "\n"); 
+}
+
 
 void R3Scene:: 
 WriteMaterials(FILE *fp) {
@@ -308,8 +377,7 @@ WriteMaterials(FILE *fp) {
       kd.Red(), kd.Green(), kd.Blue(), 
       ks.Red(), ks.Green(), ks.Blue(), 
       kt.Red(), kt.Green(), kt.Blue(), 
-      e.Red(), e.Green(), e.Blue(), cMat->shininess, cMat->indexofrefraction, "0"); 
-
+      e.Red(), e.Green(), e.Blue(), cMat->shininess, cMat->indexofrefraction, cMat->texture_name); 
   }
 
   fprintf(fp, "\n"); 
@@ -420,6 +488,10 @@ WriteNode(FILE *fp, R3Node *node) {
     if (node == player->node) return; 
   }
 
+  //Skip redrawing enemy nodes
+  if (node->is_enemy) 
+    return; 
+
   //Skip redrawing the platform nodes
   for (unsigned int j = 0; j < platforms.size(); j++) {
     
@@ -471,6 +543,7 @@ Write(const char *filename, R3Node *node) {
   WritePlatforms(fp); 
   WriteCoins(fp); 
   WritePlayer(fp); 
+  WriteEnemies(fp);
 
   fclose(fp); 
 
@@ -740,6 +813,7 @@ Read(const char *filename, R3Node *node)
       node->bbox.Union(p3);
       node->is_obstacle = true;
       node->is_coin = false;
+      node->is_enemy = false; 
       node->is_visible = true;
       node->del = false;
       
@@ -791,6 +865,7 @@ Read(const char *filename, R3Node *node)
       node->is_obstacle = true;
       node->is_visible = true;
       node->is_coin = false;
+      node->is_enemy = false; 
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -840,6 +915,7 @@ Read(const char *filename, R3Node *node)
       node->bbox = sphere->BBox();
       node->is_obstacle = true;
       node->is_coin = false;
+      node->is_enemy = false; 
       node->del = false;
       node->is_visible = true;
       
@@ -891,6 +967,7 @@ Read(const char *filename, R3Node *node)
       node->bbox = cylinder->BBox();
       node->is_obstacle = true;
       node->is_coin = false;
+      node->is_enemy = false; 
       node->del = false;
       node->is_visible = true;
       
@@ -959,6 +1036,7 @@ Read(const char *filename, R3Node *node)
       node->bbox = mesh->bbox;
       node->is_obstacle = true;
       node->is_coin = false;
+      node->is_enemy = false; 
       node->del = false;
       node->is_visible = true;
       
@@ -1010,6 +1088,7 @@ Read(const char *filename, R3Node *node)
       node->bbox = cone->BBox();
       node->is_obstacle = true;
       node->is_coin = false;
+      node->is_enemy = false; 
       node->del = false;
       node->is_visible = true;
       
@@ -1060,6 +1139,7 @@ Read(const char *filename, R3Node *node)
       node->bbox = segment->BBox();
       node->is_obstacle = true;
       node->is_coin = false;
+      node->is_enemy = false; 
       node->del = false;
       node->is_visible = true;
       
@@ -1140,7 +1220,9 @@ Read(const char *filename, R3Node *node)
       material->shininess = n;
       material->indexofrefraction = ir;
       material->texture = NULL;
-      
+
+      strcpy(material->texture_name, texture_name); 
+
       // Read texture
       if (strcmp(texture_name, "0")) {
         // Get texture filename
@@ -1158,6 +1240,8 @@ Read(const char *filename, R3Node *node)
           return 0;
         }
       }
+
+
       
       // Insert material
       materials.push_back(material);
@@ -1389,6 +1473,7 @@ Read(const char *filename, R3Node *node)
       node->bbox = *box;
       node->is_obstacle = false;
       node->is_coin = false;
+      node->is_enemy = false; 
       node->del = false;
       node->is_visible = true;
       
@@ -1398,7 +1483,81 @@ Read(const char *filename, R3Node *node)
       node->parent = group_nodes[depth];
       
       player = new R3Player(node, max_speed, mass);
+
+      // set movement plane
+      movement_plane = R3Plane(player->node->bbox.Centroid(), R3Vector(0, 0, 1));
     }
+    else if (!strcmp(cmd, "enemy")) {
+      // Read data
+      int m;
+      R3Point p1, p2;
+      int moveLeftInt; 
+      double speed;
+      double mass;
+      if (fscanf(fp, "%d%lf%lf%lf%lf%lf%lf%d%lf%lf", &m, &p1[0], &p1[1], &p1[2], &p2[0], &p2[1], &p2[2], &moveLeftInt, &speed, &mass) != 10) {
+        fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
+        return 0;
+      }
+
+      bool moveLeft; 
+      if (moveLeftInt == 1) {
+        moveLeft = true; 
+      }
+      else moveLeft = false; 
+      
+      // Get material
+      R3Material *material = group_materials[depth];
+      if (m >= 0) {
+        if (m < (int) materials.size()) {
+          material = materials[m];
+        }
+        else {
+          fprintf(stderr, "Invalid material id at box command %d in file %s\n", command_number, filename);
+          return 0;
+        }
+      }
+
+      // Create box
+      R3Box *box = new R3Box(p1, p2);
+      
+      // Create shape
+      R3Shape *shape = new R3Shape();
+      shape->type = R3_BOX_SHAPE;
+      shape->box = box;
+      shape->sphere = NULL;
+      shape->cylinder = NULL;
+      shape->cone = NULL;
+      shape->mesh = NULL;
+      shape->segment = NULL;
+      
+      // Create shape node
+      R3Node *node = new R3Node();
+      node->transformation = R3identity_matrix;
+      node->material = material;
+      node->shape = shape;
+      node->bbox = *box;
+      node->is_enemy = true; 
+      node->is_obstacle = true;
+      node->is_coin = false;
+      node->del = false;
+      node->is_visible = true;
+      
+      // Insert node
+      group_nodes[depth]->bbox.Union(node->bbox);
+      group_nodes[depth]->children.push_back(node);
+      node->parent = group_nodes[depth];
+
+      // Create platform
+      R3Enemy *e = new R3Enemy(node, moveLeft, speed, mass);
+      if (!moveLeft) 
+        e->velocity = speed * e->Towards(); 
+      else 
+        e->velocity = speed * -e->Towards(); 
+      
+      enemies.push_back(e);
+      node->enemy = e;
+    }
+
     else if (!strcmp(cmd, "platform")) {
       // Read data
       int m;
@@ -1443,6 +1602,7 @@ Read(const char *filename, R3Node *node)
       node->bbox = *box;
       node->is_platform = true;
       node->is_coin = false;
+      node->is_enemy = false; 
       node->is_obstacle = true;
       node->del = false;
       node->is_visible = true;
@@ -1509,6 +1669,7 @@ Read(const char *filename, R3Node *node)
       node->bbox = cyl->BBox();
       node->is_obstacle = false;
       node->is_coin = true;
+      node->is_enemy = false; 
       node->del = false;
       node->is_visible = true;
       node->coin = coin;

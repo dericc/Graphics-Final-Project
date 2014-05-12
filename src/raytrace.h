@@ -29,4 +29,6 @@ R3Intersection ComputeIntersection(R3Box *box, R3Ray &ray);
 R3Intersection ComputeIntersection(R3MeshFace *tri, R3Ray &ray, double min_t);
 R3Intersection ComputeIntersection(R3Mesh *mesh, R3Ray &ray, double min_t);
 
+R3Point RayPlaneIntersection(R3Plane plane, R3Ray ray);
+
 double Area(R3Point p1, R3Point p2, R3Point p3);

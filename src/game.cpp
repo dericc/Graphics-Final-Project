@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include "../irrKlang/include/irrKlang.h"
+#include "raytrace.h"
 
 using namespace irrklang;
 
@@ -53,6 +54,7 @@ static int save_video = 0;
 static int num_frames_to_record = -1; 
 static int quit = 0;
 static int level_editor = 0;
+static int soundtrack_enabled = 0;
 
 // GLUT variables 
 
@@ -91,12 +93,43 @@ static char exec_path[FILENAME_MAX + 1];
 
 
 ////////////////////////////////////////////////////////////
-// LEVEL EDITOR COMMANDS
+// LEVEL EDITOR STUFF
 ////////////////////////////////////////////////////////////
 
-// enum {
-//   MAKE_BOX,
-// };
+
+void CreateShape(R3ShapeType type, R3Scene *s, R3Point p)
+{
+  if (type == R3_BOX_SHAPE)
+  {
+    // Create box
+    R3Box *box = new R3Box(p + R3Vector(-1, -1, -1), p + R3Vector(1, 1, 1));
+    
+    // Create shape
+    R3Shape *shape = new R3Shape();
+    shape->type = R3_BOX_SHAPE;
+    shape->box = box;
+    shape->sphere = NULL;
+    shape->cylinder = NULL;
+    shape->cone = NULL;
+    shape->mesh = NULL;
+    shape->segment = NULL;
+    
+    // Create shape node
+    R3Node *node = new R3Node();
+    node->transformation = R3identity_matrix;
+    node->material = NULL;
+    node->shape = shape;
+    node->bbox = *box;
+    node->is_obstacle = true;
+    node->is_visible = true;
+    node->is_coin = false;
+
+    // Add to scene
+    s->root->bbox.Union(node->bbox);
+    s->root->children.push_back(node);
+    node->parent = s->root;
+  }
+}
 
 ////////////////////////////////////////////////////////////
 // TIMER CODE
@@ -194,6 +227,29 @@ void PlaySound(const char *filename, bool looped)
   sound_engine->play2D(path, looped);
 }
 
+void KillPlayer(void) {
+  R3Player *p = scene->player;
+
+  if (!p->isDead) {
+    p->isDead = true;
+    p->node->is_visible = false;
+    PlaySound("/../sounds/death.wav", false);
+  }
+}
+
+void KillEnemy(R3Enemy *e) {
+
+  if (!e->isDead) {
+    e->isDead = true;
+    e->node->is_visible = false;
+    e->del = true; 
+    e->node->del = true; 
+    // PlaySound("/../sounds/death.wav", false);
+  }
+}
+
+
+
 
 ////////////////////////////////////////////////////////////
 // SCENE DRAWING CODE
@@ -270,11 +326,150 @@ void CollidePlayer(R3Node *node)
       // for each direction, check if it has the minimum depth of all other collisions before correcting player position and setting velocity to 0
       if (xmin_coll && (!ymin_coll || xmin_d < ymin_d) && (!ymax_coll || xmin_d < ymax_d))
       {
+        if (node->is_enemy) {
+          KillPlayer();  
+        }
+
         tform.Translate(R3Vector(scene_box.XMax() - player_box.XMin(), 0, 0));
         R3Vector v = p->velocity;
         v.SetX(0);
         p->velocity = v;
       }
+      if (xmax_coll && (!ymin_coll || xmax_d < ymin_d) && (!ymax_coll || xmax_d < ymax_d))
+      {
+        if (node->is_enemy) {
+          KillPlayer();  
+        }
+
+        tform.Translate(R3Vector(scene_box.XMin() - player_box.XMax(), 0, 0));
+        R3Vector v = p->velocity;
+        v.SetX(0);
+        p->velocity = v;
+      }
+
+      if (ymin_coll && (!xmin_coll || ymin_d < xmin_d) && (!xmax_coll || ymin_d < xmax_d))
+      {
+        if (node->is_enemy) {
+          KillEnemy(node->enemy);  
+        }
+
+        tform.Translate(R3Vector(0, scene_box.YMax() - player_box.YMin(), 0));
+        R3Vector v = p->velocity;
+        v.SetY(0);
+        p->velocity = v;
+        p->inAir = false;
+        if (node->is_platform) {
+          p->onPlatform = true;
+          p->platform = node->platform;
+        }
+        else {
+          p->onPlatform = false;
+          p->platform = NULL;
+        }
+      }
+      if (ymax_coll && (!xmin_coll || ymax_d < xmin_d) && (!xmax_coll || ymax_d < xmax_d))
+      {
+        if (node->is_enemy) {
+          KillPlayer();  
+        }
+
+        tform.Translate(R3Vector(0, scene_box.YMin() - player_box.YMax(), 0));
+        R3Vector v = p->velocity;
+        v.SetY(0);
+        p->velocity = v;
+      }
+      // update player tform
+      p->node->transformation = tform;
+    }
+    else if (node->is_coin)
+    {
+      if (xmin_coll || xmax_coll || ymin_coll || ymax_coll || inside)
+      {
+        PlaySound("/../sounds/coin.wav", false);
+        p->n_coins++;
+        node->del = true;
+        node->coin->del = true;
+      }
+    }
+  }
+
+  for (unsigned int i = 0; i < node->children.size(); i++)
+  {
+    CollidePlayer(node->children[i]);
+  }
+}
+
+
+// recursively collide player with the scene
+void CollideEnemy(R3Enemy *e, R3Node *node)
+{
+
+  // get transformed player box
+  R3Enemy *p = e; 
+
+  if (node == p->node)
+    return;
+  R3Box player_box = *(p->node->shape->box);
+  player_box.Transform(p->node->transformation);
+
+  // if the scene node is a box
+  if (node->is_obstacle || node->is_coin)
+  {
+    // get transformed scene box
+    R3Box scene_box;
+    if (node->is_obstacle)
+    {
+      scene_box = node->bbox;
+      scene_box.Transform(node->transformation);
+    }
+    else if (node->is_coin)
+    {
+      scene_box = R3Box(R3Point(-0.5, -0.5, -0.5), R3Point(0.5, 0.5, 0.5));
+      scene_box.Translate(node->coin->position.Vector());
+    }
+
+    // calculate to what depth the player is intersecting in each direction
+    double xmin_d = abs(scene_box.XMax() - player_box.XMin());
+    double xmax_d = abs(scene_box.XMin() - player_box.XMax());
+    double ymin_d = abs(scene_box.YMax() - player_box.YMin());
+    double ymax_d = abs(scene_box.YMin() - player_box.YMax());
+
+    // determine if there is an intersection for each direction (player edge is inside object)
+    bool xmin_coll = player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin()
+    && ((player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin())
+      ||  (player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin()));
+
+    bool xmax_coll = player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin()
+    && ((player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin())
+      ||  (player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin()));
+
+    bool ymin_coll = player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin()
+    && ((player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin())
+      ||  (player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin()));
+
+    bool ymax_coll = player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin()
+    && ((player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin())
+      ||  (player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin()));
+
+    bool inside = (player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin())
+    && (player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin())
+    && (player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin())
+    && (player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin());
+
+    if (node->is_obstacle)
+    {
+      // get player transformation
+      R3Matrix tform = p->node->transformation;
+
+      // for each direction, check if it has the minimum depth of all other collisions before correcting player position and setting velocity to 0
+      if (xmin_coll && (!ymin_coll || xmin_d < ymin_d) && (!ymax_coll || xmin_d < ymax_d))
+      {
+        tform.Translate(R3Vector(scene_box.XMax() - player_box.XMin(), 0, 0));
+        R3Vector v = p->velocity;
+        v.SetX(0);
+        p->velocity = v;
+      }
+
       if (xmax_coll && (!ymin_coll || xmax_d < ymin_d) && (!ymax_coll || xmax_d < ymax_d))
       {
         tform.Translate(R3Vector(scene_box.XMin() - player_box.XMax(), 0, 0));
@@ -305,21 +500,11 @@ void CollidePlayer(R3Node *node)
       // update player tform
       p->node->transformation = tform;
     }
-    else if (node->is_coin)
-    {
-      if (xmin_coll || xmax_coll || ymin_coll || ymax_coll || inside)
-      {
-        PlaySound("/../sounds/coin.wav", false);
-        p->n_coins++;
-        node->del = true;
-        node->coin->del = true;
-      }
-    }
   }
 
   for (unsigned int i = 0; i < node->children.size(); i++)
   {
-    CollidePlayer(node->children[i]);
+    CollideEnemy(p, node->children[i]);
   }
 }
 
@@ -349,17 +534,22 @@ void UpdatePlayer(R3Scene *scene) {
   // Motion Shit
   // get the forces to move the box
   R3Vector f = R3null_vector;
-  f += -9.8 * p->Up() * p->mass;
+  if (p->inAir) {
+    f += -9.8 * p->Up() * p->mass;
+  }
   if (up_key && !p->inAir) {
     p->velocity += 15 * p->Up();
     PlaySound("/../sounds/jump.wav", false);
     if (p->onPlatform) {
       p->velocity += p->platform->velocity;
     }
+    p->inAir = true;
+    p->onPlatform = false;
+    p->platform = NULL;
   }
 
   // side to side
-  double TAU = .5; // timescale for velocity relaxation
+  double TAU = .3; // timescale for velocity relaxation
   const R3Vector forward = p->Towards();
   R3Vector forwardVelocity = p->velocity;
   forwardVelocity.Project(forward);
@@ -371,7 +561,7 @@ void UpdatePlayer(R3Scene *scene) {
   }
   // Drag
   else if (!p->inAir) {
-    const double DRAG_COEFFICIENT = 2;
+    const double DRAG_COEFFICIENT = 4;
     f += -1*forwardVelocity*DRAG_COEFFICIENT;// * DRAG_COEFFICIENT;
   }
   
@@ -386,8 +576,9 @@ void UpdatePlayer(R3Scene *scene) {
   }
   
   // set inair to true: it will be set to false if collision with ground detected
+
+  //p->onPlatform = false;
   p->inAir = true;
-  p->onPlatform = false;
   CollidePlayer(scene->root);
   
   if (p->onPlatform) {
@@ -395,7 +586,7 @@ void UpdatePlayer(R3Scene *scene) {
   }
 
   // Camera Shit
-  scene->camera.eye = p->Center() - 25 * p->Right() + 5 * p->Up();
+  scene->camera.eye = p->Center() - 40 * p->Right() + 10 * p->Up();
   scene->camera.towards = (p->Center()) - scene->camera.eye;
   scene->camera.towards.Normalize();
   scene->camera.right = p->Towards();
@@ -404,33 +595,23 @@ void UpdatePlayer(R3Scene *scene) {
 
   R3Box player_box = *p->node->shape->box;
   player_box.Transform(p->node->transformation);
+
   if (player_box.Min().Y() <= scene->death_y && !p->isDead)
   {
-    p->isDead = true;
-    p->node->is_visible = false;
-    PlaySound("/../sounds/death.wav", false);
+    KillPlayer(); 
   }
 
-  // stuff for checking mouse position and translating it to world coords
-  // R3Point min_player_pos = player_box.Min();
-  // R3Point max_player_pos = player_box.Max();
-  // int x = GLUTmouse[0];
-  // int y = GLUTmouse[1];
-  // if (x > min_player_pos.X() && x < max_player_pos.X()
-  //  && y > min_player_pos.Y() && y < max_player_pos.Y())
-  //   PlaySound("/../sounds/coin.wav", false);
-  
-  static double angle = 0;
-  double MAX_ROTATION = PI/8;
-  double new_angle = -1*MAX_ROTATION * (forwardVelocity.Length() / p->max_speed);
-  if (forwardVelocity.Dot(p->Towards()) < 0) { new_angle *= -1; }
-  angle = angle * 0.9 + new_angle * 0.1;
-  R3Line center_line(p->Center(), p->Up());
-  scene->camera.Rotate(center_line, angle);
-  camera = scene->camera;
-
+  if (!(key_state['c'] || key_state['C'])) {
+    static double angle = 0;
+    double MAX_ROTATION = PI/8;
+    double new_angle = -1*MAX_ROTATION * (forwardVelocity.Length() / p->max_speed);
+    if (forwardVelocity.Dot(p->Towards()) < 0) { new_angle *= -1; }
+    angle = angle * 0.9 + new_angle * 0.1;
+    R3Line center_line(p->Center(), p->Up());
+    scene->camera.Rotate(center_line, angle);
+    camera = scene->camera;
+  }
   previous_time = current_time;
-
 }
 
 void UpdateCoin(R3Coin *coin, double delta_time)
@@ -471,9 +652,10 @@ void UpdatePlatform(R3Platform *platform, double delta_time) {
   
   double K = 2; // spring constant
   R3Vector displacement = platform->center - pos;
-  platform->velocity += K * displacement * delta_time;
+  platform->velocity += platform->max_speed * displacement * delta_time;
   platform->node->transformation.Translate(platform->velocity * delta_time);
 }
+
 
 void DeleteNodes(R3Node *node) {
   for (vector<R3Node *>::iterator it = node->children.begin(); it != node->children.end();)
@@ -503,6 +685,16 @@ void DeleteCoins() {
   }
 }
 
+void DeleteEnemies() {
+  for (vector<R3Enemy *>::iterator it = scene->enemies.begin(); it != scene->enemies.end();)
+  {
+    if ((*it)->del)
+      scene->enemies.erase(it);
+    else
+      it++;
+  }
+}
+
 void UpdatePlatforms(R3Scene *scene) {
   double current_time = GetTime();
   static double previous_time = 0;
@@ -523,6 +715,86 @@ void UpdatePlatforms(R3Scene *scene) {
   previous_time = current_time;
 }
 
+void UpdateEnemies(R3Scene *scene) {
+
+  double current_time = GetTime();
+  static double previous_time = 0;
+  
+  // time passed since starting
+  double delta_time = current_time - previous_time;
+  
+  int numEnemies = scene->enemies.size();
+
+  for (int i = 0; i < numEnemies; i++) {
+
+    R3Enemy *p = scene->enemies[i];
+
+    if (p == NULL) return; 
+
+    // Motion Shit
+    // get the forces to move the box
+    R3Vector f = R3null_vector;
+    f += -9.8 * p->Up() * p->mass;
+    if (!p->inAir) {
+      p->velocity += 10 * p->Up();
+      // PlaySound("/../sounds/jump.wav", false);
+      if (p->onPlatform) {
+        p->velocity += p->platform->velocity;
+      }
+    }
+
+    // side to side
+    double TAU = .5; // timescale for velocity relaxation
+    const R3Vector forward = p->Towards();
+    R3Vector forwardVelocity = p->velocity;
+    forwardVelocity.Project(forward);
+
+    R3Box enemy_box = *(p->node->shape->box);
+    enemy_box.Transform(p->node->transformation);
+
+    R3Box player_box = *(scene->player->node->shape->box); 
+    player_box.Transform(scene->player->node->transformation); 
+
+    double direction = enemy_box.XMin() - player_box.XMin();
+    if (direction < 0) {p->moveLeft = false;}
+    else {p->moveLeft = true;}
+
+    if (!p->moveLeft) {
+      f += (p->speed * forward - forwardVelocity) / TAU;
+    }
+    else if (p->moveLeft) {
+      f += (-p->speed * forward - forwardVelocity) / TAU;
+    }
+    // Drag
+    else if (!p->inAir) {
+      const double DRAG_COEFFICIENT = 2;
+      f += -1*forwardVelocity*DRAG_COEFFICIENT;// * DRAG_COEFFICIENT;
+    }
+    
+    p->velocity += (f / p->mass) * delta_time;
+    
+    // transform the player node
+    if (!p->isDead)
+    {
+      R3Matrix tform = p->node->transformation;
+      tform.Translate(p->velocity * delta_time);
+      p->node->transformation = tform;
+    }
+    
+    // set inair to true: it will be set to false if collision with ground detected
+    p->inAir = true;
+    p->onPlatform = false;
+    CollideEnemy(p, scene->root);
+
+    if (p->onPlatform) {
+      p->node->transformation.Translate(p->platform->velocity * delta_time);
+    }
+
+  }
+
+  previous_time = current_time;
+}
+
 void UpdateSidebar(R3Scene *scene) {
   double current_time = GetTime();
   static double previous_time = 0;
@@ -540,13 +812,6 @@ void UpdateSidebar(R3Scene *scene) {
   for (unsigned int i = 0; i < scene->sidebar->buttons.size(); i++)
   {
     R3Button *button = scene->sidebar->buttons[i];
-    if (button->node->is_coin) {
-      R3Coin *coin = button->node->coin;
-      UpdateCoin(coin, delta_time);
-    } else if (button->node->is_platform) {
-      R3Platform *platform = button->node->platform;
-      UpdatePlatform(platform, delta_time);
-    }
   }
 }
 
@@ -651,7 +916,7 @@ void LoadMaterial(R3Material *material)
     }
 
     // Select texture
-    glBindTexture(GL_TEXTURE_2D, material->texture_index); 
+    glBindTexture(GL_TEXTURE_2D, material->texture_index);
     glEnable(GL_TEXTURE_2D);
   }
   else {
@@ -782,7 +1047,7 @@ void LoadLights(R3Scene *scene)
       buffer[3] = 1.0;
       glLightfv(index, GL_SPOT_DIRECTION, buffer);
     }
-     else {
+    else {
       fprintf(stderr, "Unrecognized light type: %d\n", light->type);
       return;
     }
@@ -1106,10 +1371,7 @@ void DrawHUD()
   // Level editor stuff
   if (level_editor)
   {
-    for (unsigned int i = 0; i < scene->sidebar->buttons.size(); i++)
-    {
-
-    }
+    //DrawSidebar();
   }
 
   // Draw coins as squares in top left
@@ -1153,16 +1415,12 @@ void GLUTMainLoop(void)
   glutMainLoop();
 }
 
-
-
 void GLUTDrawText(const R3Point& p, const char *s)
 {
   // Draw text string s and position p
   glRasterPos3d(p[0], p[1], p[2]);
   while (*s) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, *(s++));
 }
-  
-
 
 void GLUTSaveImage(const char *filename)
 { 
@@ -1252,6 +1510,7 @@ void GLUTRedraw(void)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   UpdatePlatforms(scene);
+  UpdateEnemies(scene); 
   
   // Update Player
   if (level_editor != 1) {
@@ -1266,6 +1525,7 @@ void GLUTRedraw(void)
   // delete objects
   DeleteNodes(scene->root);
   DeleteCoins();
+  DeleteEnemies(); 
   
   // Load camera
   LoadCamera(&camera);
@@ -1423,7 +1683,17 @@ void GLUTMouse(int button, int state, int x, int y)
   
   // Process mouse button event
   if (state == GLUT_DOWN) {
-    if (button == GLUT_LEFT_BUTTON) {
+    if (button == GLUT_LEFT_BUTTON && level_editor) {
+      int width = glutGet(GLUT_WINDOW_WIDTH);
+      int height = glutGet(GLUT_WINDOW_HEIGHT);
+      R3Ray ray = RayThoughPixel(camera, x, y, width, height);
+      // R3Box box = *scene->player->node->shape->box;
+      // box.Transform(scene->player->node->transformation);
+      // R3Intersection intersection = ComputeIntersection(&box, ray);
+      // if (intersection.hit)
+      //   PlaySound("/../sounds/secret.wav", false);
+      R3Point click_location = RayPlaneIntersection(scene->movement_plane, ray);
+      CreateShape(R3_BOX_SHAPE, scene, click_location);
     }
     else if (button == GLUT_MIDDLE_BUTTON) {
     }
@@ -1478,7 +1748,7 @@ void GLUTMouse(int button, int state, int x, int y)
 // {
 //   // Invert y coordinate
 //   y = GLUTwindow_height - y;
-  
+
 //   // Process keyboard button event
 //   switch (key) {
 //     case GLUT_KEY_RIGHT:
@@ -1491,14 +1761,14 @@ void GLUTMouse(int button, int state, int x, int y)
 //       up = false;
 //       break;
 //   }
-  
+
 //   // Remember mouse position
 //   GLUTmouse[0] = x;
 //   GLUTmouse[1] = y;
-  
+
 //   // Remember modifiers
 //   GLUTmodifiers = glutGetModifiers();
-  
+
 //   // Redraw
 //   glutPostRedisplay();
 // }
@@ -1647,7 +1917,7 @@ void GLUTInit(int *argc, char **argv)
   glEnable(GL_LIGHTING);
   glEnable(GL_DEPTH_TEST);
   glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
- 
+
   // Create menus
   GLUTCreateMenu();
 }
@@ -1702,6 +1972,7 @@ ParseArgs(int argc, char **argv)
   while (argc > 0) {
     if ((*argv)[0] == '-') {
       if (!strcmp(*argv, "-help")) { print_usage = 1; }
+      else if (!strcmp(*argv, "-soundtrack_enabled")) { soundtrack_enabled = 1; }
       else if (!strcmp(*argv, "-level_editor")) { level_editor = 1; }
       else if (!strcmp(*argv, "-exit_immediately")) { quit = 1; }
       else if (!strcmp(*argv, "-output_image")) { argc--; argv++; output_image_name = *argv; }
@@ -1761,12 +2032,15 @@ main(int argc, char **argv)
   sound_engine = createIrrKlangDevice();
   if (!sound_engine)
     return 0; // if there was an error creating the sound engine
-  
-//  char path[FILENAME_MAX];
-//  FilePath(path, "/../sounds/maxo.wav");
-//  ISound *soundtrack = sound_engine->play2D(path, true, false, true);
-//  soundtrack->setVolume(0.35);
-//  soundtrack->setIsPaused(false);
+
+  if (soundtrack_enabled)
+  {
+    char path[FILENAME_MAX];
+    FilePath(path, "/../sounds/maxo.wav");
+    ISound *soundtrack = sound_engine->play2D(path, true, false, true);
+    soundtrack->setVolume(0.35);
+    soundtrack->setIsPaused(false);
+  }
 
   // Run GLUT interface
   GLUTMainLoop();
