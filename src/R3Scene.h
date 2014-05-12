@@ -267,11 +267,12 @@ struct R3Scene {
   R3Rgb ambient;
   R3Player *player;
   R3Sidebar *sidebar;
+  R3Plane movement_plane;
 };
 
 struct R3Button {
   void (*action)(R3Scene *scene);
-  R3Node *node;
+  
 };
 
 struct R3Sidebar {

@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include "../irrKlang/include/irrKlang.h"
+#include "raytrace.h"
 
 using namespace irrklang;
 
@@ -92,12 +93,42 @@ static char exec_path[FILENAME_MAX + 1];
 
 
 ////////////////////////////////////////////////////////////
-// LEVEL EDITOR COMMANDS
+// LEVEL EDITOR STUFF
 ////////////////////////////////////////////////////////////
 
-// enum {
-//   MAKE_BOX,
-// };
+void CreateShape(R3ShapeType type, R3Scene *s, R3Point p)
+{
+  if (type == R3_BOX_SHAPE)
+  {
+    // Create box
+    R3Box *box = new R3Box(p + R3Vector(-1, -1, -1), p + R3Vector(1, 1, 1));
+    
+    // Create shape
+    R3Shape *shape = new R3Shape();
+    shape->type = R3_BOX_SHAPE;
+    shape->box = box;
+    shape->sphere = NULL;
+    shape->cylinder = NULL;
+    shape->cone = NULL;
+    shape->mesh = NULL;
+    shape->segment = NULL;
+    
+    // Create shape node
+    R3Node *node = new R3Node();
+    node->transformation = R3identity_matrix;
+    node->material = NULL;
+    node->shape = shape;
+    node->bbox = *box;
+    node->is_obstacle = true;
+    node->is_visible = true;
+    node->is_coin = false;
+
+    // Add to scene
+    s->root->bbox.Union(node->bbox);
+    s->root->children.push_back(node);
+    node->parent = s->root;
+  }
+}
 
 ////////////////////////////////////////////////////////////
 // TIMER CODE
@@ -460,7 +491,7 @@ void UpdatePlayer(R3Scene *scene) {
   }
 
   // side to side
-  double TAU = .5; // timescale for velocity relaxation
+  double TAU = .3; // timescale for velocity relaxation
   const R3Vector forward = p->Towards();
   R3Vector forwardVelocity = p->velocity;
   forwardVelocity.Project(forward);
@@ -472,7 +503,7 @@ void UpdatePlayer(R3Scene *scene) {
   }
   // Drag
   else if (!p->inAir) {
-    const double DRAG_COEFFICIENT = 2;
+    const double DRAG_COEFFICIENT = 4;
     f += -1*forwardVelocity*DRAG_COEFFICIENT;// * DRAG_COEFFICIENT;
   }
   
@@ -511,15 +542,6 @@ void UpdatePlayer(R3Scene *scene) {
     p->node->is_visible = false;
     PlaySound("/../sounds/death.wav", false);
   }
-
-  // stuff for checking mouse position and translating it to world coords
-  // R3Point min_player_pos = player_box.Min();
-  // R3Point max_player_pos = player_box.Max();
-  // int x = GLUTmouse[0];
-  // int y = GLUTmouse[1];
-  // if (x > min_player_pos.X() && x < max_player_pos.X()
-  //  && y > min_player_pos.Y() && y < max_player_pos.Y())
-  //   PlaySound("/../sounds/coin.wav", false);
   
   static double angle = 0;
   double MAX_ROTATION = PI/8;
@@ -531,7 +553,6 @@ void UpdatePlayer(R3Scene *scene) {
   camera = scene->camera;
 
   previous_time = current_time;
-
 }
 
 void UpdateCoin(R3Coin *coin, double delta_time)
@@ -711,13 +732,6 @@ void UpdateSidebar(R3Scene *scene) {
   for (unsigned int i = 0; i < scene->sidebar->buttons.size(); i++)
   {
     R3Button *button = scene->sidebar->buttons[i];
-    if (button->node->is_coin) {
-      R3Coin *coin = button->node->coin;
-      UpdateCoin(coin, delta_time);
-    } else if (button->node->is_platform) {
-      R3Platform *platform = button->node->platform;
-      UpdatePlatform(platform, delta_time);
-    }
   }
 }
 
@@ -822,7 +836,7 @@ void LoadMaterial(R3Material *material)
     }
 
     // Select texture
-    glBindTexture(GL_TEXTURE_2D, material->texture_index); 
+    glBindTexture(GL_TEXTURE_2D, material->texture_index);
     glEnable(GL_TEXTURE_2D);
   }
   else {
@@ -1275,11 +1289,8 @@ void DrawHUD()
   glClear(GL_DEPTH_BUFFER_BIT);
 
   // Level editor stuff
-  if (level_editor)
-  {
-    for (unsigned int i = 0; i < scene->sidebar->buttons.size(); i++)
-    {
-
+  if (level_editor) {
+    for (unsigned int i = 0; i < scene->sidebar->buttons.size(); i++) {
     }
   }
 
@@ -1596,6 +1607,16 @@ void GLUTMouse(int button, int state, int x, int y)
   // Process mouse button event
   if (state == GLUT_DOWN) {
     if (button == GLUT_LEFT_BUTTON) {
+      int width = glutGet(GLUT_WINDOW_WIDTH);
+      int height = glutGet(GLUT_WINDOW_HEIGHT);
+      R3Ray ray = RayThoughPixel(scene->camera, x, y, width, height);
+      // R3Box box = *scene->player->node->shape->box;
+      // box.Transform(scene->player->node->transformation);
+      // R3Intersection intersection = ComputeIntersection(&box, ray);
+      // if (intersection.hit)
+      //   PlaySound("/../sounds/secret.wav", false);
+      R3Point click_location = RayPlaneIntersection(scene->movement_plane, ray);
+      CreateShape(R3_BOX_SHAPE, scene, click_location);
     }
     else if (button == GLUT_MIDDLE_BUTTON) {
     }
