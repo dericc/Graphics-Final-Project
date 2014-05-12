@@ -230,8 +230,8 @@ void PlaySound(const char *filename, bool looped)
 void KillPlayer(void) {
   R3Player *p = scene->player;
 
-  if (!p->isDead) {
-    p->isDead = true;
+  if (!p->is_dead) {
+    p->is_dead = true;
     p->node->is_visible = false;
     PlaySound("/../sounds/death.wav", false);
   }
@@ -239,8 +239,8 @@ void KillPlayer(void) {
 
 void KillEnemy(R3Enemy *e) {
 
-  if (!e->isDead) {
-    e->isDead = true;
+  if (!e->is_dead) {
+    e->is_dead = true;
     e->node->is_visible = false;
     e->del = true; 
     e->node->del = true; 
@@ -560,7 +560,7 @@ void UpdatePlayer(R3Scene *scene) {
   p->velocity += (f / p->mass) * delta_time;
   
   // transform the player node
-  if (!p->isDead)
+  if (!p->is_dead)
   {
     R3Matrix tform = p->node->transformation;
     tform.Translate(p->velocity * delta_time);
@@ -588,7 +588,7 @@ void UpdatePlayer(R3Scene *scene) {
   R3Box player_box = *p->node->shape->box;
   player_box.Transform(p->node->transformation);
 
-  if (player_box.Min().Y() <= scene->death_y && !p->isDead)
+  if (player_box.Min().Y() <= scene->death_y && !p->is_dead)
   {
     KillPlayer(); 
   }

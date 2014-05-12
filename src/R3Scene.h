@@ -208,7 +208,7 @@ struct R3Enemy {
   R3Vector Up();
 
   bool inAir;
-  bool isDead;
+  bool is_dead;
   bool del; 
   
   bool onPlatform;
