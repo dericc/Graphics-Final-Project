@@ -232,24 +232,32 @@ void CollidePlayer(R3Node *node)
     double ymin_d = abs(scene_box.YMax() - player_box.YMin());
     double ymax_d = abs(scene_box.YMin() - player_box.YMax());
 
+    bool zcoll = (player_box.ZMin() <= scene_box.ZMax() && player_box.ZMin() >= scene_box.ZMin())
+              || (player_box.ZMax() <= scene_box.ZMax() && player_box.ZMax() >= scene_box.ZMin());
+
     // determine if there is an intersection for each direction (player edge is inside object)
-    bool xmin_coll = player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin()
+    bool xmin_coll = zcoll
+                &&   player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin()
                 && ((player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin())
                 ||  (player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin()));
 
-    bool xmax_coll = player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin()
+    bool xmax_coll = zcoll
+                &&   player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin()
                 && ((player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin())
                 ||  (player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin()));
 
-    bool ymin_coll = player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin()
+    bool ymin_coll = zcoll
+                &&   player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin()
                 && ((player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin())
                 ||  (player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin()));
 
-    bool ymax_coll = player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin()
+    bool ymax_coll = zcoll
+                &&   player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin()
                 && ((player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin())
                 ||  (player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin()));
 
-    bool inside = (player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin())
+    bool inside = zcoll
+               && (player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin())
                && (player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin())
                && (player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin())
                && (player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin());
