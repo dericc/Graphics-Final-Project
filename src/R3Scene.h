@@ -205,6 +205,7 @@ struct R3Enemy {
 
   bool inAir;
   bool isDead;
+  bool del; 
   
   bool onPlatform;
   R3Platform *platform;

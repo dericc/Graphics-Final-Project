@@ -237,6 +237,18 @@ void KillPlayer(void) {
   }
 }
 
+void KillEnemy(R3Enemy *e) {
+
+  if (!e->isDead) {
+    e->isDead = true;
+    e->node->is_visible = false;
+    e->del = true; 
+    e->node->del = true; 
+    PlaySound("/../sounds/death.wav", false);
+  }
+}
+
+
 
 
 ////////////////////////////////////////////////////////////
@@ -306,8 +318,10 @@ void CollidePlayer(R3Node *node)
       // for each direction, check if it has the minimum depth of all other collisions before correcting player position and setting velocity to 0
       if (xmin_coll && (!ymin_coll || xmin_d < ymin_d) && (!ymax_coll || xmin_d < ymax_d))
       {
-        if (node->is_enemy) 
+        if (node->is_enemy) {
           KillPlayer();  
+        }
+
         tform.Translate(R3Vector(scene_box.XMax() - player_box.XMin(), 0, 0));
         R3Vector v = p->velocity;
         v.SetX(0);
@@ -315,8 +329,9 @@ void CollidePlayer(R3Node *node)
       }
       if (xmax_coll && (!ymin_coll || xmax_d < ymin_d) && (!ymax_coll || xmax_d < ymax_d))
       {
-        if (node->is_enemy) 
+        if (node->is_enemy) {
           KillPlayer();  
+        }
 
         tform.Translate(R3Vector(scene_box.XMin() - player_box.XMax(), 0, 0));
         R3Vector v = p->velocity;
@@ -326,8 +341,9 @@ void CollidePlayer(R3Node *node)
 
       if (ymin_coll && (!xmin_coll || ymin_d < xmin_d) && (!xmax_coll || ymin_d < xmax_d))
       {
-        if (node->is_enemy) 
-          KillPlayer();  
+        if (node->is_enemy) {
+          KillEnemy(node->enemy);  
+        }
 
         tform.Translate(R3Vector(0, scene_box.YMax() - player_box.YMin(), 0));
         R3Vector v = p->velocity;
@@ -345,9 +361,9 @@ void CollidePlayer(R3Node *node)
       }
       if (ymax_coll && (!xmin_coll || ymax_d < xmin_d) && (!xmax_coll || ymax_d < xmax_d))
       {
-
-        if (node->is_enemy) 
+        if (node->is_enemy) {
           KillPlayer();  
+        }
 
         tform.Translate(R3Vector(0, scene_box.YMin() - player_box.YMax(), 0));
         R3Vector v = p->velocity;
@@ -445,6 +461,7 @@ void CollideEnemy(R3Enemy *e, R3Node *node)
         v.SetX(0);
         p->velocity = v;
       }
+
       if (xmax_coll && (!ymin_coll || xmax_d < ymin_d) && (!ymax_coll || xmax_d < ymax_d))
       {
         tform.Translate(R3Vector(scene_box.XMin() - player_box.XMax(), 0, 0));
@@ -660,6 +677,16 @@ void DeleteCoins() {
   }
 }
 
+void DeleteEnemies() {
+  for (vector<R3Enemy *>::iterator it = scene->enemies.begin(); it != scene->enemies.end();)
+  {
+    if ((*it)->del)
+      scene->enemies.erase(it);
+    else
+      it++;
+  }
+}
+
 void UpdatePlatforms(R3Scene *scene) {
   double current_time = GetTime();
   static double previous_time = 0;
@@ -702,7 +729,7 @@ void UpdateEnemies(R3Scene *scene) {
     f += -9.8 * p->Up() * p->mass;
     if (!p->inAir) {
       p->velocity += 10 * p->Up();
-      PlaySound("/../sounds/jump.wav", false);
+      // PlaySound("/../sounds/jump.wav", false);
       if (p->onPlatform) {
         p->velocity += p->platform->velocity;
       }
@@ -1369,16 +1396,12 @@ void GLUTMainLoop(void)
   glutMainLoop();
 }
 
-
-
 void GLUTDrawText(const R3Point& p, const char *s)
 {
   // Draw text string s and position p
   glRasterPos3d(p[0], p[1], p[2]);
   while (*s) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, *(s++));
 }
-
-
 
 void GLUTSaveImage(const char *filename)
 { 
@@ -1483,6 +1506,7 @@ void GLUTRedraw(void)
   // delete objects
   DeleteNodes(scene->root);
   DeleteCoins();
+  DeleteEnemies(); 
   
   // Load camera
   LoadCamera(&camera);
