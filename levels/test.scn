@@ -32,6 +32,10 @@ material
   0 0 0
   1 1 nazi.jpg
 
+goal
+    1
+    0 3 0
+    1 4 1
 
 box
     1

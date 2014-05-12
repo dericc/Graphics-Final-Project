@@ -82,6 +82,8 @@ struct R3Platform;
 struct R3Enemy; 
 
 struct R3Node {
+  R3Node(void)
+  : is_obstacle(false), is_coin(false), is_enemy(false), is_goal(false) {};
   struct R3Node *parent;
   vector<struct R3Node *> children;
   R3Shape *shape;
@@ -96,6 +98,7 @@ struct R3Node {
   bool is_enemy; 
   R3Enemy *enemy; 
   bool is_visible;
+  bool is_goal;
   bool del;
 };
 
@@ -156,7 +159,7 @@ struct R3ParticleSpring {
 
 struct R3Player {
   R3Player(R3Node *node, double max_speed, double mass) :
-    node(node), max_speed(max_speed),  mass(mass), isDead(false), n_coins(0) {};
+    node(node), max_speed(max_speed),  mass(mass), is_dead(false), n_coins(0) {};
   
   R3Node *node; //
   const double max_speed;
@@ -174,7 +177,7 @@ struct R3Player {
   
   R3Vector velocity; // current direction of motion
   bool inAir;
-  bool isDead;
+  bool is_dead;
   int n_coins;
   
   bool onPlatform;
@@ -190,7 +193,7 @@ struct R3Coin {
 
 struct R3Enemy {
   R3Enemy(R3Node *node, bool moveLeft, double speed, double mass) :
-    node(node), moveLeft(moveLeft), speed(speed), mass(mass), isDead(false) {};
+    node(node), moveLeft(moveLeft), speed(speed), mass(mass), is_dead(false) {};
   
   R3Node *node; 
   bool moveLeft; // current direction of motion: left or right
@@ -204,10 +207,19 @@ struct R3Enemy {
   R3Vector Up();
 
   bool inAir;
-  bool isDead;
+  bool is_dead;
   
   bool onPlatform;
   R3Platform *platform;
+};
+
+// goal for player to get to
+struct R3Goal {
+  R3Goal(R3Node *node) :
+    node(node), is_active(false) {};
+
+  R3Node *node;
+  bool is_active; // is the goal active?
 };
 
 struct R3Sidebar;
@@ -241,13 +253,13 @@ struct R3Scene {
   // I/O functions
   int Read(const char *filename, R3Node *root = NULL);
 
-  void WritePlayer(FILE *fp); 
-  void WriteMaterials(FILE *fp); 
-  void WriteLights(FILE *fp); 
-  void WritePlatforms(FILE *fp); 
-  void WriteCoins(FILE *fp); 
-  void WriteNode(FILE *fp, R3Node *node); 
-  int Write(const char *filename, R3Node *node); 
+  void WritePlayer(FILE *fp);
+  void WriteMaterials(FILE *fp);
+  void WriteLights(FILE *fp);
+  void WritePlatforms(FILE *fp);
+  void WriteCoins(FILE *fp);
+  void WriteNode(FILE *fp, R3Node *node);
+  int Write(const char *filename, R3Node *node);
 
  public:
   int death_y;
@@ -266,13 +278,13 @@ struct R3Scene {
   R3Rgb background;
   R3Rgb ambient;
   R3Player *player;
+  R3Goal *goal;
   R3Sidebar *sidebar;
   R3Plane movement_plane;
 };
 
 struct R3Button {
   void (*action)(R3Scene *scene);
-  
 };
 
 struct R3Sidebar {

@@ -1443,6 +1443,45 @@ Read(const char *filename, R3Node *node)
       // set movement plane
       movement_plane = R3Plane(player->node->bbox.Centroid(), R3Vector(0, 0, 1));
     }
+    else if (!strcmp(cmd, "goal")) {
+      // Read data
+      int m;
+      R3Point p1, p2;
+      if (fscanf(fp, "%d%lf%lf%lf%lf%lf%lf", &m, &p1[0], &p1[1], &p1[2], &p2[0], &p2[1], &p2[2]) != 7) {
+        fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
+        return 0;
+      }
+      
+      // Create box
+      R3Box *box = new R3Box(p1, p2);
+      
+      // Create shape
+      R3Shape *shape = new R3Shape();
+      shape->type = R3_BOX_SHAPE;
+      shape->box = box;
+      shape->sphere = NULL;
+      shape->cylinder = NULL;
+      shape->cone = NULL;
+      shape->mesh = NULL;
+      shape->segment = NULL;
+      
+      // Create shape node
+      R3Node *node = new R3Node();
+      node->transformation = R3identity_matrix;
+      node->material = NULL;
+      node->shape = shape;
+      node->bbox = *box;
+      node->is_goal = true;
+      node->del = false;
+      node->is_visible = true;
+      
+      // Insert node
+      group_nodes[depth]->bbox.Union(node->bbox);
+      group_nodes[depth]->children.push_back(node);
+      node->parent = group_nodes[depth];
+      
+      goal = new R3Goal(node);
+    }
     else if (!strcmp(cmd, "enemy")) {
       // Read data
       int m;
