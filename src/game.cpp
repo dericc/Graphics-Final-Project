@@ -318,6 +318,10 @@ void CollidePlayer(R3Node *node)
           p->onPlatform = true;
           p->platform = node->platform;
         }
+        else {
+          p->onPlatform = false;
+          p->platform = NULL;
+        }
       }
       if (ymax_coll && (!xmin_coll || ymax_d < xmin_d) && (!xmax_coll || ymax_d < xmax_d))
       {
@@ -347,6 +351,114 @@ void CollidePlayer(R3Node *node)
   }
 }
 
+
+// recursively collide player with the scene
+void CollideEnemy(R3Enemy *e, R3Node *node)
+{
+
+  // get transformed player box
+  R3Enemy *p = e; 
+
+  if (node == p->node)
+    return;
+  R3Box player_box = *(p->node->shape->box);
+  player_box.Transform(p->node->transformation);
+
+  // if the scene node is a box
+  if (node->is_obstacle || node->is_coin)
+  {
+    // get transformed scene box
+    R3Box scene_box;
+    if (node->is_obstacle)
+    {
+      scene_box = node->bbox;
+      scene_box.Transform(node->transformation);
+    }
+    else if (node->is_coin)
+    {
+      scene_box = R3Box(R3Point(-0.5, -0.5, -0.5), R3Point(0.5, 0.5, 0.5));
+      scene_box.Translate(node->coin->position.Vector());
+    }
+
+    // calculate to what depth the player is intersecting in each direction
+    double xmin_d = abs(scene_box.XMax() - player_box.XMin());
+    double xmax_d = abs(scene_box.XMin() - player_box.XMax());
+    double ymin_d = abs(scene_box.YMax() - player_box.YMin());
+    double ymax_d = abs(scene_box.YMin() - player_box.YMax());
+
+    // determine if there is an intersection for each direction (player edge is inside object)
+    bool xmin_coll = player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin()
+    && ((player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin())
+      ||  (player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin()));
+
+    bool xmax_coll = player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin()
+    && ((player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin())
+      ||  (player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin()));
+
+    bool ymin_coll = player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin()
+    && ((player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin())
+      ||  (player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin()));
+
+    bool ymax_coll = player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin()
+    && ((player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin())
+      ||  (player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin()));
+
+    bool inside = (player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin())
+    && (player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin())
+    && (player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin())
+    && (player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin());
+
+    if (node->is_obstacle)
+    {
+      // get player transformation
+      R3Matrix tform = p->node->transformation;
+
+      // for each direction, check if it has the minimum depth of all other collisions before correcting player position and setting velocity to 0
+      if (xmin_coll && (!ymin_coll || xmin_d < ymin_d) && (!ymax_coll || xmin_d < ymax_d))
+      {
+        tform.Translate(R3Vector(scene_box.XMax() - player_box.XMin(), 0, 0));
+        R3Vector v = p->velocity;
+        v.SetX(0);
+        p->velocity = v;
+      }
+      if (xmax_coll && (!ymin_coll || xmax_d < ymin_d) && (!ymax_coll || xmax_d < ymax_d))
+      {
+        tform.Translate(R3Vector(scene_box.XMin() - player_box.XMax(), 0, 0));
+        R3Vector v = p->velocity;
+        v.SetX(0);
+        p->velocity = v;
+      }
+
+      if (ymin_coll && (!xmin_coll || ymin_d < xmin_d) && (!xmax_coll || ymin_d < xmax_d))
+      {
+        tform.Translate(R3Vector(0, scene_box.YMax() - player_box.YMin(), 0));
+        R3Vector v = p->velocity;
+        v.SetY(0);
+        p->velocity = v;
+        p->inAir = false;
+        if (node->is_platform) {
+          p->onPlatform = true;
+          p->platform = node->platform;
+        }
+      }
+      if (ymax_coll && (!xmin_coll || ymax_d < xmin_d) && (!xmax_coll || ymax_d < xmax_d))
+      {
+        tform.Translate(R3Vector(0, scene_box.YMin() - player_box.YMax(), 0));
+        R3Vector v = p->velocity;
+        v.SetY(0);
+        p->velocity = v;
+      }
+      // update player tform
+      p->node->transformation = tform;
+    }
+  }
+
+  for (unsigned int i = 0; i < node->children.size(); i++)
+  {
+    CollideEnemy(p, node->children[i]);
+  }
+}
+
 void UpdatePlayer(R3Scene *scene) {
   R3Player *p = scene->player;
 
@@ -373,13 +485,18 @@ void UpdatePlayer(R3Scene *scene) {
   // Motion Shit
   // get the forces to move the box
   R3Vector f = R3null_vector;
-  f += -9.8 * p->Up() * p->mass;
+  if (p->inAir) {
+    f += -9.8 * p->Up() * p->mass;
+  }
   if (up_key && !p->inAir) {
     p->velocity += 15 * p->Up();
     PlaySound("/../sounds/jump.wav", false);
     if (p->onPlatform) {
       p->velocity += p->platform->velocity;
     }
+    p->inAir = true;
+    p->onPlatform = false;
+    p->platform = NULL;
   }
 
   // side to side
@@ -410,8 +527,9 @@ void UpdatePlayer(R3Scene *scene) {
   }
   
   // set inair to true: it will be set to false if collision with ground detected
+
+  //p->onPlatform = false;
   p->inAir = true;
-  p->onPlatform = false;
   CollidePlayer(scene->root);
   
   if (p->onPlatform) {
@@ -434,16 +552,17 @@ void UpdatePlayer(R3Scene *scene) {
     p->node->is_visible = false;
     PlaySound("/../sounds/death.wav", false);
   }
-  
-  static double angle = 0;
-  double MAX_ROTATION = PI/8;
-  double new_angle = -1*MAX_ROTATION * (forwardVelocity.Length() / p->max_speed);
-  if (forwardVelocity.Dot(p->Towards()) < 0) { new_angle *= -1; }
-  angle = angle * 0.9 + new_angle * 0.1;
-  R3Line center_line(p->Center(), p->Up());
-  scene->camera.Rotate(center_line, angle);
-  camera = scene->camera;
 
+  if (!(key_state['c'] || key_state['C'])) {
+    static double angle = 0;
+    double MAX_ROTATION = PI/8;
+    double new_angle = -1*MAX_ROTATION * (forwardVelocity.Length() / p->max_speed);
+    if (forwardVelocity.Dot(p->Towards()) < 0) { new_angle *= -1; }
+    angle = angle * 0.9 + new_angle * 0.1;
+    R3Line center_line(p->Center(), p->Up());
+    scene->camera.Rotate(center_line, angle);
+    camera = scene->camera;
+  }
   previous_time = current_time;
 }
 
@@ -485,9 +604,10 @@ void UpdatePlatform(R3Platform *platform, double delta_time) {
   
   double K = 2; // spring constant
   R3Vector displacement = platform->center - pos;
-  platform->velocity += K * displacement * delta_time;
+  platform->velocity += platform->max_speed * displacement * delta_time;
   platform->node->transformation.Translate(platform->velocity * delta_time);
 }
+
 
 void DeleteNodes(R3Node *node) {
   for (vector<R3Node *>::iterator it = node->children.begin(); it != node->children.end();)
@@ -534,6 +654,75 @@ void UpdatePlatforms(R3Scene *scene) {
     UpdatePlatform(cur, delta_time);
   }
   
+  previous_time = current_time;
+}
+
+void UpdateEnemies(R3Scene *scene) {
+
+  double current_time = GetTime();
+  static double previous_time = 0;
+  
+  // time passed since starting
+  double delta_time = current_time - previous_time;
+  
+  int numEnemies = scene->enemies.size();
+
+  for (int i = 0; i < numEnemies; i++) {
+
+    R3Enemy *p = scene->enemies[i];
+
+    if (p == NULL) return; 
+
+    // Motion Shit
+    // get the forces to move the box
+    R3Vector f = R3null_vector;
+    f += -9.8 * p->Up() * p->mass;
+    if (!p->inAir) {
+      p->velocity += 10 * p->Up();
+      PlaySound("/../sounds/jump.wav", false);
+      if (p->onPlatform) {
+        p->velocity += p->platform->velocity;
+      }
+    }
+
+    // side to side
+    double TAU = .5; // timescale for velocity relaxation
+    const R3Vector forward = p->Towards();
+    R3Vector forwardVelocity = p->velocity;
+    forwardVelocity.Project(forward);
+    if (!p->moveLeft) {
+      f += (p->speed * forward - forwardVelocity) / TAU;
+    }
+    else if (p->moveLeft) {
+      f += (-p->speed * forward - forwardVelocity) / TAU;
+    }
+    // Drag
+    else if (!p->inAir) {
+      const double DRAG_COEFFICIENT = 2;
+      f += -1*forwardVelocity*DRAG_COEFFICIENT;// * DRAG_COEFFICIENT;
+    }
+    
+    p->velocity += (f / p->mass) * delta_time;
+    
+    // transform the player node
+    if (!p->isDead)
+    {
+      R3Matrix tform = p->node->transformation;
+      tform.Translate(p->velocity * delta_time);
+      p->node->transformation = tform;
+    }
+    
+    // set inair to true: it will be set to false if collision with ground detected
+    p->inAir = true;
+    p->onPlatform = false;
+    CollideEnemy(p, scene->root);
+
+    if (p->onPlatform) {
+      p->node->transformation.Translate(p->platform->velocity * delta_time);
+    }
+
+  }
+
   previous_time = current_time;
 }
 
@@ -789,7 +978,7 @@ void LoadLights(R3Scene *scene)
       buffer[3] = 1.0;
       glLightfv(index, GL_SPOT_DIRECTION, buffer);
     }
-     else {
+    else {
       fprintf(stderr, "Unrecognized light type: %d\n", light->type);
       return;
     }
@@ -1111,9 +1300,9 @@ void DrawHUD()
   glClear(GL_DEPTH_BUFFER_BIT);
 
   // Level editor stuff
-  if (level_editor) {
-    for (unsigned int i = 0; i < scene->sidebar->buttons.size(); i++) {
-    }
+  if (level_editor)
+  {
+    //DrawSidebar();
   }
 
   // Draw coins as squares in top left
@@ -1165,7 +1354,7 @@ void GLUTDrawText(const R3Point& p, const char *s)
   glRasterPos3d(p[0], p[1], p[2]);
   while (*s) glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, *(s++));
 }
-  
+
 
 
 void GLUTSaveImage(const char *filename)
@@ -1256,6 +1445,7 @@ void GLUTRedraw(void)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   UpdatePlatforms(scene);
+  UpdateEnemies(scene); 
   
   // Update Player
   if (level_editor != 1) {
@@ -1427,10 +1617,10 @@ void GLUTMouse(int button, int state, int x, int y)
   
   // Process mouse button event
   if (state == GLUT_DOWN) {
-    if (button == GLUT_LEFT_BUTTON) {
+    if (button == GLUT_LEFT_BUTTON && level_editor) {
       int width = glutGet(GLUT_WINDOW_WIDTH);
       int height = glutGet(GLUT_WINDOW_HEIGHT);
-      R3Ray ray = RayThoughPixel(scene->camera, x, y, width, height);
+      R3Ray ray = RayThoughPixel(camera, x, y, width, height);
       // R3Box box = *scene->player->node->shape->box;
       // box.Transform(scene->player->node->transformation);
       // R3Intersection intersection = ComputeIntersection(&box, ray);
@@ -1492,7 +1682,7 @@ void GLUTMouse(int button, int state, int x, int y)
 // {
 //   // Invert y coordinate
 //   y = GLUTwindow_height - y;
-  
+
 //   // Process keyboard button event
 //   switch (key) {
 //     case GLUT_KEY_RIGHT:
@@ -1505,14 +1695,14 @@ void GLUTMouse(int button, int state, int x, int y)
 //       up = false;
 //       break;
 //   }
-  
+
 //   // Remember mouse position
 //   GLUTmouse[0] = x;
 //   GLUTmouse[1] = y;
-  
+
 //   // Remember modifiers
 //   GLUTmodifiers = glutGetModifiers();
-  
+
 //   // Redraw
 //   glutPostRedisplay();
 // }
@@ -1661,7 +1851,7 @@ void GLUTInit(int *argc, char **argv)
   glEnable(GL_LIGHTING);
   glEnable(GL_DEPTH_TEST);
   glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
- 
+
   // Create menus
   GLUTCreateMenu();
 }
