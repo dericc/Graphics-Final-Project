@@ -270,17 +270,24 @@ struct R3Scene {
   R3Plane movement_plane;
 };
 
+typedef void (*button_fxn)(void);
+
 struct R3Button {
-  void (*action)(R3Scene *scene);
-  
+  // this might be ugly but one of these two guys will be null
+  R3Button(int *value) : value(value), f(NULL) {};
+  R3Button(button_fxn f) : value(NULL), f(f) {};
+  int * value;
+  button_fxn f;
 };
 
 struct R3Sidebar {
+  R3Sidebar(double width, double border) :
+  width(width), border(border), button_width(width - 2*border), selected_button(-1) {};
   vector<R3Button *> buttons;
   double width;
-  double height;
-  R3Button *Clicked(int x, int y);
-  R3Button *last_clicked;
+  double border;
+  double button_width;
+  int selected_button;
 };
 
 // Inline functions 

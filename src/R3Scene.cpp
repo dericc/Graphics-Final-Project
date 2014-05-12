@@ -80,9 +80,6 @@ R3Vector R3Enemy::Up(void) {
   return up;
 }
 
-//R3Sidebar::
-//R3Sidebar(void)
-
 R3Scene::
 R3Scene(void)
 : bbox(R3null_box),
@@ -111,7 +108,7 @@ ambient(0,0,0,1)
   death_y = -5;
 
   // Create sidebar
-  sidebar = new R3Sidebar();
+  sidebar = new R3Sidebar(200, 10);
 }
 
 
