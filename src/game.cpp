@@ -1617,10 +1617,10 @@ void GLUTMouse(int button, int state, int x, int y)
   
   // Process mouse button event
   if (state == GLUT_DOWN) {
-    if (button == GLUT_LEFT_BUTTON) {
+    if (button == GLUT_LEFT_BUTTON && level_editor) {
       int width = glutGet(GLUT_WINDOW_WIDTH);
       int height = glutGet(GLUT_WINDOW_HEIGHT);
-      R3Ray ray = RayThoughPixel(scene->camera, x, y, width, height);
+      R3Ray ray = RayThoughPixel(camera, x, y, width, height);
       // R3Box box = *scene->player->node->shape->box;
       // box.Transform(scene->player->node->transformation);
       // R3Intersection intersection = ComputeIntersection(&box, ray);
