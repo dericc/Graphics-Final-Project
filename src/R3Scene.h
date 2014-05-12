@@ -245,7 +245,7 @@ struct R3Scene {
 
 struct R3Button {
   void (*action)(R3Scene *scene);
-  R3Node *node;
+  
 };
 
 struct R3Sidebar {
