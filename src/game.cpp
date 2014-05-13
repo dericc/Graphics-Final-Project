@@ -100,6 +100,7 @@ static bool key_state[256] = {false};
 
 // sound engine
 static ISoundEngine *sound_engine;
+static ISound *soundtrack;
 
 // executable path
 static char exec_path[FILENAME_MAX + 1];
@@ -1767,6 +1768,14 @@ void GLUTRedraw(void)
     GLUTStop();
   }
 
+  if (scene->player && scene->player->has_won)
+  {
+    if (GetTime() - scene->player->won_time > 10.0f && strlen(scene->next_level))
+    {
+      LoadLevel(scene->next_level);
+    }
+  }
+
   // Swap buffers 
   glutSwapBuffers();
 }    
@@ -2382,6 +2391,12 @@ R3Camera GetMinimapCam(R3Scene *scene) {
 
 void LoadLevel(const char *filename)
 {
+  if (soundtrack)
+  {
+    soundtrack->stop();
+    soundtrack->drop();
+  }
+
   if (scene)
     delete scene;
 
@@ -2399,11 +2414,11 @@ void LoadLevel(const char *filename)
     camera = minimap_cam;
   }
 
-  if (soundtrack_enabled)
+  if (soundtrack_enabled && scene->soundtrack)
   {
     char path[FILENAME_MAX];
-    FilePath(path, "/../sounds/maxo.wav");
-    ISound *soundtrack = sound_engine->play2D(path, true, false, true);
+    FilePath(path, scene->soundtrack);
+    soundtrack = sound_engine->play2D(path, true, false, true);
     soundtrack->setVolume(0.35);
     soundtrack->setIsPaused(false);
   }

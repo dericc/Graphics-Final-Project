@@ -181,4 +181,7 @@ skybox clouds_front.jpg
 
 death_y -10
 
+soundtrack /../sounds/maxo.wav
+
+
 particle_gravity 0 -9.8 0

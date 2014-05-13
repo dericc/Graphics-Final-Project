@@ -235,7 +235,7 @@ struct R3Sidebar;
 struct R3Scene {
  public:
   // Constructor functions
-  R3Scene(void);
+  R3Scene(void) {next_level[0] = '\0'; soundtrack[0] = '\0';};
 
   // Access functions
   R3Node *Root(void) const;
@@ -291,6 +291,8 @@ struct R3Scene {
   R3Sidebar *sidebar;
   R3Plane movement_plane;
   char skyboxTexture[256]; 
+  char soundtrack[256];
+  char next_level[256];
 };
 
 typedef void (*button_fxn)(void);
