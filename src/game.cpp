@@ -1203,7 +1203,7 @@ void DrawNode(R3Scene *scene, R3Node *node)
 
   // Draw shape
   if (node->is_goal && node->shape && node->is_goal) DrawGoal(node->shape);
-  else if (node->is_player && node->shape && scene->player) DrawPlayer(node->shape, scene->player->has_won);
+  else if (node->is_player && node->shape && scene->player && node->is_visible) DrawPlayer(node->shape, scene->player->has_won);
   else if (node->is_visible && node->shape) DrawShape(node->shape);
 
   // Draw children nodes
