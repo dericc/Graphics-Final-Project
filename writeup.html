@@ -131,7 +131,7 @@ We used OpenGL to implement lighting and smooth shading. Directional lights in t
 </TR>
 </TBODY>
 </TABLE> -->
-The user controls the player character with three keys: "w", "a", and "d" mapped to up, left, and right.  Many other keys are used for auxiliary functions: "c" brings up the overview of the entire level, "m" toggles the minimap, "p" prints out a new scene file with the entire game in its current state, and the level editor allows the user to click anywhere in the scene and immediately create (or alter) objects. 
+The user controls the player character with three keys: "w", "a", and "d" mapped to up, left, and right.  Many other keys are used for auxiliary functions: "c" brings up the overview of the entire level, "m" toggles the minimap, "p" prints out a new scene file with the entire game in its current state, and the level editor allows the user to click anywhere in the scene and immediately create (or alter) objects. "r" restarts the level. 
 <hr><br>
 
 <!------------------------------------------------------------------------> 
@@ -186,7 +186,7 @@ We have an enemy AI for each of the enemies that is able to track the player's l
 </TABLE> -->
 
 We implemented texture mapping using OpenGL's libraries for texture maps. The texture file is passed
-as an argument to the material in the scene file, which is then loaded onto the list of materials and applied onto an object through OpenGL. 
+as an argument to the material in the scene file, which is then loaded onto the list of materials and applied onto an object through OpenGL. We texture mapped all players and enemies, coins, platforms, and the skybox behind the object (but only in one direction, to save memory). We also texture mapped the images in the sidebar of the level editor. 
 
 <hr><br>
 
@@ -353,11 +353,17 @@ The level editor is a large proportion of our project. With the level editor, yo
 <BR>
 Furthermore, we can immediately start the game at any time in the level editor by immediately pressing "n" to initiate the game. The current state of the game be printed at any time (requiring a lot of reverse engineering of Read()) by simply pressing "p", in which case a new .scn file is automatically generated with the location of all players, objects, fire sources, enemies, platforms, and coins, along with their associated textures. 
 <HR><BR>
-
+<BR>
+<BR>
+<!------------------------------------------------------------------------> 
+<!------------------------------------------------------------------------> 
+<H2><A name='sound'> Other Features</A></H2>
+<!------------------------------------------------------------------------> 
+<!------------------------------------------------------------------------> 
 
 <!------------------------------------------------------------------------> 
 <!------------------------------------------------------------------------> 
-<H2><A name='sound'> Editor</A></H2>
+<H2><A name='sound'></A>SCN File</H2>
 <!------------------------------------------------------------------------> 
 <!------------------------------------------------------------------------> 
 
@@ -372,43 +378,55 @@ Furthermore, we can immediately start the game at any time in the level editor b
 </TBODY>
 </TABLE>
  -->
-The level editor is a large proportion of our project. With the level editor, you can change the camera view to anywhere in the scene. You can select any block, platform, or enemy, and drag it to a different place using the mouse, as well as delete the object. You can select an enemy and make it bigger or smaller by dragging the mouse. You can also spawn enemies, stationary platforms, coins, or fire sources using only a mouse click at the location desired. All of these features are implemented using a convenient sidebar picker with 7 options, where you can simply click the option you want and then immediately begin creating objects. 
+Our scn file has support for practically every variable in the game. Blocks and platforms can be created with any texture, and platforms move between two specified locations. The player and enemies can be created with any box shape at any location, with a given max speed. Enemies can be initialized to jump, to jump with any velocity, to follow the player, or to initially move in some direction (if it does not follow the player). Coins and fire sources can be created anywhere. The skybox image, minimum scene height, soundtrack to the scene, and next level after completion can all be set in the scene. 
+<HR><BR>
 <BR>
-Furthermore, we can immediately start the game at any time in the level editor by immediately pressing "n" to initiate the game. The current state of the game be printed at any time (requiring a lot of reverse engineering of Read()) by simply pressing "p", in which case a new .scn file is automatically generated with the location of all players, objects, fire sources, enemies, platforms, and coins, along with their associated textures. 
-<HR><BR>
-
 
 
 <!------------------------------------------------------------------------> 
 <!------------------------------------------------------------------------> 
-<H2>Feedback</H2>
+<H2><A name='sound'> Scene Printing </A></H2>
 <!------------------------------------------------------------------------> 
 <!------------------------------------------------------------------------> 
 
-<DL>
-  <DT>How long did you spend on this assignment?
-  <DD> Not nearly as long as the other ones. 
-  <BR>&nbsp;<BR>
-
-  <DT>Was it too hard, too easy, or just right?
-  <DD>Just right; but logically, that doesn't make any sense given that I responded "just right" for the other ones, even though the other ones were much harder. Perhaps I should have replied "too hard" for assignments 1 - 3, or there should be an extra response "Exactly as hard as it needed to be". 
-  <BR>&nbsp;<BR>
-
-  <DT>What was the best part of the assignment?
-  <DD>Getting collisions working!
-  <BR>&nbsp;<BR>
-
-  <DT>What was the worst part of the assignment?
-  <DD>Not being able to get collisions working!
-  <BR>&nbsp;<BR>
-
-  <DT>How could it be improved for next year?
-  <DD>I think its a great assignment. 
-  <BR>&nbsp;<BR>
-
-</DL>
+<TABLE cellSpacing=0 cellPadding=10 border=0 vAlign=top align=middle>
+<!-- <TBODY>
+  <TR>
+    <TD vAlign=top align=middle>
+       <A href="art/art.gif"><IMG width=512 src="art/art.gif"></A><BR>             
+       My art contest submission is a slightly modified version of my interesting scene that includes three sinks that form a triangle, but with the top sink slightly nearer to the source than the other two sinks. As a result, the particles flare off in a parabolic shape towards the upper sink, but  make an interesting fountain-shaped curve around the top sink, with random particles flying off in different directions. 
+    </TD>
+  </TR>
+</TBODY>
+</TABLE>
+ -->
+All relevant scene information can be immediately printed back out to another file ../levels/output.scn using "p", by reverse engineering Read() for all relevant objects. This is very useful for saving game state and creating new levels using the level editor. 
 
 <HR><BR>
+<BR>
+
+<!------------------------------------------------------------------------> 
+<!------------------------------------------------------------------------> 
+<H2><A name='sound'> Multiple Level Integration </A></H2>
+<!------------------------------------------------------------------------> 
+<!------------------------------------------------------------------------> 
+
+<TABLE cellSpacing=0 cellPadding=10 border=0 vAlign=top align=middle>
+<!-- <TBODY>
+  <TR>
+    <TD vAlign=top align=middle>
+       <A href="art/art.gif"><IMG width=512 src="art/art.gif"></A><BR>             
+       My art contest submission is a slightly modified version of my interesting scene that includes three sinks that form a triangle, but with the top sink slightly nearer to the source than the other two sinks. As a result, the particles flare off in a parabolic shape towards the upper sink, but  make an interesting fountain-shaped curve around the top sink, with random particles flying off in different directions. 
+    </TD>
+  </TR>
+</TBODY>
+</TABLE>
+ -->
+In our game, completing a level will immediately jump you to the next level as specified in the scn file. This transition is smooth, and can be used by level designers to build an integrated massive game (e.g. transitioning betwen many levels or dungeons). 
+
+<HR><BR>
+<BR>
+
 
 
 
