@@ -1657,7 +1657,6 @@ Read(const char *filename, R3Node *node)
       group_nodes[depth]->children.push_back(node);
       node->parent = group_nodes[depth];
 
-      // Create platform
       R3Enemy *e = new R3Enemy(node, moveLeft, speed, mass, is_jumping, is_following);
       if (!moveLeft) 
         e->velocity = speed * e->Towards(); 

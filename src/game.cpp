@@ -119,10 +119,8 @@ void LoadLevel(const char *filename);
 R3Camera GetMinimapCam(R3Scene *scene);
 void DrawSidebar(R3Scene *);
 
-void CreateShape(R3ShapeType type, R3Scene *s, R3Point p)
+void CreateBox(R3Scene *s, R3Point p)
 {
-  if (type == R3_BOX_SHAPE)
-  {
     // Create box
     R3Box *box = new R3Box(p + R3Vector(-2.5, -.5, -2), p + R3Vector(2.5, .5, 2));
     
@@ -139,7 +137,7 @@ void CreateShape(R3ShapeType type, R3Scene *s, R3Point p)
     // Create shape node
     R3Node *node = new R3Node();
     node->transformation = R3identity_matrix;
-    node->material = NULL;
+    node->material = scene->materials[1];
     node->shape = shape;
     node->bbox = *box;
     node->is_obstacle = true;
@@ -150,35 +148,86 @@ void CreateShape(R3ShapeType type, R3Scene *s, R3Point p)
     s->root->bbox.Union(node->bbox);
     s->root->children.push_back(node);
     node->parent = s->root;
-  }
-  if (type == R3_COIN_SHAPE) {
-    R3Coin *coin = new R3Coin();
-    coin->position = p;
-    coin->t = 0;
-    coin->del = false;
-    
-    R3Matrix tform = R3identity_matrix;
-    tform.Translate(p.Vector());
-    tform.Rotate(R3_X, PI / 2);
-    
-    // Create shape node
-    R3Node *node = new R3Node();
-    node->transformation = tform;
-    node->material = s->coin_material;
-    node->shape = s->coin_shape;
-    node->bbox = s->coin_shape->cylinder->BBox();
-    node->bbox.Transform(tform);
-    node->is_coin = true;
-    node->coin = coin;
-    
-    coin->node = node;
-    
-    s->coins.push_back(coin);
-    
-    s->root->bbox.Union(node->bbox);
-    s->root->children.push_back(node);
-    node->parent = s->root;
-  }
+    minimap_cam = GetMinimapCam(scene);
+}
+
+void CreateCoin(R3Scene *s, R3Point p) {
+  R3Coin *coin = new R3Coin();
+  coin->position = p;
+  coin->t = 0;
+  coin->del = false;
+  
+  R3Matrix tform = R3identity_matrix;
+  tform.Translate(p.Vector());
+  tform.Rotate(R3_X, PI / 2);
+  
+  // Create shape node
+  R3Node *node = new R3Node();
+  node->transformation = tform;
+  node->material = s->coin_material;
+  node->shape = s->coin_shape;
+  node->bbox = s->coin_shape->cylinder->BBox();
+  node->bbox.Transform(tform);
+  node->is_coin = true;
+  node->coin = coin;
+  
+  coin->node = node;
+  
+  s->coins.push_back(coin);
+  
+  s->root->bbox.Union(node->bbox);
+  s->root->children.push_back(node);
+  node->parent = s->root;
+  minimap_cam = GetMinimapCam(scene);
+}
+
+void CreateFire(R3Scene *s, R3Point p) {
+  R3Fire *fire = new R3Fire();
+  fire->position = p;
+  s->fires.push_back(fire);
+}
+
+void CreateEnemy(R3Scene *s, R3Point p) {
+  // Create box
+  R3Box *box = new R3Box(p + R3Vector(-.5, -.5, -.5), p + R3Vector(.5, .5, .5));
+  
+  // Create shape
+  R3Shape *shape = new R3Shape();
+  shape->type = R3_BOX_SHAPE;
+  shape->box = box;
+  shape->sphere = NULL;
+  shape->cylinder = NULL;
+  shape->cone = NULL;
+  shape->mesh = NULL;
+  shape->segment = NULL;
+  
+  // Create shape node
+  R3Node *node = new R3Node();
+  node->transformation = R3identity_matrix;
+  node->material = scene->materials[4]; //hack by convention
+  node->shape = shape;
+  node->bbox = *box;
+  node->is_obstacle = true;
+  node->is_visible = true;
+  node->is_coin = false;
+  node->is_enemy = true;
+  
+  // Add to scene
+  s->root->bbox.Union(node->bbox);
+  s->root->children.push_back(node);
+  node->parent = s->root;
+
+  R3Enemy *e = new R3Enemy(node, true, 1, 1, true, true);
+  if (e->moveLeft)
+    e->velocity = e->speed * e->Towards();
+  else
+    e->velocity = e->speed * -e->Towards();
+  e->inAir = true;
+  e->onPlatform = false;
+  
+  s->enemies.push_back(e);
+  node->enemy = e;
+  
   minimap_cam = GetMinimapCam(scene);
 }
 
@@ -1891,7 +1940,8 @@ void GLUTMotion(int x, int y)
         double vx = length * (double) dx / (double) GLUTwindow_width;
         double vy = length * (double) dy / (double) GLUTwindow_height;
         if (vy > 0 || R3Distance(grabbed->shape->box->Min(), grabbed->shape->box->Max()) > .1) {
-        R3Box newBox(grabbed->shape->box->Min(), grabbed->shape->box->Max() + vx * R3posx_vector);
+        R3Box newBox(grabbed->shape->box->Min(),
+                     grabbed->shape->box->Max() + vx * R3posx_vector + vy * R3posy_vector);
         *grabbed->shape->box = newBox;
         grabbed->bbox = newBox;
         scene->bbox.Union(newBox);
@@ -1929,13 +1979,12 @@ void GLUTMouse(int button, int state, int x, int y)
   if (state == GLUT_DOWN) {
     if (button == GLUT_LEFT_BUTTON && level_editor) {
       bool on_screen = x < (w - scene->sidebar->width);
+      R3Ray ray = RayThoughPixel(camera, x, y, w, h);
+      R3Point click_location = RayPlaneIntersection(scene->movement_plane, ray);
       if (on_screen && (blocks_mode == 1)) {
-        R3Ray ray = RayThoughPixel(camera, x, y, w, h);
-        R3Point click_location = RayPlaneIntersection(scene->movement_plane, ray);
-        CreateShape(R3_BOX_SHAPE, scene, click_location);
+        CreateBox(scene, click_location);
       }
       else if (on_screen && (grab_mode == 1)) {
-        R3Ray ray = RayThoughPixel(camera, x, y, w, h);
         double very_far = 1000000000;
         R3Intersection intersection = ComputeIntersection(scene, scene->root, ray, very_far);
         if (intersection.hit) {
@@ -1946,9 +1995,13 @@ void GLUTMouse(int button, int state, int x, int y)
         }
       }
       else if (on_screen && (coins_mode == 1)) {
-        R3Ray ray = RayThoughPixel(camera, x, y, w, h);
-        R3Point click_location = RayPlaneIntersection(scene->movement_plane, ray);
-        CreateShape(R3_COIN_SHAPE, scene, click_location);
+        CreateCoin(scene, click_location);
+      }
+      else if (on_screen && (fires_mode == 1)) {
+        CreateFire(scene, click_location);
+      }
+      else if (on_screen && (enemies_mode == 1)) {
+        CreateEnemy(scene, click_location);
       }
       else if (!on_screen) {
         ClickSidebar(x, y);
@@ -2075,7 +2128,12 @@ void GLUTKeyboard(unsigned char key, int x, int y)
         move_mode = 0;
       }
       break;
-
+  case 'N':
+  case 'n':
+      if (level_editor) {
+        level_editor = 0;
+      }
+      break;
   // case 'P':
   // case 'p':
   //   show_particles = !show_particles;
@@ -2393,7 +2451,7 @@ const char *ButtonIconFiles[] = {
   "platform.jpg",
   "coin.jpg",
   "fire.jpg",
-  "enemy.jpg"
+  "creeper.jpg"
 };
 
 void SetupSkybox(R3Scene *scene) {
