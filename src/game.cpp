@@ -40,6 +40,7 @@ static const char *video_prefix = "../video-frames/";
 static const char *images_path = "../images/";
 static const char *skybox_path = "../levels/";
 static int integration_type = EULER_INTEGRATION;
+static double previous_time = 0;
 
 // Display variables
 
@@ -1637,7 +1638,6 @@ void GLUTRedraw(void)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   
   double current_time = GetTime();
-  static double previous_time = 0;
 
   while (previous_time < current_time) {
     double delta_time;
@@ -2400,6 +2400,8 @@ void LoadLevel(const char *filename)
 
   if (scene)
     delete scene;
+
+  previous_time = 0.0f;
 
   // Read scene
   scene = ReadScene(filename);
