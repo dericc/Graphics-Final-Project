@@ -323,6 +323,76 @@ bool InsideBBox(R3Box box, R3Point point)
   return point.X() > box.XMin() && point.X() < box.XMax() && point.Y() > box.YMin() && point.Y() < box.YMax() && point.Z() > box.ZMin() && point.Z() < box.ZMax();
 }
 
+R3Intersection ComputeIntersection(R3Cylinder *cylinder, R3Ray r) {
+  R3Intersection ret;
+  R3Point p0 = r.Point(0);
+  R3Vector v = r.Vector();
+  double h = cylinder->Height();
+  
+  // check the two caps
+  // Bottom First
+  R3Plane bottom = R3negxz_plane;
+  R3Point bottom_center = R3Point(0, -h/2, 0);
+  bottom.Translate(bottom_center - R3null_point);
+  
+  double denom = r.Vector().Dot(bottom.Normal());
+  double t = (denom == 0) ? -1 : -(R3Vector(p0[0], p0[1], p0[2]).Dot(bottom.Normal()) + bottom.D()) / denom;
+  double dist = R3Distance(r.Point(t), bottom_center);
+  if ((t > EPSILON) && (!ret.hit || t < ret.t) && (dist < cylinder->Radius())) {
+    ret.t = t;
+    ret.normal = bottom.Normal();
+    ret.position = r.Point(t);
+    ret.hit = true;
+  }
+  
+  // Now Top
+  R3Plane top = R3posxz_plane;
+  R3Point top_center = R3Point(0, cylinder->Height()/2, 0);
+  top.Translate(top_center - R3null_point);
+  
+  denom = r.Vector().Dot(top.Normal());
+  t = (denom == 0) ? -1 : -(R3Vector(p0[0], p0[1], p0[2]).Dot(top.Normal()) + top.D()) / denom;
+  dist = R3Distance(r.Point(t), top_center);
+  if ((t > EPSILON) && (!ret.hit || t < ret.t) && (dist < cylinder->Radius())) {
+    ret.t = t;
+    ret.normal = top.Normal();
+    ret.position = r.Point(t);
+    ret.hit = true;
+  }
+  
+  // Now check the side
+  // we know (p0[0] + v[0]*t)^2 + (p0[0] + v[0]*t)^2 = r^2
+  // so we solve the quadratic
+  double A = v[0]*v[0] + v[2]*v[2];
+  double B = 2*p0[0]*v[0] + 2*p0[2]*v[2];
+  double C = p0[0]*p0[0] + p0[2]*p0[2] - cylinder->Radius()*cylinder->Radius();
+  double det = B*B - 4 * A * C;
+  if (det < 0) return ret;
+  double t_plus = (-B + sqrt(det)) / (2*A);
+  double t_minus = (-B - sqrt(det)) / (2*A);
+  
+  R3Point loc = r.Point(t_minus);
+  if (((t_minus > EPSILON) && (!ret.hit || t_minus < ret.t)) &&
+      ((loc[1] > -h/2) && (loc[1] < h/2)))
+  {
+    ret.t = t_minus;
+    ret.position = loc;
+    ret.normal = R3Point(loc[0], 0, loc[2]) - R3null_point;
+    ret.normal.Normalize();
+    ret.hit = true;
+  }
+  loc = r.Point(t_plus);
+  if (((t_plus > EPSILON) && (!ret.hit || t_plus < ret.t)) &&
+      ((loc[1] > -h/2) && (loc[1] < h/2))) {
+    ret.t = t_plus;
+    ret.position = loc;
+    ret.normal = R3Point(loc[0], 0, loc[2]) - R3null_point;
+    ret.normal.Normalize();
+    ret.hit = true;
+  }
+  return ret;
+}
+
 // compute the nearest intersection between a ray and a scene node
 R3Intersection ComputeIntersection(R3Scene *scene, R3Node *node, R3Ray ray, double min_t)
 {
@@ -363,8 +433,9 @@ R3Intersection ComputeIntersection(R3Scene *scene, R3Node *node, R3Ray ray, doub
       }
       break;
       // not implemented
+      case R3_COIN_SHAPE:
       case R3_CYLINDER_SHAPE:
-        break;
+        i = ComputeIntersection(node->shape->cylinder, ray);
       case R3_CONE_SHAPE:
         break;
       case R3_SEGMENT_SHAPE:
@@ -374,7 +445,10 @@ R3Intersection ComputeIntersection(R3Scene *scene, R3Node *node, R3Ray ray, doub
       case R3_NUM_SHAPE_TYPES:
         break;
     }
-
+    if (node->is_coin) {
+      printf("I'm a coin");
+      i = ComputeIntersection(&(node->bbox), ray);
+    }
     // update minimum if found
     if (i.hit && i.t < min_intersection.t)
     {
