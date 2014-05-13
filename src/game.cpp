@@ -38,7 +38,7 @@ static char *input_scene_name = NULL;
 static char *output_image_name = NULL;
 static const char *video_prefix = "./video-frames/";
 static const char *images_path = "../images/";
-static const char *skybox_path = "../skybox/";
+static const char *skybox_path = "../levels/";
 static int integration_type = EULER_INTEGRATION;
 
 // Display variables
@@ -1524,46 +1524,6 @@ void DrawSkybox(R3Scene *scene) {
        glTexCoord2f(1, 0); glVertex3f( -0.5f, 0.5f, -0.5f );
        glTexCoord2f(1, 1); glVertex3f( 0.5f,  0.5f, -0.5f );
        glTexCoord2f(0, 1); glVertex3f(  0.5f, -0.5f, -0.5f );
-   glEnd();
-   // Render the left quad
-   glBindTexture(GL_TEXTURE_2D, skyboxMaterials[0]->texture_index);
-   glBegin(GL_QUADS);
-       glTexCoord2f(0, 0); glVertex3f(  0.5f, -0.5f,  0.5f );
-       glTexCoord2f(1, 0); glVertex3f(  0.5f, -0.5f, -0.5f );
-       glTexCoord2f(1, 1); glVertex3f(  0.5f,  0.5f, -0.5f );
-       glTexCoord2f(0, 1); glVertex3f(  0.5f,  0.5f,  0.5f );
-   glEnd();
-   // Render the back quad
-   glBindTexture(GL_TEXTURE_2D, skyboxMaterials[0]->texture_index);
-   glBegin(GL_QUADS);
-       glTexCoord2f(0, 0); glVertex3f( -0.5f, -0.5f,  0.5f );
-       glTexCoord2f(1, 0); glVertex3f(  0.5f, -0.5f,  0.5f );
-       glTexCoord2f(1, 1); glVertex3f(  0.5f,  0.5f,  0.5f );
-       glTexCoord2f(0, 1); glVertex3f( -0.5f,  0.5f,  0.5f );
-   glEnd();
-   // Render the right quad
-   glBindTexture(GL_TEXTURE_2D, skyboxMaterials[0]->texture_index);
-   glBegin(GL_QUADS);
-       glTexCoord2f(0, 0); glVertex3f( -0.5f, -0.5f, -0.5f );
-       glTexCoord2f(1, 0); glVertex3f( -0.5f, -0.5f,  0.5f );
-       glTexCoord2f(1, 1); glVertex3f( -0.5f,  0.5f,  0.5f );
-       glTexCoord2f(0, 1); glVertex3f( -0.5f,  0.5f, -0.5f );
-   glEnd();
-   // Render the top quad
-   glBindTexture(GL_TEXTURE_2D, skyboxMaterials[0]->texture_index);
-   glBegin(GL_QUADS);
-       glTexCoord2f(0, 1); glVertex3f( -0.5f,  0.5f, -0.5f );
-       glTexCoord2f(0, 0); glVertex3f( -0.5f,  0.5f,  0.5f );
-       glTexCoord2f(1, 0); glVertex3f(  0.5f,  0.5f,  0.5f );
-       glTexCoord2f(1, 1); glVertex3f(  0.5f,  0.5f, -0.5f );
-   glEnd();
-   // Render the bottom quad
-   glBindTexture(GL_TEXTURE_2D, skyboxMaterials[0]->texture_index);
-   glBegin(GL_QUADS);
-       glTexCoord2f(0, 0); glVertex3f( -0.5f, -0.5f, -0.5f );
-       glTexCoord2f(0, 1); glVertex3f( -0.5f, -0.5f,  0.5f );
-       glTexCoord2f(1, 1); glVertex3f(  0.5f, -0.5f,  0.5f );
-       glTexCoord2f(1, 0); glVertex3f(  0.5f, -0.5f, -0.5f );
    glEnd();
    // Restore enable bits and matrix
    glPopAttrib();

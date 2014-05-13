@@ -179,7 +179,6 @@ platform
 
 skybox clouds_front.jpg
 
-
 death_y -10
 
 particle_gravity 0 -9.8 0
