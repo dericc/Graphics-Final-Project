@@ -548,9 +548,6 @@ void UpdatePlayer(R3Scene *scene, double delta_time) {
       p->has_won = true;
     }
   }
-  
-  if (p->has_won)
-    return;
 
   // Motion Shit
   // get the forces to move the box

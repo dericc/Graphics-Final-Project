@@ -817,11 +817,6 @@ Read(const char *filename, R3Node *node)
       node->bbox.Union(p1);
       node->bbox.Union(p2);
       node->bbox.Union(p3);
-      node->is_obstacle = true;
-      node->is_coin = false;
-      node->is_enemy = false; 
-      node->is_visible = true;
-      node->del = false;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -869,9 +864,6 @@ Read(const char *filename, R3Node *node)
       node->shape = shape;
       node->bbox = *box;
       node->is_obstacle = true;
-      node->is_visible = true;
-      node->is_coin = false;
-      node->is_enemy = false; 
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -919,11 +911,6 @@ Read(const char *filename, R3Node *node)
       node->material = material;
       node->shape = shape;
       node->bbox = sphere->BBox();
-      node->is_obstacle = true;
-      node->is_coin = false;
-      node->is_enemy = false; 
-      node->del = false;
-      node->is_visible = true;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -971,11 +958,6 @@ Read(const char *filename, R3Node *node)
       node->material = material;
       node->shape = shape;
       node->bbox = cylinder->BBox();
-      node->is_obstacle = true;
-      node->is_coin = false;
-      node->is_enemy = false; 
-      node->del = false;
-      node->is_visible = true;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -1040,11 +1022,6 @@ Read(const char *filename, R3Node *node)
       node->material = material;
       node->shape = shape;
       node->bbox = mesh->bbox;
-      node->is_obstacle = true;
-      node->is_coin = false;
-      node->is_enemy = false; 
-      node->del = false;
-      node->is_visible = true;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -1092,11 +1069,6 @@ Read(const char *filename, R3Node *node)
       node->material = material;
       node->shape = shape;
       node->bbox = cone->BBox();
-      node->is_obstacle = true;
-      node->is_coin = false;
-      node->is_enemy = false; 
-      node->del = false;
-      node->is_visible = true;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -1143,11 +1115,6 @@ Read(const char *filename, R3Node *node)
       node->material = material;
       node->shape = shape;
       node->bbox = segment->BBox();
-      node->is_obstacle = true;
-      node->is_coin = false;
-      node->is_enemy = false; 
-      node->del = false;
-      node->is_visible = true;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);
@@ -1599,6 +1566,9 @@ Read(const char *filename, R3Node *node)
         e->velocity = speed * e->Towards(); 
       else 
         e->velocity = speed * -e->Towards(); 
+
+      e->inAir = true; 
+      e->onPlatform = false; 
       
       enemies.push_back(e);
       node->enemy = e;

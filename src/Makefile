@@ -45,7 +45,7 @@ endif
 
 OBJS=game.o particle.o R3Scene.o raytrace.o
 LIBS=R3/libR3.a R2/libR2.a jpeg/libjpeg.a fglut/libfglut.a
-ifeq (,$(findstring Darwin,$(UNAME)))
+ifneq (,$(findstring Linux,$(UNAME)))
 	OPTS =  -I"../irrKlang/include" -L"../irrKlang/bin/linux-gcc-64" ../irrKlang/bin/linux-gcc-64/libIrrKlang.so
 	INSTALL_NAME_TOOL = 
 else 
