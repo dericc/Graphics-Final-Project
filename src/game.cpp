@@ -2356,7 +2356,9 @@ ParseArgs(int argc, char **argv)
 
 
 void DrawSidebar(R3Scene *scene) {
+  
   R3Sidebar& sidebar(*scene->sidebar);
+  sidebar.width = (GLUTwindow_height + 6 * sidebar.border)/7;
   // draw the background
   float xmin = GLUTwindow_width - scene->sidebar->width;
   glBegin(GL_QUADS);

@@ -7,7 +7,7 @@
 #
 
 CXX=g++
-CXXFLAGS=-Wall -I. -g -DUSE_JPEG
+CXXFLAGS=-Wall -I. -O3 -DUSE_JPEG
 
 
 
