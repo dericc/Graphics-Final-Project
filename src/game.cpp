@@ -1527,7 +1527,7 @@ void DrawSkybox(R3Scene *scene) {
        glTexCoord2f(0, 1); glVertex3f(  0.5f, -0.5f, -0.5f );
    glEnd();
    // Render the left quad
-   glBindTexture(GL_TEXTURE_2D, skyboxMaterials[1]->texture_index);
+   glBindTexture(GL_TEXTURE_2D, skyboxMaterials[0]->texture_index);
    glBegin(GL_QUADS);
        glTexCoord2f(0, 0); glVertex3f(  0.5f, -0.5f,  0.5f );
        glTexCoord2f(1, 0); glVertex3f(  0.5f, -0.5f, -0.5f );
@@ -1535,7 +1535,7 @@ void DrawSkybox(R3Scene *scene) {
        glTexCoord2f(0, 1); glVertex3f(  0.5f,  0.5f,  0.5f );
    glEnd();
    // Render the back quad
-   glBindTexture(GL_TEXTURE_2D, skyboxMaterials[2]->texture_index);
+   glBindTexture(GL_TEXTURE_2D, skyboxMaterials[0]->texture_index);
    glBegin(GL_QUADS);
        glTexCoord2f(0, 0); glVertex3f( -0.5f, -0.5f,  0.5f );
        glTexCoord2f(1, 0); glVertex3f(  0.5f, -0.5f,  0.5f );
@@ -1543,7 +1543,7 @@ void DrawSkybox(R3Scene *scene) {
        glTexCoord2f(0, 1); glVertex3f( -0.5f,  0.5f,  0.5f );
    glEnd();
    // Render the right quad
-   glBindTexture(GL_TEXTURE_2D, skyboxMaterials[3]->texture_index);
+   glBindTexture(GL_TEXTURE_2D, skyboxMaterials[0]->texture_index);
    glBegin(GL_QUADS);
        glTexCoord2f(0, 0); glVertex3f( -0.5f, -0.5f, -0.5f );
        glTexCoord2f(1, 0); glVertex3f( -0.5f, -0.5f,  0.5f );
@@ -1551,7 +1551,7 @@ void DrawSkybox(R3Scene *scene) {
        glTexCoord2f(0, 1); glVertex3f( -0.5f,  0.5f, -0.5f );
    glEnd();
    // Render the top quad
-   glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
+   glBindTexture(GL_TEXTURE_2D, skyboxMaterials[0]->texture_index);
    glBegin(GL_QUADS);
        glTexCoord2f(0, 1); glVertex3f( -0.5f,  0.5f, -0.5f );
        glTexCoord2f(0, 0); glVertex3f( -0.5f,  0.5f,  0.5f );
@@ -1559,7 +1559,7 @@ void DrawSkybox(R3Scene *scene) {
        glTexCoord2f(1, 1); glVertex3f(  0.5f,  0.5f, -0.5f );
    glEnd();
    // Render the bottom quad
-   glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
+   glBindTexture(GL_TEXTURE_2D, skyboxMaterials[0]->texture_index);
    glBegin(GL_QUADS);
        glTexCoord2f(0, 0); glVertex3f( -0.5f, -0.5f, -0.5f );
        glTexCoord2f(0, 1); glVertex3f( -0.5f, -0.5f,  0.5f );
@@ -1660,7 +1660,6 @@ void GLUTResize(int w, int h)
   // Redraw
   glutPostRedisplay();
 }
-
 
 
 void GLUTRedraw(void)
@@ -2331,16 +2330,6 @@ const char *ButtonIconFiles[] = {
   "camera.jpg"
 };
 
-const char *SkybarFiles[] = {
-  "clouds_front.jpg",
-  "clouds_front.jpg",
-  "clouds_front.jpg",
-  "clouds_front.jpg",
-  "clouds_front.jpg",
-  "clouds_front.jpg",
-};
-
-
 void SetupSkybox(R3Scene *scene) {
   for (int i = 0; i < 5; ++i) {
     // Create material
@@ -2352,7 +2341,7 @@ void SetupSkybox(R3Scene *scene) {
     char buffer[2048];
     memset(buffer, 0, 2048);
     strcpy(buffer, skybox_path);
-    strcat(buffer, SkybarFiles[i]);
+    strcat(buffer, scene->skyboxTexture);
     strcpy(material->texture_name, buffer);
     
     material->ka = R3Rgb(1, 1, 1, 0);
@@ -2411,9 +2400,7 @@ void SetupLevelEditor(R3Scene *scene) {
     scene->materials.push_back(material);
     R3Button *button = new R3Button(ButtonVariables[i], material);
     scene->sidebar->buttons.push_back(button);
-  }
-  
-
+  }  
 }
 
 R3Camera GetMinimapCam(R3Scene *scene) {

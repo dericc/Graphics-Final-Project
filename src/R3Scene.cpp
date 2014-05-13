@@ -1242,11 +1242,22 @@ Read(const char *filename, R3Node *node)
         }
       }
 
-
-      
       // Insert material
       materials.push_back(material);
     }
+
+    else if (!strcmp(cmd, "skybox")) {
+      // Read data
+      char texture_name[256]; 
+      if (fscanf(fp, "%s", texture_name) != 1) {
+        fprintf(stderr, "Unable to read material at command %d in file %s\n", command_number, filename);
+        return 0;
+      }
+      
+    strcpy(skyboxTexture, texture_name); 
+
+    }
+
     else if (!strcmp(cmd, "dir_light")) {
       // Read data
       R3Rgb c;

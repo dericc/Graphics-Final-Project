@@ -290,6 +290,7 @@ struct R3Scene {
   R3Goal *goal;
   R3Sidebar *sidebar;
   R3Plane movement_plane;
+  char skyboxTexture[256]; 
 };
 
 typedef void (*button_fxn)(void);
