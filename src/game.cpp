@@ -764,7 +764,7 @@ void UpdateEnemies(R3Scene *scene, double delta_time) {
     f += -9.8 * p->Up() * p->mass;
 
     if (!p->inAir && p->is_jumping) {
-      p->velocity += 10 * p->Up();
+      p->velocity += p->jumpHeight * p->Up();
       if (scene->player && R3Distance(scene->player->Center(), p->Center()) < 20.0f)
       {
         char path[FILENAME_MAX + 1];
