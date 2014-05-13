@@ -392,7 +392,14 @@ void CollidePlayer(R3Node *node)
         tform.Translate(R3Vector(0, scene_box.YMax() - player_box.YMin(), 0));
         R3Vector v = p->velocity;
         v.SetY(0);
-        p->velocity = v;
+        
+        //Jump up if node is enemy
+        if (node ->is_enemy) {
+          p->velocity = v + 10 * p->Up();
+        }
+        else {
+          p->velocity = v;
+        }
         p->inAir = false;
         if (node->is_platform && !node->is_enemy) {
           p->onPlatform = true;
@@ -764,8 +771,11 @@ void UpdateEnemies(R3Scene *scene, double delta_time) {
 
     double direction = enemy_box.XMin() - player_box.XMin();
 
-    if (direction < 0 && p->is_following) {p->moveLeft = false;}
-    else {p->moveLeft = true;}
+    //Only change direction if the enemy is following
+    if (p->is_following) {
+      if (direction < 0) {p->moveLeft = false;}
+      else {p->moveLeft = true;}
+    }
 
     if (!p->moveLeft) {
       f += (p->speed * forward - forwardVelocity) / TAU;
