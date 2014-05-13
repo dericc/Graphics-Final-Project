@@ -194,7 +194,7 @@ struct R3Coin {
 
 struct R3Enemy {
   R3Enemy(R3Node *node, bool moveLeft, double speed, double mass) :
-    node(node), moveLeft(moveLeft), speed(speed), mass(mass), is_dead(false) onPlatform(false) {};
+    node(node), moveLeft(moveLeft), speed(speed), mass(mass), is_dead(false), onPlatform(false) {};
   
   R3Node *node; 
   bool moveLeft; // current direction of motion: left or right
