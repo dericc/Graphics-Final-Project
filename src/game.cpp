@@ -569,6 +569,7 @@ void UpdatePlayer(R3Scene *scene, double delta_time) {
   bool down_key = key_state['s'] || key_state['S'];
   bool left_key = key_state['a'] || key_state['A'];
   bool right_key = key_state['d'] || key_state['D'];
+  bool shift_key = GLUTmodifiers & GLUT_ACTIVE_SHIFT ? true : false;
 
   // check if they've won
   if (scene->goal)
@@ -2049,6 +2050,7 @@ void GLUTKeyboard(unsigned char key, int x, int y)
   //   break;
   case 'c':
   case 'C':
+
       camera = minimap_cam;
       break;
   case 'M':
@@ -2113,6 +2115,9 @@ void GLUTKeyboard(unsigned char key, int x, int y)
 
   // Remember modifiers 
   GLUTmodifiers = glutGetModifiers();
+  
+  // if (GLUTmodifiers & GLUT_ACTIVE_SHIFT)
+  //   dcamera = minimap_cam;
 
   // Redraw
   glutPostRedisplay();
