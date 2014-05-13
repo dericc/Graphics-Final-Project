@@ -1556,6 +1556,9 @@ Read(const char *filename, R3Node *node)
         e->velocity = speed * e->Towards(); 
       else 
         e->velocity = speed * -e->Towards(); 
+
+      e->inAir = true; 
+      e->onPlatform = false; 
       
       enemies.push_back(e);
       node->enemy = e;
