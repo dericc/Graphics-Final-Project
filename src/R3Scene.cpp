@@ -117,7 +117,7 @@ ambient(0,0,0,1)
   death_y = -1000;
 
   // Create sidebar
-  sidebar = new R3Sidebar(200, 10);
+  sidebar = new R3Sidebar(180, 10);
   
   coin_shape = NULL;
   coin_material = NULL;

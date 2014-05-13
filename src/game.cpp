@@ -68,6 +68,8 @@ static int blocks_mode = 0;
 static int grab_mode = 0;
 static int move_mode = 0;
 static int coins_mode = 0;
+static int fires_mode = 0;
+static int enemies_mode = 0;
 static int paused = 0;
 // GLUT variables 
 
@@ -1704,14 +1706,13 @@ void GLUTRedraw(void)
     if (level_editor != 1 && !scene->player->is_dead) {
       UpdatePlayer(scene, delta_time);
       UpdateEnemies(scene, delta_time);
+      UpdatePlatforms(scene, delta_time);
+      // Update Coins
+      UpdateCoins(scene, delta_time);
+      
     }
 
-    UpdatePlatforms(scene, delta_time);
 
-
-    // Update Coins
-    UpdateCoins(scene, delta_time);
-    
     // delete objects
     DeleteNodes(scene->root);
     DeleteCoins();
@@ -1889,10 +1890,12 @@ void GLUTMotion(int x, int y)
         double length = R3Distance(scene_center, camera.eye) * tan(camera.yfov);
         double vx = length * (double) dx / (double) GLUTwindow_width;
         double vy = length * (double) dy / (double) GLUTwindow_height;
+        if (vy > 0 || R3Distance(grabbed->shape->box->Min(), grabbed->shape->box->Max()) > .1) {
         R3Box newBox(grabbed->shape->box->Min(), grabbed->shape->box->Max() + vx * R3posx_vector);
         *grabbed->shape->box = newBox;
         grabbed->bbox = newBox;
         scene->bbox.Union(newBox);
+        }
       }
       else if (GLUTbutton[0]) {
         R3Point scene_center = scene->bbox.Centroid();
@@ -1925,14 +1928,16 @@ void GLUTMouse(int button, int state, int x, int y)
   // Process mouse button event
   if (state == GLUT_DOWN) {
     if (button == GLUT_LEFT_BUTTON && level_editor) {
-      if ((x < w - scene->sidebar->width) && (blocks_mode == 1)) {
+      bool on_screen = x < (w - scene->sidebar->width);
+      if (on_screen && (blocks_mode == 1)) {
         R3Ray ray = RayThoughPixel(camera, x, y, w, h);
         R3Point click_location = RayPlaneIntersection(scene->movement_plane, ray);
         CreateShape(R3_BOX_SHAPE, scene, click_location);
       }
-      else if ((x < w - scene->sidebar->width) && (grab_mode == 1)) {
+      else if (on_screen && (grab_mode == 1)) {
         R3Ray ray = RayThoughPixel(camera, x, y, w, h);
-        R3Intersection intersection = ComputeIntersection(scene, scene->root, ray, 1000000000);
+        double very_far = 1000000000;
+        R3Intersection intersection = ComputeIntersection(scene, scene->root, ray, very_far);
         if (intersection.hit) {
           grab_mode = 0;
           move_mode = 1;
@@ -1940,12 +1945,12 @@ void GLUTMouse(int button, int state, int x, int y)
           scene->sidebar->selected_button = -1;
         }
       }
-      else if ((x < w - scene->sidebar->width) && (coins_mode == 1)) {
+      else if (on_screen && (coins_mode == 1)) {
         R3Ray ray = RayThoughPixel(camera, x, y, w, h);
         R3Point click_location = RayPlaneIntersection(scene->movement_plane, ray);
         CreateShape(R3_COIN_SHAPE, scene, click_location);
       }
-      else if (x >  w - scene->sidebar->width) {
+      else if (!on_screen) {
         ClickSidebar(x, y);
       }
     }
@@ -2321,7 +2326,7 @@ void DrawSidebar(R3Scene *scene) {
       glBindTexture(GL_TEXTURE_2D, 0); 
 
       glBegin(GL_QUADS);
-      if (i == scene->sidebar->selected_button) {
+      if (*scene->sidebar->buttons[i]->value == 1) {
         glColor3f(1, 0, 0);
       }
       else {
@@ -2369,20 +2374,26 @@ void DrawSidebar(R3Scene *scene) {
   
 }
 
-const int NButtons = 4;
+const int NButtons = 7;
 
 int *ButtonVariables[] = {
   &camera_mode,
   &grab_mode,
+  &move_mode,
   &blocks_mode,
   &coins_mode,
+  &fires_mode,
+  &enemies_mode,
 };
 
 const char *ButtonIconFiles[] = {
   "camera.jpg",
   "grab.jpg",
+  "grabbed.jpg",
   "platform.jpg",
-  "coin.jpg"
+  "coin.jpg",
+  "fire.jpg",
+  "enemy.jpg"
 };
 
 void SetupSkybox(R3Scene *scene) {
@@ -2392,7 +2403,7 @@ void SetupSkybox(R3Scene *scene) {
     *material = *scene->materials[0];
     material->texture_index = -1;
 
-    // Get texture filename
+    // Get texture filename`
     char buffer[2048];
     memset(buffer, 0, 2048);
     strcpy(buffer, skybox_path);
