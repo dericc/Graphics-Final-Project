@@ -362,7 +362,7 @@ void CollidePlayer(R3Node *node)
         v.SetY(0);
         p->velocity = v;
         p->inAir = false;
-        if (node->is_platform) {
+        if (node->is_platform && !node->is_enemy) {
           p->onPlatform = true;
           p->platform = node->platform;
         }
