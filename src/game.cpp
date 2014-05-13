@@ -422,14 +422,7 @@ void CollidePlayer(R3Node *node)
         tform.Translate(R3Vector(0, scene_box.YMax() - player_box.YMin(), 0));
         R3Vector v = p->velocity;
         v.SetY(0);
-        
-        //Jump up if node is enemy; else, just regular collision
-        if (node ->is_enemy) {
-          p->velocity = v + 10 * p->Up();
-        }
-        else {
-          p->velocity = v;
-        }
+        p->velocity = v;
 
         p->inAir = false;
         if (node->is_platform && !node->is_enemy) {
@@ -1533,7 +1526,7 @@ void DrawHUD()
     // glBindTexture(GL_TEXTURE_2D, scene->coins[0]->node->material->texture_index); 
     glBindTexture(GL_TEXTURE_2D, 0); 
     glBegin(GL_QUADS);
-      glColor3f(.8f, .8f, 0.0);
+      glColor3f(.7f, .7f, 0.0);
       // glTexCoord2f(0.0, 0.0); 
       glVertex2f(xmin, ymin);
       // glTexCoord2f(1.0, 0.0); 
@@ -1563,7 +1556,7 @@ void DrawSkybox(R3Scene *scene) {
    glLoadIdentity();
    gluLookAt(
        0,0,0,
-       scene->camera.towards.X(),scene->camera.towards.Y(),scene->camera.towards.Z() - 5,
+       scene->camera.towards.X(),scene->camera.towards.Y(),scene->camera.towards.Z() - 50,
        0,1,0);
 
    // Enable/Disable features
@@ -1741,8 +1734,7 @@ void GLUTRedraw(void)
   // Draw scene lights
   DrawLights(scene);
 
-  // Draw particles
-  RenderParticles(scene);
+  DrawSkybox(scene); 
 
   // Draw particle sources 
   DrawParticleSources(scene);
@@ -1752,10 +1744,7 @@ void GLUTRedraw(void)
 
   // Draw particle springs
   DrawParticleSprings(scene);
-
-  DrawSkybox(scene); 
   
-
   // Draw scene surfaces
   if (show_faces) {
     glEnable(GL_LIGHTING);
@@ -1780,6 +1769,10 @@ void GLUTRedraw(void)
     LoadCamera(&camera);
     glViewport(0, 0, GLUTwindow_width, GLUTwindow_height);
   }
+
+  
+  // Draw particles
+  RenderParticles(scene);
   
   DrawHUD();
 
@@ -1837,7 +1830,6 @@ void GLUTRedraw(void)
   // Swap buffers 
   glutSwapBuffers();
 }    
-
 
 
 void GLUTMotion(int x, int y)
@@ -1977,7 +1969,6 @@ void GLUTMouse(int button, int state, int x, int y)
   // Redraw
   glutPostRedisplay();
 }
-
 
 
 // void GLUTSpecial(int key, int x, int y)
