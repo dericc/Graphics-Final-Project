@@ -118,6 +118,9 @@ ambient(0,0,0,1)
 
   // Create sidebar
   sidebar = new R3Sidebar(200, 10);
+  
+  coin_shape = NULL;
+  coin_material = NULL;
 }
 
 
@@ -1671,39 +1674,43 @@ Read(const char *filename, R3Node *node)
       platforms.push_back(p);
       node->platform = p;
     }
-    else if (!strcmp(cmd, "coin")) {
-      // Read data
+    else if (!strcmp(cmd, "coin_material")) {
       int m;
-      R3Point p;
-      if (fscanf(fp, "%d%lf%lf%lf", &m, &p[0], &p[1], &p[2]) != 4) {
+      if (fscanf(fp, "%d", &m) != 1) {
         fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
         return 0;
       }
-      
       // Get material
-      R3Material *material = group_materials[depth];
+      coin_material = group_materials[depth];
       if (m >= 0) {
         if (m < (int) materials.size()) {
-          material = materials[m];
+          coin_material = materials[m];
         }
         else {
           fprintf(stderr, "Invalid material id at box command %d in file %s\n", command_number, filename);
           return 0;
         }
       }
-      
       // Create box
       R3Cylinder *cyl = new R3Cylinder(R3null_point, 0.5, 0.2);
       
       // Create shape
-      R3Shape *shape = new R3Shape();
-      shape->type = R3_CYLINDER_SHAPE;
-      shape->box = NULL;
-      shape->sphere = NULL;
-      shape->cylinder = cyl;
-      shape->cone = NULL;
-      shape->mesh = NULL;
-      shape->segment = NULL;
+      coin_shape = new R3Shape();
+      coin_shape->type = R3_CYLINDER_SHAPE;
+      coin_shape->box = NULL;
+      coin_shape->sphere = NULL;
+      coin_shape->cylinder = cyl;
+      coin_shape->cone = NULL;
+      coin_shape->mesh = NULL;
+      coin_shape->segment = NULL;
+    }
+    else if (!strcmp(cmd, "coin")) {
+      // Read data
+      R3Point p;
+      if (fscanf(fp, "%lf%lf%lf", &p[0], &p[1], &p[2]) != 3) {
+        fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
+        return 0;
+      }
       
       R3Coin *coin = new R3Coin();
       coin->position = p;
@@ -1717,9 +1724,9 @@ Read(const char *filename, R3Node *node)
       // Create shape node
       R3Node *node = new R3Node();
       node->transformation = tform;
-      node->material = material;
-      node->shape = shape;
-      node->bbox = cyl->BBox();
+      node->material = coin_material;
+      node->shape = coin_shape;
+      node->bbox = coin_shape->cylinder->BBox();
       node->is_coin = true;
       node->coin = coin;
       

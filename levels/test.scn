@@ -48,6 +48,9 @@ material
   0 0 0
   1 1 0
 
+coin_material
+  2
+
 goal
     1
     5 0 0
@@ -89,7 +92,6 @@ box
     75 31 2
 
 coin
-  2
   70 32 0
 
 platform
@@ -114,11 +116,9 @@ box
   170 31 2
 
 coin
-  2
   165 32 0
 
 coin
-  2
   166 32 0
 
 player 
@@ -151,23 +151,18 @@ enemy
     1
 
 coin
-  2
   0 2 0
 
 coin
-  2
   8 6.5 0
 
 coin
-  2
   37 6.5 0
 
 coin
-  2
   35 6.5 0
 
 coin
-  2
   36 6.5 0
 
 platform

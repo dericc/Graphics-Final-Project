@@ -40,6 +40,7 @@ static const char *video_prefix = "../video-frames/";
 static const char *images_path = "../images/";
 static const char *skybox_path = "../levels/";
 static int integration_type = EULER_INTEGRATION;
+static double previous_time = 0;
 
 // Display variables
 
@@ -120,7 +121,7 @@ void CreateShape(R3ShapeType type, R3Scene *s, R3Point p)
   if (type == R3_BOX_SHAPE)
   {
     // Create box
-    R3Box *box = new R3Box(p + R3Vector(-1, -1, -1), p + R3Vector(1, 1, 1));
+    R3Box *box = new R3Box(p + R3Vector(-2.5, -.5, -2), p + R3Vector(2.5, .5, 2));
     
     // Create shape
     R3Shape *shape = new R3Shape();
@@ -143,6 +144,33 @@ void CreateShape(R3ShapeType type, R3Scene *s, R3Point p)
     node->is_coin = false;
 
     // Add to scene
+    s->root->bbox.Union(node->bbox);
+    s->root->children.push_back(node);
+    node->parent = s->root;
+  }
+  if (type == R3_COIN_SHAPE) {
+    R3Coin *coin = new R3Coin();
+    coin->position = p;
+    coin->t = 0;
+    coin->del = false;
+    
+    R3Matrix tform = R3identity_matrix;
+    tform.Translate(p.Vector());
+    tform.Rotate(R3_X, PI / 2);
+    
+    // Create shape node
+    R3Node *node = new R3Node();
+    node->transformation = tform;
+    node->material = s->coin_material;
+    node->shape = s->coin_shape;
+    node->bbox = s->coin_shape->cylinder->BBox();
+    node->is_coin = true;
+    node->coin = coin;
+    
+    coin->node = node;
+    
+    s->coins.push_back(coin);
+    
     s->root->bbox.Union(node->bbox);
     s->root->children.push_back(node);
     node->parent = s->root;
@@ -1641,7 +1669,6 @@ void GLUTRedraw(void)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   
   double current_time = GetTime();
-  static double previous_time = 0;
 
   while (previous_time < current_time) {
     double delta_time;
@@ -1862,16 +1889,10 @@ void GLUTMouse(int button, int state, int x, int y)
     if (button == GLUT_LEFT_BUTTON && level_editor) {
       if ((x < w - scene->sidebar->width) && (blocks_mode == 1)) {
         R3Ray ray = RayThoughPixel(camera, x, y, w, h);
-        
-        // R3Box box = *scene->player->node->shape->box;
-        // box.Transform(scene->player->node->transformation);
-        // R3Intersection intersection = ComputeIntersection(&box, ray);
-        // if (intersection.hit)
-        //   PlaySound("/../sounds/secret.wav", false);
         R3Point click_location = RayPlaneIntersection(scene->movement_plane, ray);
         CreateShape(R3_BOX_SHAPE, scene, click_location);
       }
-      if ((x < w - scene->sidebar->width) && (grab_mode == 1)) {
+      else if ((x < w - scene->sidebar->width) && (grab_mode == 1)) {
         R3Ray ray = RayThoughPixel(camera, x, y, w, h);
         R3Intersection intersection = ComputeIntersection(scene, scene->root, ray, 1000000000);
         if (intersection.hit) {
@@ -1881,7 +1902,12 @@ void GLUTMouse(int button, int state, int x, int y)
           scene->sidebar->selected_button = -1;
         }
       }
-      else {
+      else if ((x < w - scene->sidebar->width) && (coins_mode == 1)) {
+        R3Ray ray = RayThoughPixel(camera, x, y, w, h);
+        R3Point click_location = RayPlaneIntersection(scene->movement_plane, ray);
+        CreateShape(R3_COIN_SHAPE, scene, click_location);
+      }
+      else if (x >  w - scene->sidebar->width) {
         ClickSidebar(x, y);
       }
     }
@@ -2394,11 +2420,12 @@ R3Camera GetMinimapCam(R3Scene *scene) {
 
 void LoadLevel(const char *filename)
 {
-  if (scene)
+  if (scene) {
     delete scene;
-
+  }
   // Read scene
   scene = ReadScene(filename);
+  static double previous_time = 0;
   
   if (!scene) exit(-1);
   
