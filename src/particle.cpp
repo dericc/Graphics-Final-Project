@@ -568,17 +568,36 @@ void RenderParticles(R3Scene *scene)
 {
   // Draw every particle
 
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP); 
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
   // REPLACE CODE HERE
   glDisable(GL_LIGHTING);
   glPointSize(5);
-  glBegin(GL_POINTS);
+
+  glColor3d(1, 0, 0); 
+  glBegin(GL_QUADS);
   for (int i = 0; i < scene->NParticles(); i++) {
+      glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
+
     R3Particle *particle = scene->Particle(i);
-    glColor3d(particle->material->kd[0], particle->material->kd[1], particle->material->kd[2]);
+
+    // glColor3f(particle->material->kd[0], particle->material->kd[1], particle->material->kd[2]);
     const R3Point& position = particle->position;
-    glVertex3d(position[0], position[1], position[2]);
+
+    glVertex2f(position[0]-.2, position[1]-.2);
+    glVertex2f(position[0]+.2, position[1]-.2);
+    glVertex2f(position[0]+.2, position[1]+.2);
+    glVertex2f(position[0]-.2, position[1]+.2);
+
+    // glColor3d(particle->material->kd[0], particle->material->kd[1], particle->material->kd[2]);
+    // const R3Point& position = particle->position;
+    // glVertex3d(position[0], position[1], position[2]);
+    // glEnd();
   }   
-  glEnd();
+
+  glEnd(); 
+
 }
 
 

@@ -267,6 +267,7 @@ struct R3Scene {
   void WritePlatforms(FILE *fp); 
   void WriteCoins(FILE *fp); 
   void WriteNode(FILE *fp, R3Node *node); 
+  void WriteSkybox(FILE *fp); 
   int Write(const char *filename, R3Node *node); 
 
  public:

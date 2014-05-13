@@ -466,6 +466,17 @@ WriteCoins(FILE *fp) {
   fprintf(fp, "\n"); 
 }
 
+
+void R3Scene::
+WriteSkybox(FILE *fp) {
+
+  if (skyboxTexture != NULL) {
+    fprintf(fp, "skybox %s \n", skyboxTexture); 
+
+    fprintf(fp, "\n"); 
+  }
+}
+
 void R3Scene::
 WriteLights(FILE *fp) {
 
@@ -578,6 +589,7 @@ Write(const char *filename, R3Node *node) {
   WritePlayer(fp); 
   WriteEnemies(fp);
   WriteGoal(fp); 
+  WriteSkybox(fp); 
 
   fclose(fp); 
 
