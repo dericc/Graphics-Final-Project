@@ -221,7 +221,6 @@ void GetExecPath()
     {
       exit(1);
     }
-    cout << exec_path << endl;
   #else
     uint32_t size = sizeof(exec_path);
     if (_NSGetExecutablePath(exec_path, &size) != 0)
@@ -258,7 +257,6 @@ void KillPlayer(void) {
     p->is_dead = true;
     p->node->is_visible = false;
     CreateParticles(scene, p->Center(), 10, scene->materials[0], 5);
-    cout << scene->materials.size() << endl;
     PlaySound("/../sounds/death.wav", false);
   }
 }
