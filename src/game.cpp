@@ -41,6 +41,7 @@ static int integration_type = EULER_INTEGRATION;
 
 static R3Scene *scene = NULL;
 static R3Camera camera;
+static R3Camera minimap_cam;
 static int show_faces = 1;
 static int show_edges = 0;
 static int show_bboxes = 0;
@@ -53,8 +54,11 @@ static int save_image = 0;
 static int save_video = 0;
 static int num_frames_to_record = -1; 
 static int quit = 0;
+static int minimap = 1;
 static int level_editor = 0;
 static int soundtrack_enabled = 0;
+static int camera_mode = 0;
+static int blocks_mode = 0;
 
 // GLUT variables 
 
@@ -230,8 +234,8 @@ void PlaySound(const char *filename, bool looped)
 void KillPlayer(void) {
   R3Player *p = scene->player;
 
-  if (!p->isDead) {
-    p->isDead = true;
+  if (!p->is_dead) {
+    p->is_dead = true;
     p->node->is_visible = false;
     PlaySound("/../sounds/death.wav", false);
   }
@@ -239,8 +243,8 @@ void KillPlayer(void) {
 
 void KillEnemy(R3Enemy *e) {
 
-  if (!e->isDead) {
-    e->isDead = true;
+  if (!e->is_dead) {
+    e->is_dead = true;
     e->node->is_visible = false;
     e->del = true; 
     e->node->del = true; 
@@ -541,7 +545,10 @@ void UpdatePlayer(R3Scene *scene) {
     p->velocity += 15 * p->Up();
     PlaySound("/../sounds/jump.wav", false);
     if (p->onPlatform) {
-      p->velocity += p->platform->velocity;
+      // only in the horizontal direction;
+      R3Vector platformForwardVelocity = p->platform->velocity;
+      platformForwardVelocity.Project(p->Towards());
+      p->velocity += platformForwardVelocity;
     }
     p->inAir = true;
     p->onPlatform = false;
@@ -568,7 +575,7 @@ void UpdatePlayer(R3Scene *scene) {
   p->velocity += (f / p->mass) * delta_time;
   
   // transform the player node
-  if (!p->isDead)
+  if (!p->is_dead)
   {
     R3Matrix tform = p->node->transformation;
     tform.Translate(p->velocity * delta_time);
@@ -596,7 +603,7 @@ void UpdatePlayer(R3Scene *scene) {
   R3Box player_box = *p->node->shape->box;
   player_box.Transform(p->node->transformation);
 
-  if (player_box.Min().Y() <= scene->death_y && !p->isDead)
+  if (player_box.Min().Y() <= scene->death_y && !p->is_dead)
   {
     KillPlayer(); 
   }
@@ -737,7 +744,17 @@ void UpdateEnemies(R3Scene *scene) {
     f += -9.8 * p->Up() * p->mass;
     if (!p->inAir) {
       p->velocity += 10 * p->Up();
-      // PlaySound("/../sounds/jump.wav", false);
+      char path[FILENAME_MAX + 1];
+      FilePath(path, "/../sounds/jump.wav");
+      ISound *soundtrack = sound_engine->play2D(path, false, false, true);
+      double dist = 1.0f;
+      if (scene->player)
+      {
+        double r = R3Distance(scene->player->Center(), p->Center()) / 10;
+        dist = (1.0f / (1.0f + r * r));
+      }
+      soundtrack->setVolume(dist);
+      soundtrack->setIsPaused(false);
       if (p->onPlatform) {
         p->velocity += p->platform->velocity;
       }
@@ -768,13 +785,13 @@ void UpdateEnemies(R3Scene *scene) {
     // Drag
     else if (!p->inAir) {
       const double DRAG_COEFFICIENT = 2;
-      f += -1*forwardVelocity*DRAG_COEFFICIENT;// * DRAG_COEFFICIENT;
+      f += -1*forwardVelocity*DRAG_COEFFICIENT; // * DRAG_COEFFICIENT;
     }
     
     p->velocity += (f / p->mass) * delta_time;
     
     // transform the player node
-    if (!p->isDead)
+    if (!p->is_dead)
     {
       R3Matrix tform = p->node->transformation;
       tform.Translate(p->velocity * delta_time);
@@ -789,30 +806,83 @@ void UpdateEnemies(R3Scene *scene) {
     if (p->onPlatform) {
       p->node->transformation.Translate(p->platform->velocity * delta_time);
     }
-
   }
 
   previous_time = current_time;
 }
 
-void UpdateSidebar(R3Scene *scene) {
-  double current_time = GetTime();
-  static double previous_time = 0;
-  
-  // program just started up?
-  if (previous_time == 0) {
-    previous_time = current_time;
-  }
-  
-  // time passed since starting
-  double delta_time = current_time - previous_time;
-  previous_time = current_time;
 
-  // for each button
-  for (unsigned int i = 0; i < scene->sidebar->buttons.size(); i++)
-  {
-    R3Button *button = scene->sidebar->buttons[i];
+
+void DrawSidebar(R3Scene *scene) {
+  R3Sidebar& sidebar(*scene->sidebar);
+  // draw the background
+  float xmin = GLUTwindow_width - scene->sidebar->width;
+  glBegin(GL_QUADS);
+  glColor3f(0, 0, 0);
+  glVertex2f(xmin, 0);
+  glColor3f(.3, .3, .3);
+  glVertex2f(GLUTwindow_width, 0);
+  glColor3f(0, 0, 0);
+  glVertex2f(GLUTwindow_width, GLUTwindow_height);
+  glColor3f(.2, .2, .2);
+  glVertex2f(xmin, GLUTwindow_height);
+  glEnd();
+  
+  int numButtons = scene->sidebar->buttons.size();
+  double button_width = sidebar.width - 2*sidebar.border;
+  for (int i = 0; i < numButtons; ++i) {
+    R3Button& cur(*scene->sidebar->buttons[i]);
+    float xmin = GLUTwindow_width - sidebar.width + sidebar.border;
+    float ymin = (i) * (button_width + sidebar.border) + sidebar.border;
+    float ymax = ymin + button_width;
+    float xmax = xmin + button_width;
+    glBegin(GL_QUADS);
+    if (i == scene->sidebar->selected_button) {
+      glColor3f(1, 0, 0);
+    }
+    else {
+      glColor3f(0, 0, 1);
+    }
+    glVertex3f(xmin, ymin, .01);
+    glVertex3f(xmax, ymin, .01);
+    glVertex3f(xmax, ymax, .01);
+    glVertex3f(xmin, ymax, .01);
+    glEnd();
   }
+  
+}
+
+void ClickSidebar(int x, int y) {
+  // did we click a button?
+  int sidebarLeftX = GLUTwindow_width - scene->sidebar->width;
+  if (x < sidebarLeftX ||
+      (x > sidebarLeftX && x < sidebarLeftX + scene->sidebar->border) ||
+      (x > GLUTwindow_width - scene->sidebar->border)) {
+    return;
+  }
+  // how many buttons down are we?
+  int button = floor((GLUTwindow_height - y) / (scene->sidebar->button_width + scene->sidebar->border));
+  if (button >= scene->sidebar->buttons.size()) {
+    return;
+  }
+  // this code is to determine if we're in the border between buttons
+  int remainder = (GLUTwindow_height - y) - button * (scene->sidebar->button_width + scene->sidebar->border);
+  if (GLUTwindow_height - remainder < scene->sidebar->border) {
+    return;
+  }
+  
+  if (button == scene->sidebar->selected_button) {
+    scene->sidebar->selected_button = -1;
+    *scene->sidebar->buttons[button]->value = 0;
+  }
+  else {
+    if (scene->sidebar->selected_button != -1) {
+      *scene->sidebar->buttons[scene->sidebar->selected_button]->value = 0;
+    }
+    scene->sidebar->selected_button = button;
+    *scene->sidebar->buttons[button]->value = 1;
+  }
+  
 }
 
 void DrawShape(R3Shape *shape)
@@ -826,6 +896,16 @@ void DrawShape(R3Shape *shape)
   else if (shape->type == R3_SEGMENT_SHAPE) shape->segment->Draw();
   else if (shape->type == R3_CIRCLE_SHAPE) shape->circle->Draw();
   else fprintf(stderr, "Unrecognized shape type: %d\n", shape->type);
+}
+
+void DrawGoal(R3Shape *shape)
+{
+  glDisable(GL_LIGHTING);
+  glColor3d(1 - scene->background[0], 1 - scene->background[1], 1 - scene->background[2]);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  shape->box->Draw();
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  glEnable(GL_LIGHTING);
 }
 
 
@@ -1069,7 +1149,8 @@ void DrawNode(R3Scene *scene, R3Node *node)
   if (node->material) LoadMaterial(node->material);
 
   // Draw shape
-  if (node->is_visible && node->shape) DrawShape(node->shape);
+  if (node->is_goal && node->shape && node->is_goal) DrawGoal(node->shape);
+  else if (node->is_visible && node->shape) DrawShape(node->shape);
 
   // Draw children nodes
   for (int i = 0; i < (int) node->children.size(); i++) 
@@ -1371,7 +1452,7 @@ void DrawHUD()
   // Level editor stuff
   if (level_editor)
   {
-    //DrawSidebar();
+    DrawSidebar(scene);
   }
 
   // Draw coins as squares in top left
@@ -1402,8 +1483,6 @@ void DrawHUD()
   glMatrixMode(GL_PROJECTION);
   glPopMatrix();
 }
-
-
 
 ////////////////////////////////////////////////////////////
 // GLUT USER INTERFACE CODE
@@ -1512,8 +1591,6 @@ void GLUTRedraw(void)
   // Update Player
   if (level_editor != 1) {
     UpdatePlayer(scene);
-  } else {
-    UpdateSidebar(scene);
   }
 
   UpdatePlatforms(scene);
@@ -1566,7 +1643,17 @@ void GLUTRedraw(void)
     DrawScene(scene);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   }
-
+  
+  if (minimap) {
+    // Resize window
+    glViewport(10, 10, 400, 400);
+    glEnable(GL_LIGHTING);
+    LoadCamera(&minimap_cam);
+    DrawScene(scene);
+    LoadCamera(&camera);
+    glViewport(0, 0, GLUTwindow_width, GLUTwindow_height);
+  }
+  
   DrawHUD();
 
   // Save image
@@ -1628,46 +1715,48 @@ void GLUTMotion(int x, int y)
   int dy = y - GLUTmouse[1];
   
   // Process mouse motion event
-  if ((dx != 0) || (dy != 0)) {
-    R3Point scene_center = scene->bbox.Centroid();
-    if ((GLUTbutton[0] && (GLUTmodifiers & GLUT_ACTIVE_SHIFT)) || GLUTbutton[1]) {
-      // Scale world 
-      double factor = (double) dx / (double) GLUTwindow_width;
-      factor += (double) dy / (double) GLUTwindow_height;
-      factor = exp(2.0 * factor);
-      factor = (factor - 1.0) / factor;
-      R3Vector translation = (scene_center - camera.eye) * factor;
-      camera.eye += translation;
-      glutPostRedisplay();
+  if (camera_mode) {
+    if ((dx != 0) || (dy != 0)) {
+      R3Point scene_center = scene->bbox.Centroid();
+      if ((GLUTbutton[0] && (GLUTmodifiers & GLUT_ACTIVE_SHIFT)) || GLUTbutton[1]) {
+        // Scale world 
+        double factor = (double) dx / (double) GLUTwindow_width;
+        factor += (double) dy / (double) GLUTwindow_height;
+        factor = exp(2.0 * factor);
+        factor = (factor - 1.0) / factor;
+        R3Vector translation = (scene_center - camera.eye) * factor;
+        camera.eye += translation;
+        glutPostRedisplay();
+      }
+      else if (GLUTbutton[0] && (GLUTmodifiers & GLUT_ACTIVE_CTRL)) {
+        // Translate world
+        double length = R3Distance(scene_center, camera.eye) * tan(camera.yfov);
+        double vx = length * (double) dx / (double) GLUTwindow_width;
+        double vy = length * (double) dy / (double) GLUTwindow_height;
+        R3Vector translation = -((camera.right * vx) + (camera.up * vy));
+        camera.eye += translation;
+        glutPostRedisplay();
+      }
+      else if (GLUTbutton[0]) {
+        // Rotate world
+        double vx = (double) dx / (double) GLUTwindow_width;
+        double vy = (double) dy / (double) GLUTwindow_height;
+        double theta = 4.0 * (fabs(vx) + fabs(vy));
+        R3Vector vector = (camera.right * vx) + (camera.up * vy);
+        R3Vector rotation_axis = camera.towards % vector;
+        rotation_axis.Normalize();
+        camera.eye.Rotate(R3Line(scene_center, rotation_axis), theta);
+        camera.towards.Rotate(rotation_axis, theta);
+        camera.up.Rotate(rotation_axis, theta);
+        camera.right = camera.towards % camera.up;
+        camera.up = camera.right % camera.towards;
+        camera.towards.Normalize();
+        camera.up.Normalize();
+        camera.right.Normalize();
+        glutPostRedisplay();
+      }
     }
-    else if (GLUTbutton[0] && (GLUTmodifiers & GLUT_ACTIVE_CTRL)) {
-      // Translate world
-      double length = R3Distance(scene_center, camera.eye) * tan(camera.yfov);
-      double vx = length * (double) dx / (double) GLUTwindow_width;
-      double vy = length * (double) dy / (double) GLUTwindow_height;
-      R3Vector translation = -((camera.right * vx) + (camera.up * vy));
-      camera.eye += translation;
-      glutPostRedisplay();
-    }
-    else if (GLUTbutton[0]) {
-      // Rotate world
-      double vx = (double) dx / (double) GLUTwindow_width;
-      double vy = (double) dy / (double) GLUTwindow_height;
-      double theta = 4.0 * (fabs(vx) + fabs(vy));
-      R3Vector vector = (camera.right * vx) + (camera.up * vy);
-      R3Vector rotation_axis = camera.towards % vector;
-      rotation_axis.Normalize();
-      camera.eye.Rotate(R3Line(scene_center, rotation_axis), theta);
-      camera.towards.Rotate(rotation_axis, theta);
-      camera.up.Rotate(rotation_axis, theta);
-      camera.right = camera.towards % camera.up;
-      camera.up = camera.right % camera.towards;
-      camera.towards.Normalize();
-      camera.up.Normalize();
-      camera.right.Normalize();
-      glutPostRedisplay();
-    }
-  }
+}
 
   // Remember mouse position 
   GLUTmouse[0] = x;
@@ -1686,14 +1775,19 @@ void GLUTMouse(int button, int state, int x, int y)
     if (button == GLUT_LEFT_BUTTON && level_editor) {
       int width = glutGet(GLUT_WINDOW_WIDTH);
       int height = glutGet(GLUT_WINDOW_HEIGHT);
-      R3Ray ray = RayThoughPixel(camera, x, y, width, height);
-      // R3Box box = *scene->player->node->shape->box;
-      // box.Transform(scene->player->node->transformation);
-      // R3Intersection intersection = ComputeIntersection(&box, ray);
-      // if (intersection.hit)
-      //   PlaySound("/../sounds/secret.wav", false);
-      R3Point click_location = RayPlaneIntersection(scene->movement_plane, ray);
-      CreateShape(R3_BOX_SHAPE, scene, click_location);
+      if ((x < width - scene->sidebar->width) && (blocks_mode == 1)) {
+        R3Ray ray = RayThoughPixel(camera, x, y, width, height);
+        // R3Box box = *scene->player->node->shape->box;
+        // box.Transform(scene->player->node->transformation);
+        // R3Intersection intersection = ComputeIntersection(&box, ray);
+        // if (intersection.hit)
+        //   PlaySound("/../sounds/secret.wav", false);
+        R3Point click_location = RayPlaneIntersection(scene->movement_plane, ray);
+        CreateShape(R3_BOX_SHAPE, scene, click_location);
+      }
+      else {
+        ClickSidebar(x, y);
+      }
     }
     else if (button == GLUT_MIDDLE_BUTTON) {
     }
@@ -2007,7 +2101,15 @@ ParseArgs(int argc, char **argv)
   return 1;
 }
 
-
+R3Camera GetMinimapCam(R3Scene *scene) {
+  R3Camera ret(camera);
+  ret.towards = R3posz_vector;
+  ret.up = R3posy_vector;
+  ret.right = R3posx_vector;
+  ret.eye = scene->root->bbox.Centroid();
+  ret.eye.Translate(-1*ret.towards*(scene->root->bbox.XLength()/2)/tan(ret.xfov));
+  return ret;
+}
 
 ////////////////////////////////////////////////////////////
 // MAIN
@@ -2026,7 +2128,15 @@ main(int argc, char **argv)
 
   // Read scene
   scene = ReadScene(input_scene_name);
+  
+  R3Button *blocks_button = new R3Button(&blocks_mode);
+  scene->sidebar->buttons.push_back(blocks_button);
+  R3Button *camera_button = new R3Button(&camera_mode);
+  scene->sidebar->buttons.push_back(camera_button);
+
   if (!scene) exit(-1);
+  
+  minimap_cam = GetMinimapCam(scene);
 
   // Initialize sound shit
   sound_engine = createIrrKlangDevice();
