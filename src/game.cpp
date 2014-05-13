@@ -66,7 +66,8 @@ static int camera_mode = 0;
 static int blocks_mode = 0;
 static int grab_mode = 0;
 static int move_mode = 0;
-
+static int coins_mode = 0;
+static int paused = 0;
 // GLUT variables 
 
 static int GLUTwindow = 0;
@@ -823,6 +824,10 @@ void ClickSidebar(int x, int y) {
   else {
     if (scene->sidebar->selected_button != -1) {
       *scene->sidebar->buttons[scene->sidebar->selected_button]->value = 0;
+    }
+    if (move_mode != 0) {
+      grabbed = NULL;
+      move_mode = 0;
     }
     scene->sidebar->selected_button = button;
     *scene->sidebar->buttons[button]->value = 1;
@@ -1714,7 +1719,7 @@ void GLUTRedraw(void)
   
   if (minimap) {
     // Resize window
-    glViewport(10, 10, 500, 500);
+    glViewport(0, 0, GLUTwindow_width/3,  GLUTwindow_height/3);
     glEnable(GL_LIGHTING);
     LoadCamera(&minimap_cam);
     DrawScene(scene);
@@ -1830,11 +1835,12 @@ void GLUTMotion(int x, int y)
       double vx = length * (double) dx / (double) GLUTwindow_width;
       double vy = length * (double) dy / (double) GLUTwindow_height;
       R3Vector translation = ((camera.right * vx) + (camera.up * vy));
-      grabbed->transformation.Translate(translation);
+      // snap the shit to a grid
+      grabbed->shape->box->Translate(translation);
+      grabbed->bbox = *grabbed->shape->box;
     }
   }
   
-
   // Remember mouse position
   GLUTmouse[0] = x;
   GLUTmouse[1] = y;
@@ -1969,7 +1975,9 @@ void GLUTKeyboard(unsigned char key, int x, int y)
   // case 'l':
   //   show_lights = !show_lights;
   //   break;
-
+  case 'c':
+  case 'C':
+      camera = minimap_cam;
   case 'M':
   case 'm':
       minimap = (minimap == 1) ? 0 : 1;
@@ -1981,8 +1989,10 @@ void GLUTKeyboard(unsigned char key, int x, int y)
 
   case 'R':
   case 'r':
-    if (scene->player && scene->player->is_dead)
-      LoadLevel(input_scene_name);
+      if (scene->player && scene->player->is_dead) {
+        LoadLevel(input_scene_name);
+        paused = 1;
+      }
     break;
 
   // case 'P':
@@ -2262,13 +2272,12 @@ void DrawSidebar(R3Scene *scene) {
       // Just in case we set all vertices to white.
       glColor4f(1,1,1,1);
       // Render the front quad
-      R3Material *playermat = scene->player->node->material;
       glBindTexture(GL_TEXTURE_2D, cur.material->texture_index);
       glBegin(GL_QUADS);
-      glTexCoord2f(1, 1); glVertex3f(xmin, ymin, .04);
-      glTexCoord2f(1, 0); glVertex3f(xmax, ymin, .04);
-      glTexCoord2f(0, 0); glVertex3f(xmax, ymax, .04);
-      glTexCoord2f(0, 1); glVertex3f(xmin, ymax, .04);
+      glTexCoord2f(1, 0); glVertex3f(xmin, ymin, .04);
+      glTexCoord2f(1, 1); glVertex3f(xmax, ymin, .04);
+      glTexCoord2f(0, 1); glVertex3f(xmax, ymax, .04);
+      glTexCoord2f(0, 0); glVertex3f(xmin, ymax, .04);
       glEnd();
       glPopAttrib();
       glPopMatrix();
@@ -2280,17 +2289,17 @@ void DrawSidebar(R3Scene *scene) {
 const int NButtons = 4;
 
 int *ButtonVariables[] = {
-  &blocks_mode,
   &camera_mode,
   &grab_mode,
   &blocks_mode,
+  &coins_mode,
 };
 
 const char *ButtonIconFiles[] = {
   "camera.jpg",
-  "camera.jpg",
-  "camera.jpg",
-  "camera.jpg"
+  "grab.jpg",
+  "platform.jpg",
+  "coin.jpg"
 };
 
 void SetupSkybox(R3Scene *scene) {
@@ -2363,7 +2372,9 @@ void SetupLevelEditor(R3Scene *scene) {
     scene->materials.push_back(material);
     R3Button *button = new R3Button(ButtonVariables[i], material);
     scene->sidebar->buttons.push_back(button);
-  }  
+  }
+  scene->sidebar->selected_button = 0;
+  *scene->sidebar->buttons[0]->value = 1;
 }
 
 R3Camera GetMinimapCam(R3Scene *scene) {
