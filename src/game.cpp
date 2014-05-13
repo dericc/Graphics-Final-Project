@@ -107,6 +107,7 @@ static char exec_path[FILENAME_MAX + 1];
 ////////////////////////////////////////////////////////////
 
 R3Camera GetMinimapCam(R3Scene *scene);
+void DrawSidebar(R3Scene *);
 
 void CreateShape(R3ShapeType type, R3Scene *s, R3Point p)
 {
@@ -804,82 +805,6 @@ void UpdateEnemies(R3Scene *scene, double delta_time) {
   }
 }
 
-
-
-void DrawSidebar(R3Scene *scene) {
-  R3Sidebar& sidebar(*scene->sidebar);
-  // draw the background
-  float xmin = GLUTwindow_width - scene->sidebar->width;
-  glBegin(GL_QUADS);
-  glColor3f(0, 0, 0);
-  glVertex2f(xmin, 0);
-  glColor3f(.3, .3, .3);
-  glVertex2f(GLUTwindow_width, 0);
-  glColor3f(0, 0, 0);
-  glVertex2f(GLUTwindow_width, GLUTwindow_height);
-  glColor3f(.2, .2, .2);
-  glVertex2f(xmin, GLUTwindow_height);
-  glEnd();
-  
-  int numButtons = scene->sidebar->buttons.size();
-  double button_width = sidebar.width - 2*sidebar.border;
-  for (int i = 0; i < numButtons; ++i) {
-    R3Button& cur(*scene->sidebar->buttons[i]);
-    float xmin = GLUTwindow_width - sidebar.width + sidebar.border;
-    float ymin = (i) * (button_width + sidebar.border) + sidebar.border;
-    float ymax = ymin + button_width;
-    float xmax = xmin + button_width;
-    glBegin(GL_QUADS);
-    if (i == scene->sidebar->selected_button) {
-      glColor3f(1, 0, 0);
-    }
-    else {
-      glColor3f(0, 0, 1);
-    }
-    glVertex3f(xmin, ymin, .01);
-    glVertex3f(xmax, ymin, .01);
-    glVertex3f(xmax, ymax, .01);
-    glVertex3f(xmin, ymax, .01);
-    glEnd();
-    
-   button_width = sidebar.width - 3*sidebar.border;
-   xmin = GLUTwindow_width - sidebar.width + sidebar.border*1.5;
-   ymin = (i) * (button_width + sidebar.border) + sidebar.border*1.5;
-   ymax = ymin + button_width;
-   xmax = xmin + button_width;
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-   
-   // Store the current matrix
-   glPushMatrix();
-   // Reset and transform the matrix.
-//    glLoadIdentity();
-//    gluLookAt(
-//              0,0,0,
-//              scene->camera.towards.X(),scene->camera.towards.Y(),scene->camera.towards.Z(),
-//              0,1,0);
-//    
-   // Enable/Disable features
-   glPushAttrib(GL_ENABLE_BIT);
-   glEnable(GL_TEXTURE_2D);
-   glDisable(GL_DEPTH_TEST);
-   glDisable(GL_LIGHTING);
-   glDisable(GL_BLEND);
-   // Just in case we set all vertices to white.
-   glColor4f(1,1,1,1);
-   // Render the front quad
-   glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
-   glBegin(GL_QUADS);
-   glTexCoord2f(0, 0);  glVertex3f(xmin, ymin, .04);
-   glTexCoord2f(1, 0); glVertex3f(xmax, ymin, .04);
-   glTexCoord2f(1, 1); glVertex3f(xmax, ymax, .04);
-   glTexCoord2f(0, 1); glVertex3f(xmin, ymax, .04);
-   glEnd();
-   glPopAttrib();
-   glPopMatrix();
-  }
-  
-}
 
 void ClickSidebar(int x, int y) {
   // did we click a button?
@@ -2315,6 +2240,80 @@ ParseArgs(int argc, char **argv)
   return 1;
 }
 
+
+
+
+void DrawSidebar(R3Scene *scene) {
+  R3Sidebar& sidebar(*scene->sidebar);
+  // draw the background
+  float xmin = GLUTwindow_width - scene->sidebar->width;
+  glBegin(GL_QUADS);
+  glColor3f(0, 0, 0);
+  glVertex2f(xmin, 0);
+  glColor3f(.3, .3, .3);
+  glVertex2f(GLUTwindow_width, 0);
+  glColor3f(0, 0, 0);
+  glVertex2f(GLUTwindow_width, GLUTwindow_height);
+  glColor3f(.2, .2, .2);
+  glVertex2f(xmin, GLUTwindow_height);
+  glEnd();
+  
+  int numButtons = scene->sidebar->buttons.size();
+  double button_width = sidebar.width - 2*sidebar.border;
+  for (int i = 0; i < numButtons; ++i) {
+    R3Button& cur(*scene->sidebar->buttons[i]);
+    float xmin = GLUTwindow_width - sidebar.width + sidebar.border;
+    float ymin = (i) * (button_width + sidebar.border) + sidebar.border;
+    float ymax = ymin + button_width;
+    float xmax = xmin + button_width;
+    glBegin(GL_QUADS);
+    if (i == scene->sidebar->selected_button) {
+      glColor3f(1, 0, 0);
+    }
+    else {
+      glColor3f(0, 0, 1);
+    }
+    glVertex3f(xmin, ymin, .01);
+    glVertex3f(xmax, ymin, .01);
+    glVertex3f(xmax, ymax, .01);
+    glVertex3f(xmin, ymax, .01);
+    glEnd();
+    
+//    button_width = sidebar.width - 3*sidebar.border;
+//    xmin = GLUTwindow_width - sidebar.width + sidebar.border*1.5;
+//    ymin = (i) * (button_width + sidebar.border*1.5) + sidebar.border*1.5;
+//    ymax = ymin + button_width;
+//    xmax = xmin + button_width;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    
+    // Store the current matrix
+    glPushMatrix();
+    // Reset and transform the matrix.
+    
+    // Enable/Disable features
+    glPushAttrib(GL_ENABLE_BIT);
+    glEnable(GL_TEXTURE_2D);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_BLEND);
+    // Just in case we set all vertices to white.
+    glColor4f(1,1,1,1);
+    // Render the front quad
+    R3Material *playermat = scene->player->node->material;
+    glBindTexture(GL_TEXTURE_2D, cur.material->texture_index);
+    glBegin(GL_QUADS);
+    glTexCoord2f(0, 0); glVertex3f(xmin, ymin, .04);
+    glTexCoord2f(1, 0); glVertex3f(xmax, ymin, .04);
+    glTexCoord2f(1, 1); glVertex3f(xmax, ymax, .04);
+    glTexCoord2f(0, 1); glVertex3f(xmin, ymax, .04);
+    glEnd();
+    glPopAttrib();
+    glPopMatrix();
+  }
+  
+}
+
 const int NButtons = 3;
 
 int *ButtonVariables[] = {
@@ -2334,7 +2333,7 @@ void SetupLevelEditor(R3Scene *scene) {
     // Create material
     R3Material *material = new R3Material();
     *material = *scene->materials[0];
-    material->texture_index = scene->materials.size();
+    material->texture_index = -1;
 
     
     // Get texture filename
@@ -2344,12 +2343,21 @@ void SetupLevelEditor(R3Scene *scene) {
     strcat(buffer, ButtonIconFiles[i]);
     strcpy(material->texture_name, buffer);
     
+    material->ka = R3Rgb(1, 1, 1, 0);
+    material->kd = R3Rgb(1, 1, 1, 0);
+    material->ks = R3Rgb(0, 0, 0, 0);
+    material->kt = R3Rgb(0, 0, 0, 0);
+    material->emission = R3Rgb(0, 0, 0, 0);
+    material->shininess = 1;
+    material->indexofrefraction = 1;
+    
     // Read texture image
     material->texture = new R2Image();
     if (!material->texture->Read(buffer)) {
       fprintf(stderr, "not a good icon file: %s\n", buffer);
     }
     
+    LoadMaterial(material);
     // Insert material
     scene->materials.push_back(material);
     R3Button *button = new R3Button(ButtonVariables[i], material);

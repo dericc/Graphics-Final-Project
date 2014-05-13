@@ -301,7 +301,7 @@ struct R3Button {
   
   int * value;
   button_fxn f;
-  const R3Material *material;
+  R3Material *material;
 };
 
 struct R3Sidebar {
