@@ -842,41 +842,41 @@ void DrawSidebar(R3Scene *scene) {
     glVertex3f(xmin, ymax, .01);
     glEnd();
     
-//    button_width = sidebar.width - 3*sidebar.border;
-//    xmin = GLUTwindow_width - sidebar.width + sidebar.border*1.5;
-//    ymin = (i) * (button_width + sidebar.border) + sidebar.border*1.5;
-//    ymax = ymin + button_width;
-//    xmax = xmin + button_width;
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+   button_width = sidebar.width - 3*sidebar.border;
+   xmin = GLUTwindow_width - sidebar.width + sidebar.border*1.5;
+   ymin = (i) * (button_width + sidebar.border) + sidebar.border*1.5;
+   ymax = ymin + button_width;
+   xmax = xmin + button_width;
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+   
+   // Store the current matrix
+   glPushMatrix();
+   // Reset and transform the matrix.
+//    glLoadIdentity();
+//    gluLookAt(
+//              0,0,0,
+//              scene->camera.towards.X(),scene->camera.towards.Y(),scene->camera.towards.Z(),
+//              0,1,0);
 //    
-//    // Store the current matrix
-//    glPushMatrix();
-//    // Reset and transform the matrix.
-////    glLoadIdentity();
-////    gluLookAt(
-////              0,0,0,
-////              scene->camera.towards.X(),scene->camera.towards.Y(),scene->camera.towards.Z(),
-////              0,1,0);
-////    
-//    // Enable/Disable features
-//    glPushAttrib(GL_ENABLE_BIT);
-//    glEnable(GL_TEXTURE_2D);
-//    glDisable(GL_DEPTH_TEST);
-//    glDisable(GL_LIGHTING);
-//    glDisable(GL_BLEND);
-//    // Just in case we set all vertices to white.
-//    glColor4f(1,1,1,1);
-//    // Render the front quad
-//    glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
-//    glBegin(GL_QUADS);
-//    glTexCoord2f(0, 0);  glVertex3f(xmin, ymin, .04);
-//    glTexCoord2f(1, 0); glVertex3f(xmax, ymin, .04);
-//    glTexCoord2f(1, 1); glVertex3f(xmax, ymax, .04);
-//    glTexCoord2f(0, 1); glVertex3f(xmin, ymax, .04);
-//    glEnd();
-//    glPopAttrib();
-//    glPopMatrix();
+   // Enable/Disable features
+   glPushAttrib(GL_ENABLE_BIT);
+   glEnable(GL_TEXTURE_2D);
+   glDisable(GL_DEPTH_TEST);
+   glDisable(GL_LIGHTING);
+   glDisable(GL_BLEND);
+   // Just in case we set all vertices to white.
+   glColor4f(1,1,1,1);
+   // Render the front quad
+   glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
+   glBegin(GL_QUADS);
+   glTexCoord2f(0, 0);  glVertex3f(xmin, ymin, .04);
+   glTexCoord2f(1, 0); glVertex3f(xmax, ymin, .04);
+   glTexCoord2f(1, 1); glVertex3f(xmax, ymax, .04);
+   glTexCoord2f(0, 1); glVertex3f(xmin, ymax, .04);
+   glEnd();
+   glPopAttrib();
+   glPopMatrix();
   }
   
 }
