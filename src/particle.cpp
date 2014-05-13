@@ -607,6 +607,26 @@ void RenderParticles(R3Scene *scene) {
    //     scene->camera.towards.X(),scene->camera.towards.Y(),scene->camera.towards.Z() - 5,
    //     0,1,0);
 
+  glDisable(GL_LIGHTING);
+  glPointSize(5);
+
+  for (unsigned int i = 0; i < scene->fire_particles.size(); i++) {
+    R3Particle *particle = scene->fire_particles[i];
+    // glColor3d(1, particle->lifetime / 10.0, 0);
+    const R3Point& position = particle->position;
+
+    glColor4f(1,0,0,1);
+    glBegin(GL_POINTS);
+      glVertex2f(position[0], position[1]);
+      glVertex2f(position[0], position[1]);
+      glVertex2f(position[0], position[1]);
+      glVertex2f(position[0], position[1]);
+    glEnd(); 
+  }
+
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP); 
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
    // Enable/Disable features
    // glPushAttrib(GL_ENABLE_BIT);
    // glEnable(GL_TEXTURE_2D);
@@ -618,17 +638,17 @@ void RenderParticles(R3Scene *scene) {
   for (int i = 0; i < scene->NParticles(); i++) {
     R3Particle *particle = scene->Particle(i);
     const R3Point& position = particle->position;
-   glColor4f(1,1,1,1);
-   // Render the front quad
+    glColor4f(1,0,0,1);
+    // Render the front quad
 
-   glBegin(GL_QUADS);
+    glBegin(GL_QUADS);
     glVertex2f(position[0]-.2, position[1]-.2);
     glVertex2f(position[0]+.2, position[1]-.2);
     glVertex2f(position[0]+.2, position[1]+.2);
     glVertex2f(position[0]-.2, position[1]+.2);
-   glEnd();
-   glBindTexture(GL_TEXTURE_2D, 0);
-   // Restore enable bits wand matrix
+    glEnd();
+    glBindTexture(GL_TEXTURE_2D, 0);
+    // Restore enable bits wand matrix
 
   }   
    glPopAttrib();

@@ -1752,9 +1752,6 @@ void GLUTRedraw(void)
 
   // Draw particle springs
   DrawParticleSprings(scene);
-
-  // Draw particles
-  RenderParticles(scene);
   
 
   // Draw scene surfaces
@@ -1781,6 +1778,10 @@ void GLUTRedraw(void)
     LoadCamera(&camera);
     glViewport(0, 0, GLUTwindow_width, GLUTwindow_height);
   }
+
+  
+  // Draw particles
+  RenderParticles(scene);
   
   DrawHUD();
 
