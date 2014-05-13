@@ -36,7 +36,7 @@ static const double VIDEO_FRAME_DELAY = 1./25.; // 25 FPS
 
 static char *input_scene_name = NULL;
 static char *output_image_name = NULL;
-static const char *video_prefix = "./video-frames/";
+static const char *video_prefix = "../video-frames/";
 static const char *images_path = "../images/";
 static const char *skybox_path = "../levels/";
 static int integration_type = EULER_INTEGRATION;
@@ -104,7 +104,7 @@ static ISoundEngine *sound_engine;
 // executable path
 static char exec_path[FILENAME_MAX + 1];
 
-int LoadLevel(const char *filename);
+void LoadLevel(const char *filename);
 
 
 ////////////////////////////////////////////////////////////
@@ -1831,7 +1831,7 @@ void GLUTMotion(int x, int y)
       double length = R3Distance(scene_center, camera.eye) * tan(camera.yfov);
       double vx = length * (double) dx / (double) GLUTwindow_width;
       double vy = length * (double) dy / (double) GLUTwindow_height;
-      R3Vector translation = -((camera.right * vx) + (camera.up * vy));
+      R3Vector translation = ((camera.right * vx) + (camera.up * vy));
       grabbed->transformation.Translate(translation);
     }
   }
@@ -1848,14 +1848,16 @@ void GLUTMouse(int button, int state, int x, int y)
 {
   // Invert y coordinate
   y = GLUTwindow_height - y;
+  int w = glutGet(GLUT_WINDOW_WIDTH);
+  int h = glutGet(GLUT_WINDOW_HEIGHT);
+  camera.xfov = atan(tan(camera.yfov) * (double) w/ (double) h);
   
   // Process mouse button event
   if (state == GLUT_DOWN) {
     if (button == GLUT_LEFT_BUTTON && level_editor) {
-      int width = glutGet(GLUT_WINDOW_WIDTH);
-      int height = glutGet(GLUT_WINDOW_HEIGHT);
-      if ((x < width - scene->sidebar->width) && (blocks_mode == 1)) {
-        R3Ray ray = RayThoughPixel(camera, x, y, width, height);
+      if ((x < w - scene->sidebar->width) && (blocks_mode == 1)) {
+        R3Ray ray = RayThoughPixel(camera, x, y, w, h);
+        
         // R3Box box = *scene->player->node->shape->box;
         // box.Transform(scene->player->node->transformation);
         // R3Intersection intersection = ComputeIntersection(&box, ray);
@@ -1864,9 +1866,9 @@ void GLUTMouse(int button, int state, int x, int y)
         R3Point click_location = RayPlaneIntersection(scene->movement_plane, ray);
         CreateShape(R3_BOX_SHAPE, scene, click_location);
       }
-      if ((x < width - scene->sidebar->width) && (grab_mode == 1)) {
-        R3Ray ray = RayThoughPixel(camera, x, y, width, height);
-        R3Intersection intersection = ComputeIntersection(scene, scene->root, ray, .00001);
+      if ((x < w - scene->sidebar->width) && (grab_mode == 1)) {
+        R3Ray ray = RayThoughPixel(camera, x, y, w, h);
+        R3Intersection intersection = ComputeIntersection(scene, scene->root, ray, 1000000000);
         if (intersection.hit) {
           grab_mode = 0;
           move_mode = 1;
@@ -2380,7 +2382,7 @@ R3Camera GetMinimapCam(R3Scene *scene) {
 // MAIN
 ////////////////////////////////////////////////////////////
 
-int LoadLevel(const char *filename)
+void LoadLevel(const char *filename)
 {
   if (scene)
     delete scene;
@@ -2434,12 +2436,4 @@ main(int argc, char **argv)
   // Return success 
   return 0;
 }
-
-
-
-
-
-
-
-
 
