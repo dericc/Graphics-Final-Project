@@ -1500,7 +1500,7 @@ void DrawHUD()
     float ymax = spacing + size;
 
     glDisable(GL_DEPTH_TEST); 
-    glColor4f(0.0f, 0.0f, 0.0, 0f);
+    glColor4f(0.0f, 0.0f, 0.0f, 0.0f);
     glBindTexture(GL_TEXTURE_2D, scene->coins[0]->node->material->texture_index); 
     glBegin(GL_QUADS);
       // glColor3f(1.0f, 1.0f, 0.0);
