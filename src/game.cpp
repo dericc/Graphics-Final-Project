@@ -1507,6 +1507,7 @@ void DrawSkybox(R3Scene *scene) {
 
    // Store the current matrix
    glPushMatrix();
+
    // Reset and transform the matrix.
    glLoadIdentity();
    gluLookAt(
