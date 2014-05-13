@@ -1,4 +1,4 @@
-// Source file for the scene file viewerddddddd
+// Source file for the scene file viewer
 
 
 ////////////////////////////////////////////////////////////
@@ -1542,6 +1542,7 @@ void GLUTRedraw(void)
 
   // Draw particle springs
   DrawParticleSprings(scene);
+
   
 
   // Draw scene surfaces
@@ -2015,6 +2016,11 @@ main(int argc, char **argv)
 
   // Initialize GLUT
   GLUTInit(&argc, argv);
+
+  // CSkybox::loadSkybox("../skyboxes/jajlands1/", 
+  //   "jajlands1_bk.jpg", "jajlands1_bk.jpg", 
+  //   "jajlands1_bk.jpg", "jajlands1_bk.jpg", 
+  //   "jajlands1_bk.jpg", "jajlands1_bk.jpg"); 
 
   // Read scene
   scene = ReadScene(input_scene_name);
