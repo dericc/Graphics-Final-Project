@@ -209,11 +209,11 @@ struct R3Enemy {
   R3Vector Towards();
   R3Vector Up();
 
-  bool inAir; 
+  bool inAir = true; 
   bool is_dead;
   bool del; 
   
-  bool onPlatform;
+  bool onPlatform = false;
   R3Platform *platform;
 };
 
@@ -278,7 +278,8 @@ struct R3Scene {
   vector<R3Coin *> coins;
   vector<R3Platform *> platforms;
   vector<R3Light *> lights;
-  vector<R3Enemy *> enemies; 
+  vector<R3Enemy *> enemies;
+  vector<R3Material *> materials;
   R3Vector gravity;
   R3Camera camera;
   R3Box bbox;
@@ -294,10 +295,12 @@ typedef void (*button_fxn)(void);
 
 struct R3Button {
   // this might be ugly but one of these two guys will be null
-  R3Button(int *value) : value(value), f(NULL) {};
-  R3Button(button_fxn f) : value(NULL), f(f) {};
+  R3Button(int *value, R3Material *material) : value(value), f(NULL), material(material) {};
+  R3Button(button_fxn f, R3Material *material) : value(NULL), f(f), material(material) {};
+  
   int * value;
   button_fxn f;
+  const R3Material *material;
 };
 
 struct R3Sidebar {
