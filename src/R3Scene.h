@@ -13,7 +13,8 @@ typedef enum {
   R3_MESH_SHAPE,
   R3_SEGMENT_SHAPE,
   R3_CIRCLE_SHAPE,
-  R3_NUM_SHAPE_TYPES
+  R3_NUM_SHAPE_TYPES,
+  R3_COIN_SHAPE,
 } R3ShapeType;
 
 typedef enum {
@@ -304,6 +305,8 @@ struct R3Scene {
   R3Goal *goal;
   R3Sidebar *sidebar;
   R3Plane movement_plane;
+  R3Shape *coin_shape;
+  R3Material *coin_material;
   char skyboxTexture[256]; 
   char soundtrack[256];
   char next_level[256];

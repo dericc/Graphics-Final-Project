@@ -67,7 +67,8 @@ static int camera_mode = 0;
 static int blocks_mode = 0;
 static int grab_mode = 0;
 static int move_mode = 0;
-
+static int coins_mode = 0;
+static int paused = 0;
 // GLUT variables 
 
 static int GLUTwindow = 0;
@@ -121,7 +122,7 @@ void CreateShape(R3ShapeType type, R3Scene *s, R3Point p)
   if (type == R3_BOX_SHAPE)
   {
     // Create box
-    R3Box *box = new R3Box(p + R3Vector(-1, -1, -1), p + R3Vector(1, 1, 1));
+    R3Box *box = new R3Box(p + R3Vector(-2.5, -.5, -2), p + R3Vector(2.5, .5, 2));
     
     // Create shape
     R3Shape *shape = new R3Shape();
@@ -144,6 +145,33 @@ void CreateShape(R3ShapeType type, R3Scene *s, R3Point p)
     node->is_coin = false;
 
     // Add to scene
+    s->root->bbox.Union(node->bbox);
+    s->root->children.push_back(node);
+    node->parent = s->root;
+  }
+  if (type == R3_COIN_SHAPE) {
+    R3Coin *coin = new R3Coin();
+    coin->position = p;
+    coin->t = 0;
+    coin->del = false;
+    
+    R3Matrix tform = R3identity_matrix;
+    tform.Translate(p.Vector());
+    tform.Rotate(R3_X, PI / 2);
+    
+    // Create shape node
+    R3Node *node = new R3Node();
+    node->transformation = tform;
+    node->material = s->coin_material;
+    node->shape = s->coin_shape;
+    node->bbox = s->coin_shape->cylinder->BBox();
+    node->is_coin = true;
+    node->coin = coin;
+    
+    coin->node = node;
+    
+    s->coins.push_back(coin);
+    
     s->root->bbox.Union(node->bbox);
     s->root->children.push_back(node);
     node->parent = s->root;
@@ -841,6 +869,10 @@ void ClickSidebar(int x, int y) {
     if (scene->sidebar->selected_button != -1) {
       *scene->sidebar->buttons[scene->sidebar->selected_button]->value = 0;
     }
+    if (move_mode != 0) {
+      grabbed = NULL;
+      move_mode = 0;
+    }
     scene->sidebar->selected_button = button;
     *scene->sidebar->buttons[button]->value = 1;
   }
@@ -1499,18 +1531,18 @@ void DrawHUD()
     float ymin = spacing;
     float ymax = spacing + size;
 
-    glDisable(GL_DEPTH_TEST); 
-    glColor4f(0.0f, 0.0f, 0.0f, 0.0f);
-    glBindTexture(GL_TEXTURE_2D, scene->coins[0]->node->material->texture_index); 
+    // glColor4f(0.0f, 0.0f, 0.0, 0);
+    // glBindTexture(GL_TEXTURE_2D, scene->coins[0]->node->material->texture_index); 
+    glBindTexture(GL_TEXTURE_2D, 0); 
     glBegin(GL_QUADS);
-      // glColor3f(1.0f, 1.0f, 0.0);
-      glTexCoord2f(0.0, 0.0); 
+      glColor3f(.8f, .8f, 0.0);
+      // glTexCoord2f(0.0, 0.0); 
       glVertex2f(xmin, ymin);
-      glTexCoord2f(1.0, 0.0); 
+      // glTexCoord2f(1.0, 0.0); 
       glVertex2f(xmax, ymin);
-      glTexCoord2f(1.0, 1.0); 
+      // glTexCoord2f(1.0, 1.0); 
       glVertex2f(xmax, ymax);
-      glTexCoord2f(0.0, 1.0); 
+      // glTexCoord2f(0.0, 1.0); 
       glVertex2f(xmin, ymax);
     glEnd();
   }
@@ -1742,7 +1774,7 @@ void GLUTRedraw(void)
   
   if (minimap) {
     // Resize window
-    glViewport(10, 10, 500, 500);
+    glViewport(0, 0, GLUTwindow_width/3,  GLUTwindow_height/3);
     glEnable(GL_LIGHTING);
     LoadCamera(&minimap_cam);
     DrawScene(scene);
@@ -1866,11 +1898,12 @@ void GLUTMotion(int x, int y)
       double vx = length * (double) dx / (double) GLUTwindow_width;
       double vy = length * (double) dy / (double) GLUTwindow_height;
       R3Vector translation = ((camera.right * vx) + (camera.up * vy));
-      grabbed->transformation.Translate(translation);
+      // snap the shit to a grid
+      grabbed->shape->box->Translate(translation);
+      grabbed->bbox = *grabbed->shape->box;
     }
   }
   
-
   // Remember mouse position
   GLUTmouse[0] = x;
   GLUTmouse[1] = y;
@@ -1891,16 +1924,10 @@ void GLUTMouse(int button, int state, int x, int y)
     if (button == GLUT_LEFT_BUTTON && level_editor) {
       if ((x < w - scene->sidebar->width) && (blocks_mode == 1)) {
         R3Ray ray = RayThoughPixel(camera, x, y, w, h);
-        
-        // R3Box box = *scene->player->node->shape->box;
-        // box.Transform(scene->player->node->transformation);
-        // R3Intersection intersection = ComputeIntersection(&box, ray);
-        // if (intersection.hit)
-        //   PlaySound("/../sounds/secret.wav", false);
         R3Point click_location = RayPlaneIntersection(scene->movement_plane, ray);
         CreateShape(R3_BOX_SHAPE, scene, click_location);
       }
-      if ((x < w - scene->sidebar->width) && (grab_mode == 1)) {
+      else if ((x < w - scene->sidebar->width) && (grab_mode == 1)) {
         R3Ray ray = RayThoughPixel(camera, x, y, w, h);
         R3Intersection intersection = ComputeIntersection(scene, scene->root, ray, 1000000000);
         if (intersection.hit) {
@@ -1910,7 +1937,12 @@ void GLUTMouse(int button, int state, int x, int y)
           scene->sidebar->selected_button = -1;
         }
       }
-      else {
+      else if ((x < w - scene->sidebar->width) && (coins_mode == 1)) {
+        R3Ray ray = RayThoughPixel(camera, x, y, w, h);
+        R3Point click_location = RayPlaneIntersection(scene->movement_plane, ray);
+        CreateShape(R3_COIN_SHAPE, scene, click_location);
+      }
+      else if (x >  w - scene->sidebar->width) {
         ClickSidebar(x, y);
       }
     }
@@ -2005,7 +2037,9 @@ void GLUTKeyboard(unsigned char key, int x, int y)
   // case 'l':
   //   show_lights = !show_lights;
   //   break;
-
+  case 'c':
+  case 'C':
+      camera = minimap_cam;
   case 'M':
   case 'm':
       minimap = (minimap == 1) ? 0 : 1;
@@ -2017,8 +2051,10 @@ void GLUTKeyboard(unsigned char key, int x, int y)
 
   case 'R':
   case 'r':
-    if (scene->player && scene->player->is_dead)
-      LoadLevel(input_scene_name);
+      if (scene->player && scene->player->is_dead) {
+        LoadLevel(input_scene_name);
+        paused = 1;
+      }
     break;
 
   // case 'P':
@@ -2263,6 +2299,10 @@ void DrawSidebar(R3Scene *scene) {
       float ymin = (i) * (button_width + sidebar.border) + sidebar.border;
       float ymax = ymin + button_width;
       float xmax = xmin + button_width;
+
+
+      glBindTexture(GL_TEXTURE_2D, 0); 
+
       glBegin(GL_QUADS);
       if (i == scene->sidebar->selected_button) {
         glColor3f(1, 0, 0);
@@ -2298,13 +2338,12 @@ void DrawSidebar(R3Scene *scene) {
       // Just in case we set all vertices to white.
       glColor4f(1,1,1,1);
       // Render the front quad
-      R3Material *playermat = scene->player->node->material;
       glBindTexture(GL_TEXTURE_2D, cur.material->texture_index);
       glBegin(GL_QUADS);
-      glTexCoord2f(1, 1); glVertex3f(xmin, ymin, .04);
-      glTexCoord2f(1, 0); glVertex3f(xmax, ymin, .04);
-      glTexCoord2f(0, 0); glVertex3f(xmax, ymax, .04);
-      glTexCoord2f(0, 1); glVertex3f(xmin, ymax, .04);
+      glTexCoord2f(1, 0); glVertex3f(xmin, ymin, .04);
+      glTexCoord2f(1, 1); glVertex3f(xmax, ymin, .04);
+      glTexCoord2f(0, 1); glVertex3f(xmax, ymax, .04);
+      glTexCoord2f(0, 0); glVertex3f(xmin, ymax, .04);
       glEnd();
       glPopAttrib();
       glPopMatrix();
@@ -2316,17 +2355,17 @@ void DrawSidebar(R3Scene *scene) {
 const int NButtons = 4;
 
 int *ButtonVariables[] = {
-  &blocks_mode,
   &camera_mode,
   &grab_mode,
   &blocks_mode,
+  &coins_mode,
 };
 
 const char *ButtonIconFiles[] = {
   "camera.jpg",
-  "camera.jpg",
-  "camera.jpg",
-  "camera.jpg"
+  "grab.jpg",
+  "platform.jpg",
+  "coin.jpg"
 };
 
 void SetupSkybox(R3Scene *scene) {
@@ -2372,7 +2411,6 @@ void SetupLevelEditor(R3Scene *scene) {
     *material = *scene->materials[0];
     material->texture_index = -1;
 
-
     // Get texture filename
     char buffer[2048];
     memset(buffer, 0, 2048);
@@ -2399,7 +2437,9 @@ void SetupLevelEditor(R3Scene *scene) {
     scene->materials.push_back(material);
     R3Button *button = new R3Button(ButtonVariables[i], material);
     scene->sidebar->buttons.push_back(button);
-  }  
+  }
+  scene->sidebar->selected_button = 0;
+  *scene->sidebar->buttons[0]->value = 1;
 }
 
 R3Camera GetMinimapCam(R3Scene *scene) {
@@ -2424,9 +2464,9 @@ void LoadLevel(const char *filename)
     soundtrack->drop();
   }
 
-  if (scene)
+  if (scene) {
     delete scene;
-
+  }
   // Read scene
   scene = ReadScene(filename);
   
