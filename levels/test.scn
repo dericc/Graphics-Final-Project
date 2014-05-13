@@ -40,6 +40,14 @@ material
 0 0 0
 1 1 tallcreeper.jpg
 
+material
+  1 0 0
+  1 0 0
+  0 0 0
+  0 0 0
+  0 0 0
+  1 1 0
+
 goal
     1
     5 0 0
@@ -174,4 +182,4 @@ skybox clouds_front.jpg
 
 death_y -10
 
-
+particle_gravity 0 -9.8 0

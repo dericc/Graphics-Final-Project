@@ -42,6 +42,30 @@ RandomNumber(void)
 // Generating Particles
 ////////////////////////////////////////////////////////////
 
+void CreateParticles(R3Scene *scene, R3Point position, int count, R3Material *mat, double velocity)
+{
+  for (int i = 0; i < count; i++)
+  {
+    double z = (RandomNumber() - 0.5) * 2;
+    double phi = RandomNumber() * 2 * 3.14159;
+    double d = sqrt(1 - z * z);
+    R3Vector n(d * cos(phi), d * sin(phi), z);
+    n.Normalize();
+
+    // create new particle
+    R3Particle *particle      = new R3Particle();
+    particle->drag            = 0;
+    particle->elasticity      = 1;
+    particle->fixed           = false;
+    particle->lifetime        = 10;
+    particle->mass            = 1;
+    particle->material        = mat;
+    particle->position        = position;
+    particle->velocity        = n * velocity;
+    scene->particles.push_back(particle);
+  }
+}
+
 void GenerateParticles(R3Scene *scene, double current_time, double delta_time)
 {
   // Generate new particles for every source
@@ -441,18 +465,18 @@ R3Vector ComputeForce(R3Scene *scene, R3Particle *particle)
   R3Vector f(0, 0, 0);
 
   // gravitational attractive force between each pair of particles
-  for (int i = 0; i < scene->NParticles(); i++) 
-  {
-    R3Particle *other = scene->Particle(i);
-    if (other != particle)
-    {
-      R3Vector diff = other->position - particle->position;
-      double d = diff.Length();
-      diff.Normalize();
-      R3Vector fg = diff * 6.67384e-11 * particle->mass * other->mass / (d * d);
-      f += fg;
-    }
-  }
+  // for (int i = 0; i < scene->NParticles(); i++) 
+  // {
+  //   R3Particle *other = scene->Particle(i);
+  //   if (other != particle)
+  //   {
+  //     R3Vector diff = other->position - particle->position;
+  //     double d = diff.Length();
+  //     diff.Normalize();
+  //     R3Vector fg = diff * 6.67384e-11 * particle->mass * other->mass / (d * d);
+  //     f += fg;
+  //   }
+  // }
 
   // sink forces
   for (int i = 0; i < scene->NParticleSinks(); i++)
@@ -540,7 +564,7 @@ R3Vector ComputeForce(R3Scene *scene, R3Particle *particle)
 // Rendering Particles
 ////////////////////////////////////////////////////////////
 
-void RenderParticles(R3Scene *scene, double current_time, double delta_time)
+void RenderParticles(R3Scene *scene)
 {
   // Draw every particle
 

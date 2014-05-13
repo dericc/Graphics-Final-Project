@@ -338,7 +338,7 @@ R3Intersection ComputeIntersection(R3Scene *scene, R3Node *node, R3Ray ray, doub
   min_intersection.t = min_t_trans;
 
   // check this node if it contains a shape
-  if (node->shape != NULL)
+  if (node->shape != NULL && node->is_obstacle)
   {
     R3Intersection i;
     i.hit = false;

@@ -245,12 +245,20 @@ void PlaySound(const char *filename, bool looped)
   sound_engine->play2D(path, looped);
 }
 
+
+
+////////////////////////////////////////////////////////////
+// SCENE DRAWING CODE
+////////////////////////////////////////////////////////////
+
 void KillPlayer(void) {
   R3Player *p = scene->player;
   
   if (!p->is_dead) {
     p->is_dead = true;
     p->node->is_visible = false;
+    CreateParticles(scene, p->Center(), 10, scene->materials[0], 5);
+    cout << scene->materials.size() << endl;
     PlaySound("/../sounds/death.wav", false);
   }
 }
@@ -265,13 +273,6 @@ void KillEnemy(R3Enemy *e) {
     // PlaySound("/../sounds/death.wav", false);
   }
 }
-
-
-
-
-////////////////////////////////////////////////////////////
-// SCENE DRAWING CODE
-////////////////////////////////////////////////////////////
 
 enum
 {
@@ -1305,44 +1306,44 @@ void DrawScene(R3Scene *scene)
 }
 
 
-void DrawParticles(R3Scene *scene)
-{
-  // Get current time (in seconds) since start of execution
-  double current_time = GetTime();
-  static double previous_time = 0;
+// void DrawParticles(R3Scene *scene)
+// {
+//   // Get current time (in seconds) since start of execution
+//   double current_time = GetTime();
+//   static double previous_time = 0;
 
 
-  static double time_lost_taking_videos = 0; // for switching back and forth
-					     // between recording and not
-					     // recording smoothly
+//   static double time_lost_taking_videos = 0; // for switching back and forth
+// 					     // between recording and not
+// 					     // recording smoothly
 
-  // program just started up?
-  if (previous_time == 0) previous_time = current_time;
+//   // program just started up?
+//   if (previous_time == 0) previous_time = current_time;
 
-  // time passed since starting
-  double delta_time = current_time - previous_time;
+//   // time passed since starting
+//   double delta_time = current_time - previous_time;
 
 
-  if (save_video) { // in video mode, the time that passes only depends on the frame rate ...
-    delta_time = VIDEO_FRAME_DELAY;    
-    // ... but we need to keep track how much time we gained and lost so that we can arbitrarily switch back and forth ...
-    time_lost_taking_videos += (current_time - previous_time) - VIDEO_FRAME_DELAY;
-  } else { // real time simulation
-    delta_time = current_time - previous_time;
-  }
+//   if (save_video) { // in video mode, the time that passes only depends on the frame rate ...
+//     delta_time = VIDEO_FRAME_DELAY;    
+//     // ... but we need to keep track how much time we gained and lost so that we can arbitrarily switch back and forth ...
+//     time_lost_taking_videos += (current_time - previous_time) - VIDEO_FRAME_DELAY;
+//   } else { // real time simulation
+//     delta_time = current_time - previous_time;
+//   }
 
-  // Update particles
-  UpdateParticles(scene, current_time - time_lost_taking_videos, delta_time, integration_type);
+//   // Update particles
+//   UpdateParticles(scene, current_time - time_lost_taking_videos, delta_time, integration_type);
 
-  // Generate new particles
-  GenerateParticles(scene, current_time - time_lost_taking_videos, delta_time);
+//   // Generate new particles
+//   GenerateParticles(scene, current_time - time_lost_taking_videos, delta_time);
 
-  // Render particles
-  if (show_particles) RenderParticles(scene, current_time - time_lost_taking_videos, delta_time);
+//   // Render particles
+//   if (show_particles) RenderParticles(scene, current_time - time_lost_taking_videos, delta_time);
 
-  // Remember previous time
-  previous_time = current_time;
-}
+//   // Remember previous time
+//   previous_time = current_time;
+// }
 
 
 void DrawParticleSources(R3Scene *scene)
@@ -1691,7 +1692,7 @@ void GLUTRedraw(void)
     }
     
     // Update Player
-    if (level_editor != 1) {
+    if (level_editor != 1 && !scene->player->is_dead) {
       UpdatePlayer(scene, delta_time);
     }
 
@@ -1705,7 +1706,9 @@ void GLUTRedraw(void)
     DeleteNodes(scene->root);
     DeleteCoins();
     DeleteEnemies();
-    
+
+    GenerateParticles(scene, current_time, delta_time);
+    UpdateParticles(scene, current_time, delta_time, MIDPOINT_INTEGRATION);
   }
 
 
@@ -1722,7 +1725,7 @@ void GLUTRedraw(void)
   DrawLights(scene);
 
   // Draw particles
-  DrawParticles(scene);
+  RenderParticles(scene);
 
   // Draw particle sources 
   DrawParticleSources(scene);
