@@ -83,7 +83,7 @@ struct R3Enemy;
 
 struct R3Node {
   R3Node(void)
-  : is_obstacle(false), is_coin(false), is_enemy(false), is_goal(false), is_platform(false), is_visible(true), is_player(false), del(false) {};
+  : is_obstacle(false), is_coin(false), is_enemy(false), is_platform(false), is_goal(false), is_visible(true), is_player(false), del(false) {};
   struct R3Node *parent;
   vector<struct R3Node *> children;
   R3Shape *shape;
