@@ -117,7 +117,7 @@ ambient(0,0,0,1)
   death_y = -5;
 
   // Create sidebar
-  sidebar = new R3Sidebar();
+  sidebar = new R3Sidebar(200, 10);
 }
 
 

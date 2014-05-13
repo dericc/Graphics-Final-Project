@@ -3,7 +3,6 @@
 #define R3Rgb R2Pixel
 #define PI 3.1415926535
 
-
 // Constant definitions
 
 typedef enum {
@@ -84,7 +83,7 @@ struct R3Enemy;
 
 struct R3Node {
   R3Node(void)
-  : is_obstacle(false), is_coin(false), is_enemy(false), is_goal(false), is_player(false) {};
+  : is_obstacle(false), is_coin(false), is_enemy(false), is_goal(false), is_platform(false), is_visible(true), is_player(false) {};
   struct R3Node *parent;
   vector<struct R3Node *> children;
   R3Shape *shape;
@@ -161,7 +160,7 @@ struct R3ParticleSpring {
 
 struct R3Player {
   R3Player(R3Node *node, double max_speed, double mass) :
-    node(node), max_speed(max_speed),  mass(mass), is_dead(false), has_won(false), n_coins(0), won_time(0.0f) {};
+    node(node), max_speed(max_speed),  mass(mass), is_dead(false), has_won(false), n_coins(0), won_time(0.0f), onPlatform(false) {};
   
   R3Node *node; //
   const double max_speed;
@@ -197,7 +196,7 @@ struct R3Coin {
 
 struct R3Enemy {
   R3Enemy(R3Node *node, bool moveLeft, double speed, double mass) :
-    node(node), moveLeft(moveLeft), speed(speed), mass(mass), is_dead(false) {};
+    node(node), moveLeft(moveLeft), speed(speed), mass(mass), is_dead(false), onPlatform(false) {};
   
   R3Node *node; 
   bool moveLeft; // current direction of motion: left or right
@@ -291,16 +290,24 @@ struct R3Scene {
   R3Plane movement_plane;
 };
 
+typedef void (*button_fxn)(void);
+
 struct R3Button {
-  void (*action)(R3Scene *scene);
+  // this might be ugly but one of these two guys will be null
+  R3Button(int *value) : value(value), f(NULL) {};
+  R3Button(button_fxn f) : value(NULL), f(f) {};
+  int * value;
+  button_fxn f;
 };
 
 struct R3Sidebar {
+  R3Sidebar(double width, double border) :
+  width(width), border(border), button_width(width - 2*border), selected_button(-1) {};
   vector<R3Button *> buttons;
   double width;
-  double height;
-  R3Button *Clicked(int x, int y);
-  R3Button *last_clicked;
+  double border;
+  double button_width;
+  int selected_button;
 };
 
 // Inline functions 
