@@ -1428,8 +1428,6 @@ void DrawParticleSources(R3Scene *scene)
   if (!lighting) glDisable(GL_LIGHTING);
 }
 
-
-
 void DrawParticleSinks(R3Scene *scene)
 {
   // Check if should draw particle sinks
@@ -2471,7 +2469,12 @@ R3Camera GetMinimapCam(R3Scene *scene) {
   ret.up = R3posy_vector;
   ret.right = R3posx_vector;
   ret.eye = scene->root->bbox.Centroid();
-  ret.eye.Translate(-1*ret.towards*(scene->root->bbox.XLength()/2)/tan(ret.xfov));
+  if (scene->root->bbox.XLength() > scene->root->bbox.YLength()) {
+    ret.eye.Translate(-1.05*ret.towards*(scene->root->bbox.XLength()/2)/tan(ret.xfov));
+  }
+  else {
+    ret.eye.Translate(-1.05*ret.towards*(scene->root->bbox.YLength()/2)/tan(ret.yfov));
+  }
   return ret;
 }
 
