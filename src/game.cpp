@@ -729,7 +729,8 @@ void UpdateEnemies(R3Scene *scene, double delta_time) {
     // get the forces to move the box
     R3Vector f = R3null_vector;
     f += -9.8 * p->Up() * p->mass;
-    if (!p->inAir) {
+
+    if (!p->inAir && p->is_jumping) {
       p->velocity += 10 * p->Up();
       if (scene->player && R3Distance(scene->player->Center(), p->Center()) < 20.0f)
       {
@@ -762,7 +763,8 @@ void UpdateEnemies(R3Scene *scene, double delta_time) {
     player_box.Transform(scene->player->node->transformation); 
 
     double direction = enemy_box.XMin() - player_box.XMin();
-    if (direction < 0) {p->moveLeft = false;}
+
+    if (direction < 0 && p->is_following) {p->moveLeft = false;}
     else {p->moveLeft = true;}
 
     if (!p->moveLeft) {

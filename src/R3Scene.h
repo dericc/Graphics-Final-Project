@@ -200,8 +200,9 @@ struct R3Coin {
 };
 
 struct R3Enemy {
-  R3Enemy(R3Node *node, bool moveLeft, double speed, double mass) :
-    node(node), moveLeft(moveLeft), speed(speed), mass(mass), is_dead(false), del(false), onPlatform(false) {};
+  R3Enemy(R3Node *node, bool moveLeft, double speed, double mass, bool is_jumping, bool is_following) :
+    node(node), moveLeft(moveLeft), speed(speed), mass(mass), 
+    is_dead(false), del(false), is_jumping(is_jumping), is_following(is_following), onPlatform(false) {};
   
   R3Node *node; 
   bool moveLeft; // current direction of motion: left or right
@@ -217,6 +218,9 @@ struct R3Enemy {
   bool inAir;
   bool is_dead;
   bool del; 
+
+  bool is_jumping; 
+  bool is_following; 
   
   bool onPlatform;
   R3Platform *platform;
