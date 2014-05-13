@@ -1535,7 +1535,7 @@ void DrawHUD()
     // glBindTexture(GL_TEXTURE_2D, scene->coins[0]->node->material->texture_index); 
     glBindTexture(GL_TEXTURE_2D, 0); 
     glBegin(GL_QUADS);
-      glColor3f(.8f, .8f, 0.0);
+      glColor3f(.7f, .7f, 0.0);
       // glTexCoord2f(0.0, 0.0); 
       glVertex2f(xmin, ymin);
       // glTexCoord2f(1.0, 0.0); 
@@ -1565,7 +1565,7 @@ void DrawSkybox(R3Scene *scene) {
    glLoadIdentity();
    gluLookAt(
        0,0,0,
-       scene->camera.towards.X(),scene->camera.towards.Y(),scene->camera.towards.Z() - 5,
+       scene->camera.towards.X(),scene->camera.towards.Y(),scene->camera.towards.Z() - 50,
        0,1,0);
 
    // Enable/Disable features
@@ -1756,7 +1756,6 @@ void GLUTRedraw(void)
 
   DrawSkybox(scene); 
   
-
   // Draw scene surfaces
   if (show_faces) {
     glEnable(GL_LIGHTING);
@@ -1838,7 +1837,6 @@ void GLUTRedraw(void)
   // Swap buffers 
   glutSwapBuffers();
 }    
-
 
 
 void GLUTMotion(int x, int y)
@@ -1966,7 +1964,6 @@ void GLUTMouse(int button, int state, int x, int y)
   // Redraw
   glutPostRedisplay();
 }
-
 
 
 // void GLUTSpecial(int key, int x, int y)
