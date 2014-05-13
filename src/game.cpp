@@ -1222,8 +1222,6 @@ void DrawNode(R3Scene *scene, R3Node *node)
   }
 }
 
-
-
 void DrawLights(R3Scene *scene)
 {
   // Check if should draw lights
@@ -1492,7 +1490,7 @@ void DrawHUD()
 {
   // disable lighting and enable orthogonal projection
   glDisable(GL_LIGHTING);
-  glMatrixMode(GdL_PROJECTION);
+  glMatrixMode(GL_PROJECTION);
   glPushMatrix();
   glLoadIdentity();
   glOrtho(0.0, GLUTwindow_width, GLUTwindow_height, 0.0, -1.0, 10.0);
