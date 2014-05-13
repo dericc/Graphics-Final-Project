@@ -114,7 +114,7 @@ ambient(0,0,0,1)
   root->bbox = R3null_box;
   
   player = NULL;
-  death_y = -5;
+  death_y = -100;
 
   // Create sidebar
   sidebar = new R3Sidebar(200, 10);
@@ -1743,6 +1743,10 @@ Read(const char *filename, R3Node *node)
       coin_shape->segment = NULL;
     }
     else if (!strcmp(cmd, "coin")) {
+      if (coin_shape == NULL || coin_material == NULL) {
+        fprintf(stderr, "Define a coin material first!\n");
+        return 0;
+      }
       // Read data
       R3Point p;
       if (fscanf(fp, "%lf%lf%lf", &p[0], &p[1], &p[2]) != 3) {
