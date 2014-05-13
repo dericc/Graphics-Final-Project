@@ -80,6 +80,15 @@ R3Vector R3Enemy::Up(void) {
   return up;
 }
 
+R3Point R3Goal::Center(void) {
+  R3Box box = *(node->shape->box);
+  box.Transform(node->transformation);
+  return (box.Min() + box.Max())/2;
+}
+
+//R3Sidebar::
+//R3Sidebar(void)
+
 R3Scene::
 R3Scene(void)
 : bbox(R3null_box),
@@ -1473,6 +1482,7 @@ Read(const char *filename, R3Node *node)
       node->is_enemy = false; 
       node->del = false;
       node->is_visible = true;
+      node->is_player = true;
       
       // Insert node
       group_nodes[depth]->bbox.Union(node->bbox);

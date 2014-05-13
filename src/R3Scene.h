@@ -83,7 +83,7 @@ struct R3Enemy;
 
 struct R3Node {
   R3Node(void)
-  : is_obstacle(false), is_coin(false), is_enemy(false), is_goal(false), is_platform(false), is_visible(true) {};
+  : is_obstacle(false), is_coin(false), is_enemy(false), is_goal(false), is_platform(false), is_visible(true), is_player(false) {};
   struct R3Node *parent;
   vector<struct R3Node *> children;
   R3Shape *shape;
@@ -99,6 +99,7 @@ struct R3Node {
   R3Enemy *enemy; 
   bool is_visible;
   bool is_goal;
+  bool is_player;
   bool del;
 };
 
@@ -159,7 +160,7 @@ struct R3ParticleSpring {
 
 struct R3Player {
   R3Player(R3Node *node, double max_speed, double mass) :
-    node(node), max_speed(max_speed),  mass(mass), is_dead(false), n_coins(0), onPlatform(false) {};
+    node(node), max_speed(max_speed),  mass(mass), is_dead(false), has_won(false), n_coins(0), won_time(0.0f), onPlatform(false) {};
   
   R3Node *node; //
   const double max_speed;
@@ -178,7 +179,9 @@ struct R3Player {
   R3Vector velocity; // current direction of motion
   bool inAir;
   bool is_dead;
+  bool has_won;
   int n_coins;
+  double won_time;
   
   bool onPlatform;
   R3Platform *platform;
@@ -206,18 +209,20 @@ struct R3Enemy {
   R3Vector Towards();
   R3Vector Up();
 
-  bool inAir;
+  bool inAir = true; 
   bool is_dead;
   bool del; 
   
-  bool onPlatform;
+  bool onPlatform = false;
   R3Platform *platform;
 };
 
 // goal for player to get to
 struct R3Goal {
   R3Goal(R3Node *node) :
-    node(node), is_active(false) {};
+    node(node), is_active(true) {};
+
+  R3Point Center();
 
   R3Node *node;
   bool is_active; // is the goal active?

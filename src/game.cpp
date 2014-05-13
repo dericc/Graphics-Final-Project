@@ -16,9 +16,11 @@
 #include "../irrKlang/include/irrKlang.h"
 #include "raytrace.h"
 
+
 using namespace irrklang;
 
 #define TIME_SCALE 2
+#define TIME_STEP .005
 
 ////////////////////////////////////////////////////////////
 // GLOBAL CONSTANTS
@@ -512,30 +514,34 @@ void CollideEnemy(R3Enemy *e, R3Node *node)
   }
 }
 
-void UpdatePlayer(R3Scene *scene) {
+void UpdatePlayer(R3Scene *scene, double delta_time) {
   R3Player *p = scene->player;
 
-  if (p == NULL) return; 
-
-  // Get current time (in seconds) since start of execution
-  double current_time = GetTime();
-  static double previous_time = 0;
+  if (p == NULL) return;
 
   // program just started up?
-  if (previous_time == 0) {
-    previous_time = current_time;
+  if (delta_time == 0) {
     p->velocity = R3null_vector;
     p->onPlatform = false;
     p->inAir = true;
   }
-  
-  // time passed since starting
-  double delta_time = current_time - previous_time;
 
   bool up_key = key_state['w'] || key_state['W'];
   bool down_key = key_state['s'] || key_state['S'];
   bool left_key = key_state['a'] || key_state['A'];
   bool right_key = key_state['d'] || key_state['D'];
+
+  // check if they've won
+  R3Goal *goal = scene->goal;
+  double goal_dist = R3Distance(p->Center(), goal->Center());
+  if (!p->has_won && goal_dist < 0.2f && scene->NCoins() <= 0) {
+    PlaySound("/../sounds/victory.wav", false);
+    p->won_time = GetTime();
+    p->has_won = true;
+  }
+  
+  if (p->has_won)
+    return;
 
   // Motion Shit
   // get the forces to move the box
@@ -543,7 +549,7 @@ void UpdatePlayer(R3Scene *scene) {
   if (p->inAir) {
     f += -9.8 * p->Up() * p->mass;
   }
-  if (up_key && !p->inAir) {
+  if (up_key && !p->inAir && !p->has_won) {
     p->velocity += 15 * p->Up();
     PlaySound("/../sounds/jump.wav", false);
     if (p->onPlatform) {
@@ -574,10 +580,13 @@ void UpdatePlayer(R3Scene *scene) {
     f += -1*forwardVelocity*DRAG_COEFFICIENT;// * DRAG_COEFFICIENT;
   }
   
-  p->velocity += (f / p->mass) * delta_time;
+  if (p->has_won)
+    p->velocity = R3null_vector;
+  else
+    p->velocity += (f / p->mass) * delta_time;
   
   // transform the player node
-  if (!p->is_dead)
+  if (!p->is_dead && !p->has_won)
   {
     R3Matrix tform = p->node->transformation;
     tform.Translate(p->velocity * delta_time);
@@ -620,7 +629,6 @@ void UpdatePlayer(R3Scene *scene) {
     scene->camera.Rotate(center_line, angle);
     camera = scene->camera;
   }
-  previous_time = current_time;
 }
 
 void UpdateCoin(R3Coin *coin, double delta_time)
@@ -634,19 +642,9 @@ void UpdateCoin(R3Coin *coin, double delta_time)
   coin->node->transformation = tform;
 }
 
-void UpdateCoins(R3Scene *scene)
+void UpdateCoins(R3Scene *scene, double delta_time)
 {
-  double current_time = GetTime();
-  static double previous_time = 0;
-  // program just started up?
-  if (previous_time == 0) {
-    previous_time = current_time;
-  }
-  
   // time passed since starting
-  double delta_time = current_time - previous_time;
-  previous_time = current_time;
-
   for (int i = 0; i < scene->NCoins(); i++)
   {
     R3Coin *coin = scene->Coin(i);
@@ -704,33 +702,18 @@ void DeleteEnemies() {
   }
 }
 
-void UpdatePlatforms(R3Scene *scene) {
-  double current_time = GetTime();
-  static double previous_time = 0;
-  
-  // time passed since starting
-  double delta_time = current_time - previous_time;
-  
+void UpdatePlatforms(R3Scene *scene, double delta_time) {
   int numPlatforms = scene->platforms.size();
   for (int i = 0; i < numPlatforms; ++i) {
     R3Platform *cur = scene->platforms[i];
-    if (previous_time == 0) {
-      previous_time = current_time;
+    if (delta_time == 0) {
       cur->velocity = R3null_vector;
     }
     UpdatePlatform(cur, delta_time);
   }
-  
-  previous_time = current_time;
 }
 
-void UpdateEnemies(R3Scene *scene) {
-
-  double current_time = GetTime();
-  static double previous_time = 0;
-  
-  // time passed since starting
-  double delta_time = current_time - previous_time;
+void UpdateEnemies(R3Scene *scene, double delta_time) {
   
   int numEnemies = scene->enemies.size();
 
@@ -738,7 +721,7 @@ void UpdateEnemies(R3Scene *scene) {
     R3Enemy *p = scene->enemies[i];
 
     if (p == NULL) return; 
-    if (previous_time == 0) {
+    if (delta_time == 0) {
       p->inAir = true;
       p->onPlatform = false;
     }
@@ -811,8 +794,6 @@ void UpdateEnemies(R3Scene *scene) {
       p->node->transformation.Translate(p->platform->velocity * delta_time);
     }
   }
-
-  previous_time = current_time;
 }
 
 
@@ -910,6 +891,74 @@ void DrawGoal(R3Shape *shape)
   shape->box->Draw();
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glEnable(GL_LIGHTING);
+}
+
+void DrawPlayer(R3Shape *shape, bool has_won)
+{
+  static double win_duration = 3.0f;
+  if (!has_won)
+    shape->box->Draw();
+  else
+  {
+    R3Box *box = shape->box;
+    double shrinkage = (GetTime() - scene->player->won_time) / win_duration;
+    if (shrinkage >= 1.0f)
+      return;
+    // Get box corner points 
+    R3Point corners[8];
+    corners[0] = box->Corner(0, 0, 0);
+    corners[1] = box->Corner(0, 0, 1);
+    corners[2] = box->Corner(0, 1, 1);
+    corners[3] = box->Corner(0, 1, 0);
+    corners[4] = box->Corner(1, 0, 0);
+    corners[5] = box->Corner(1, 0, 1);
+    corners[6] = box->Corner(1, 1, 1);
+    corners[7] = box->Corner(1, 1, 0);
+
+    for (int i = 0; i < 8; i++)
+    {
+      R3Vector v = box->Centroid() - corners[i];
+      v.Normalize();
+      v *= shrinkage;
+      corners[i].Translate(v);
+    }
+
+    // Get normals, texture coordinates, etc.
+    static GLdouble normals[6][3] = {
+      { -1.0, 0.0, 0.0 },
+      { 1.0, 0.0, 0.0 },
+      { 0.0, -1.0, 0.0 },
+      { 0.0, 1.0, 0.0 },
+      { 0.0, 0.0, -1.0 },
+      { 0.0, 0.0, 1.0 }
+    };
+    static GLdouble texcoords[4][2] = {
+      { 0.0, 0.0 },
+      { 1.0, 0.0 },
+      { 1.0, 1.0 },
+      { 0.0, 1.0 }
+    };
+    static int surface_paths[6][4] = {
+      { 3, 0, 1, 2 },
+      { 4, 7, 6, 5 },
+      { 0, 4, 5, 1 },
+      { 7, 3, 2, 6 },
+      { 3, 7, 4, 0 },
+      { 1, 5, 6, 2 }
+    };
+
+    // Draw box
+    glBegin(GL_QUADS);
+    for (int i = 0; i < 6; i++) {
+      glNormal3d(normals[i][0], normals[i][1], normals[i][2]);
+      for (int j = 0; j < 4; j++) {
+        const R3Point& p = corners[surface_paths[i][j]];
+        glTexCoord2d(texcoords[j][0], texcoords[j][1]);
+        glVertex3d(p[0], p[1], p[2]);
+      }
+    }
+    glEnd();    
+  }
 }
 
 
@@ -1154,6 +1203,7 @@ void DrawNode(R3Scene *scene, R3Node *node)
 
   // Draw shape
   if (node->is_goal && node->shape && node->is_goal) DrawGoal(node->shape);
+  else if (node->is_player && node->shape && scene->player && node->is_visible) DrawPlayer(node->shape, scene->player->has_won);
   else if (node->is_visible && node->shape) DrawShape(node->shape);
 
   // Draw children nodes
@@ -1171,8 +1221,6 @@ void DrawNode(R3Scene *scene, R3Node *node)
     if (lighting) glEnable(GL_LIGHTING);
   }
 }
-
-
 
 void DrawLights(R3Scene *scene)
 {
@@ -1488,6 +1536,81 @@ void DrawHUD()
   glPopMatrix();
 }
 
+void DrawSkybox(R3Scene *scene) {
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP); 
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+   // Store the current matrix
+   glPushMatrix();
+   // Reset and transform the matrix.
+   glLoadIdentity();
+   gluLookAt(
+       0,0,0,
+       scene->camera.towards.X(),scene->camera.towards.Y(),scene->camera.towards.Z(),
+       0,1,0);
+
+   // Enable/Disable features
+   glPushAttrib(GL_ENABLE_BIT);
+   glEnable(GL_TEXTURE_2D);
+   glDisable(GL_DEPTH_TEST);
+   glDisable(GL_LIGHTING);
+   glDisable(GL_BLEND);
+
+   glColor4f(1,1,1,1);
+   // Render the front quad
+   glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
+   glBegin(GL_QUADS);
+       glTexCoord2f(0, 0); glVertex3f(  0.5f, -0.5f, -0.5f );
+       glTexCoord2f(1, 0); glVertex3f( -0.5f, -0.5f, -0.5f );
+       glTexCoord2f(1, 1); glVertex3f( -0.5f,  0.5f, -0.5f );
+       glTexCoord2f(0, 1); glVertex3f(  0.5f,  0.5f, -0.5f );
+   glEnd();
+   // Render the left quad
+   glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
+   glBegin(GL_QUADS);
+       glTexCoord2f(0, 0); glVertex3f(  0.5f, -0.5f,  0.5f );
+       glTexCoord2f(1, 0); glVertex3f(  0.5f, -0.5f, -0.5f );
+       glTexCoord2f(1, 1); glVertex3f(  0.5f,  0.5f, -0.5f );
+       glTexCoord2f(0, 1); glVertex3f(  0.5f,  0.5f,  0.5f );
+   glEnd();
+   // Render the back quad
+   glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
+   glBegin(GL_QUADS);
+       glTexCoord2f(0, 0); glVertex3f( -0.5f, -0.5f,  0.5f );
+       glTexCoord2f(1, 0); glVertex3f(  0.5f, -0.5f,  0.5f );
+       glTexCoord2f(1, 1); glVertex3f(  0.5f,  0.5f,  0.5f );
+       glTexCoord2f(0, 1); glVertex3f( -0.5f,  0.5f,  0.5f );
+   glEnd();
+   // Render the right quad
+   glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
+   glBegin(GL_QUADS);
+       glTexCoord2f(0, 0); glVertex3f( -0.5f, -0.5f, -0.5f );
+       glTexCoord2f(1, 0); glVertex3f( -0.5f, -0.5f,  0.5f );
+       glTexCoord2f(1, 1); glVertex3f( -0.5f,  0.5f,  0.5f );
+       glTexCoord2f(0, 1); glVertex3f( -0.5f,  0.5f, -0.5f );
+   glEnd();
+   // Render the top quad
+   glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
+   glBegin(GL_QUADS);
+       glTexCoord2f(0, 1); glVertex3f( -0.5f,  0.5f, -0.5f );
+       glTexCoord2f(0, 0); glVertex3f( -0.5f,  0.5f,  0.5f );
+       glTexCoord2f(1, 0); glVertex3f(  0.5f,  0.5f,  0.5f );
+       glTexCoord2f(1, 1); glVertex3f(  0.5f,  0.5f, -0.5f );
+   glEnd();
+   // Render the bottom quad
+   glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
+   glBegin(GL_QUADS);
+       glTexCoord2f(0, 0); glVertex3f( -0.5f, -0.5f, -0.5f );
+       glTexCoord2f(0, 1); glVertex3f( -0.5f, -0.5f,  0.5f );
+       glTexCoord2f(1, 1); glVertex3f(  0.5f, -0.5f,  0.5f );
+       glTexCoord2f(1, 0); glVertex3f(  0.5f, -0.5f, -0.5f );
+   glEnd();
+   // Restore enable bits and matrix
+   glPopAttrib();
+   glPopMatrix();
+
+}
+
 ////////////////////////////////////////////////////////////
 // GLUT USER INTERFACE CODE
 ////////////////////////////////////////////////////////////
@@ -1592,22 +1715,39 @@ void GLUTRedraw(void)
   glClearColor(background[0], background[1], background[2], background[3]);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   
-  // Update Player
-  if (level_editor != 1) {
-    UpdatePlayer(scene);
+  double current_time = GetTime();
+  static double previous_time = 0;
+
+  while (previous_time < current_time) {
+    double delta_time;
+    if (previous_time == 0) {
+      delta_time = 0;
+      previous_time = current_time;
+    }
+    else {
+      delta_time = TIME_STEP;
+      previous_time += TIME_STEP;
+    }
+    
+    // Update Player
+    if (level_editor != 1) {
+      UpdatePlayer(scene, delta_time);
+    }
+
+    UpdatePlatforms(scene, delta_time);
+    UpdateEnemies(scene, delta_time);
+
+    // Update Coins
+    UpdateCoins(scene, delta_time);
+    
+    // delete objects
+    DeleteNodes(scene->root);
+    DeleteCoins();
+    DeleteEnemies();
+    
   }
 
-  UpdatePlatforms(scene);
-  UpdateEnemies(scene); 
 
-  // Update Coins
-  UpdateCoins(scene);
-
-  // delete objects
-  DeleteNodes(scene->root);
-  DeleteCoins();
-  DeleteEnemies(); 
-  
   // Load camera
   LoadCamera(&camera);
 
@@ -1632,6 +1772,7 @@ void GLUTRedraw(void)
   // Draw particle springs
   DrawParticleSprings(scene);
 
+  DrawSkybox(scene); 
   
 
   // Draw scene surfaces
@@ -2131,10 +2272,6 @@ main(int argc, char **argv)
   // Initialize GLUT
   GLUTInit(&argc, argv);
 
-  // CSkybox::loadSkybox("../skyboxes/jajlands1/", 
-  //   "jajlands1_bk.jpg", "jajlands1_bk.jpg", 
-  //   "jajlands1_bk.jpg", "jajlands1_bk.jpg", 
-  //   "jajlands1_bk.jpg", "jajlands1_bk.jpg"); 
 
   // Read scene
   scene = ReadScene(input_scene_name);
