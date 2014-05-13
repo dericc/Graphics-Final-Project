@@ -20,7 +20,7 @@
 using namespace irrklang;
 
 #define TIME_SCALE 2
-#define TIME_STEP .01
+#define TIME_STEP .002
 
 ////////////////////////////////////////////////////////////
 // GLOBAL CONSTANTS
@@ -1992,6 +1992,7 @@ void GLUTMouse(int button, int state, int x, int y)
           grab_mode = 0;
           move_mode = 1;
           grabbed = intersection.node;
+          scene->sidebar->selected_button = -1;
         }
       }
       else {
@@ -2323,7 +2324,7 @@ int *ButtonVariables[] = {
 };
 
 const char *ButtonIconFiles[] = {
-  "camera.png",
+  "camera.jpg",
   "asfd",
   "grab.png",
 };
@@ -2334,18 +2335,19 @@ void SetupLevelEditor(R3Scene *scene) {
     R3Material *material = new R3Material();
     *material = *scene->materials[0];
     material->texture_index = scene->materials.size();
-    strcpy(material->texture_name, ButtonIconFiles[i]);
+
     
     // Get texture filename
     char buffer[2048];
     memset(buffer, 0, 2048);
     strcpy(buffer, images_path);
     strcat(buffer, ButtonIconFiles[i]);
+    strcpy(material->texture_name, buffer);
     
     // Read texture image
     material->texture = new R2Image();
     if (!material->texture->Read(buffer)) {
-      fprintf(stderr, "not a good icon file\n");
+      fprintf(stderr, "not a good icon file: %s\n", buffer);
     }
     
     // Insert material

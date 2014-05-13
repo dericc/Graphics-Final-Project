@@ -209,7 +209,7 @@ struct R3Enemy {
   R3Vector Towards();
   R3Vector Up();
 
-  bool inAir; 
+  bool inAir;
   bool is_dead;
   bool del; 
   
