@@ -16,6 +16,7 @@
 #include "../irrKlang/include/irrKlang.h"
 #include "raytrace.h"
 
+
 using namespace irrklang;
 
 #define TIME_SCALE 2
@@ -1491,7 +1492,7 @@ void DrawHUD()
 {
   // disable lighting and enable orthogonal projection
   glDisable(GL_LIGHTING);
-  glMatrixMode(GL_PROJECTION);
+  glMatrixMode(GdL_PROJECTION);
   glPushMatrix();
   glLoadIdentity();
   glOrtho(0.0, GLUTwindow_width, GLUTwindow_height, 0.0, -1.0, 10.0);
@@ -1535,6 +1536,81 @@ void DrawHUD()
   glPopMatrix();
   glMatrixMode(GL_PROJECTION);
   glPopMatrix();
+}
+
+void DrawSkybox(R3Scene *scene) {
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP); 
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+   // Store the current matrix
+   glPushMatrix();
+   // Reset and transform the matrix.
+   glLoadIdentity();
+   gluLookAt(
+       0,0,0,
+       scene->camera.towards.X(),scene->camera.towards.Y(),scene->camera.towards.Z(),
+       0,1,0);
+
+   // Enable/Disable features
+   glPushAttrib(GL_ENABLE_BIT);
+   glEnable(GL_TEXTURE_2D);
+   glDisable(GL_DEPTH_TEST);
+   glDisable(GL_LIGHTING);
+   glDisable(GL_BLEND);
+   // Just in case we set all vertices to white.
+   glColor4f(1,1,1,1);
+   // Render the front quad
+   glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
+   glBegin(GL_QUADS);
+       glTexCoord2f(0, 0); glVertex3f(  0.5f, -0.5f, -0.5f );
+       glTexCoord2f(1, 0); glVertex3f( -0.5f, -0.5f, -0.5f );
+       glTexCoord2f(1, 1); glVertex3f( -0.5f,  0.5f, -0.5f );
+       glTexCoord2f(0, 1); glVertex3f(  0.5f,  0.5f, -0.5f );
+   glEnd();
+   // Render the left quad
+   glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
+   glBegin(GL_QUADS);
+       glTexCoord2f(0, 0); glVertex3f(  0.5f, -0.5f,  0.5f );
+       glTexCoord2f(1, 0); glVertex3f(  0.5f, -0.5f, -0.5f );
+       glTexCoord2f(1, 1); glVertex3f(  0.5f,  0.5f, -0.5f );
+       glTexCoord2f(0, 1); glVertex3f(  0.5f,  0.5f,  0.5f );
+   glEnd();
+   // Render the back quad
+   glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
+   glBegin(GL_QUADS);
+       glTexCoord2f(0, 0); glVertex3f( -0.5f, -0.5f,  0.5f );
+       glTexCoord2f(1, 0); glVertex3f(  0.5f, -0.5f,  0.5f );
+       glTexCoord2f(1, 1); glVertex3f(  0.5f,  0.5f,  0.5f );
+       glTexCoord2f(0, 1); glVertex3f( -0.5f,  0.5f,  0.5f );
+   glEnd();
+   // Render the right quad
+   glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
+   glBegin(GL_QUADS);
+       glTexCoord2f(0, 0); glVertex3f( -0.5f, -0.5f, -0.5f );
+       glTexCoord2f(1, 0); glVertex3f( -0.5f, -0.5f,  0.5f );
+       glTexCoord2f(1, 1); glVertex3f( -0.5f,  0.5f,  0.5f );
+       glTexCoord2f(0, 1); glVertex3f( -0.5f,  0.5f, -0.5f );
+   glEnd();
+   // Render the top quad
+   glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
+   glBegin(GL_QUADS);
+       glTexCoord2f(0, 1); glVertex3f( -0.5f,  0.5f, -0.5f );
+       glTexCoord2f(0, 0); glVertex3f( -0.5f,  0.5f,  0.5f );
+       glTexCoord2f(1, 0); glVertex3f(  0.5f,  0.5f,  0.5f );
+       glTexCoord2f(1, 1); glVertex3f(  0.5f,  0.5f, -0.5f );
+   glEnd();
+   // Render the bottom quad
+   glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
+   glBegin(GL_QUADS);
+       glTexCoord2f(0, 0); glVertex3f( -0.5f, -0.5f, -0.5f );
+       glTexCoord2f(0, 1); glVertex3f( -0.5f, -0.5f,  0.5f );
+       glTexCoord2f(1, 1); glVertex3f(  0.5f, -0.5f,  0.5f );
+       glTexCoord2f(1, 0); glVertex3f(  0.5f, -0.5f, -0.5f );
+   glEnd();
+   // Restore enable bits and matrix
+   glPopAttrib();
+   glPopMatrix();
+
 }
 
 ////////////////////////////////////////////////////////////
@@ -1698,6 +1774,7 @@ void GLUTRedraw(void)
   // Draw particle springs
   DrawParticleSprings(scene);
 
+  DrawSkybox(scene); 
   
 
   // Draw scene surfaces
@@ -2197,10 +2274,6 @@ main(int argc, char **argv)
   // Initialize GLUT
   GLUTInit(&argc, argv);
 
-  // CSkybox::loadSkybox("../skyboxes/jajlands1/", 
-  //   "jajlands1_bk.jpg", "jajlands1_bk.jpg", 
-  //   "jajlands1_bk.jpg", "jajlands1_bk.jpg", 
-  //   "jajlands1_bk.jpg", "jajlands1_bk.jpg"); 
 
   // Read scene
   scene = ReadScene(input_scene_name);
