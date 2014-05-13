@@ -422,14 +422,7 @@ void CollidePlayer(R3Node *node)
         tform.Translate(R3Vector(0, scene_box.YMax() - player_box.YMin(), 0));
         R3Vector v = p->velocity;
         v.SetY(0);
-        
-        //Jump up if node is enemy; else, just regular collision
-        if (node ->is_enemy) {
-          p->velocity = v + 10 * p->Up();
-        }
-        else {
-          p->velocity = v;
-        }
+        p->velocity = v;
 
         p->inAir = false;
         if (node->is_platform && !node->is_enemy) {
