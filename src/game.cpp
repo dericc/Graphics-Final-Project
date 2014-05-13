@@ -2299,6 +2299,10 @@ void DrawSidebar(R3Scene *scene) {
       float ymin = (i) * (button_width + sidebar.border) + sidebar.border;
       float ymax = ymin + button_width;
       float xmax = xmin + button_width;
+
+
+      glBindTexture(GL_TEXTURE_2D, 0); 
+
       glBegin(GL_QUADS);
       if (i == scene->sidebar->selected_button) {
         glColor3f(1, 0, 0);
@@ -2406,7 +2410,6 @@ void SetupLevelEditor(R3Scene *scene) {
     R3Material *material = new R3Material();
     *material = *scene->materials[0];
     material->texture_index = -1;
-
 
     // Get texture filename
     char buffer[2048];
