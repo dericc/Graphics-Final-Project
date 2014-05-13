@@ -68,37 +68,6 @@ void CreateParticles(R3Scene *scene, R3Point position, int count, R3Material *ma
 
 void GenerateParticles(R3Scene *scene, double current_time, double delta_time)
 {
-  for (unsigned int j = 0; j < scene->fires.size(); j++)
-  {
-    R3Fire *fire = scene->fires[j];
-
-    double k = delta_time * 20;
-    int num_particles = floor(k);
-    if (RandomNumber() < (k - num_particles))
-      num_particles++;
-
-    for (int i = 0; i < num_particles; i++)
-    {
-      double z = RandomNumber();
-      double phi = RandomNumber() * 2 * 3.14159;
-      double d = sqrt(1 - z * z);
-      R3Vector n(d * cos(phi), d * sin(phi), z);
-      n.Normalize();
-
-      // create new particle
-      R3Particle *particle      = new R3Particle();
-      particle->drag            = 0;
-      particle->elasticity      = 1;
-      particle->fixed           = false;
-      particle->lifetime        = 8 + RandomNumber() * 4;
-      particle->mass            = 1;
-      particle->material        = NULL;
-      particle->position        = fire->position + R3Vector(RandomNumber() - 0.5, 0, RandomNumber() - 0.5);
-      particle->velocity        = n * (0.4 + RandomNumber() * 0.2);
-      scene->fire_particles.push_back(particle);
-    }
-  }
-
   // Generate new particles for every source
   for (int i = 0; i < scene->NParticleSources(); i++) 
   {
@@ -339,28 +308,6 @@ void UpdateParticles(R3Scene *scene, double current_time, double delta_time, int
       } while (error > ERROR_THRESH);
       break;
     }
-  }
-
-  // update fire particles
-  for (vector<R3Particle *>::iterator i = scene->fire_particles.begin(); i != scene->fire_particles.end(); )
-  {
-    R3Particle *particle = *i;
-    particle->position += particle->velocity * delta_time + R3Vector(0, 0.1, 0) * delta_time * particle->lifetime;
-
-    particle->velocity *= 0.999;
-    // avoids deleting particles that started with a 0 or negative lifetime
-    if (particle->lifetime > 0)
-    {
-      particle->lifetime -= delta_time;
-      if (particle->lifetime <= 0)
-      {
-        scene->fire_particles.erase(i);
-        delete particle;
-        continue;
-      }
-    }
-
-    i++;
   }
 
   // delete particles that have reached a sink or have expired
@@ -617,48 +564,75 @@ R3Vector ComputeForce(R3Scene *scene, R3Particle *particle)
 // Rendering Particles
 ////////////////////////////////////////////////////////////
 
-void RenderParticles(R3Scene *scene)
-{
-  // Draw every particle
+// void RenderParticles(R3Scene *scene)
+// {
+//   // Draw every particle
+ 
+//     glPushMatrix();
+//   // REPLACE CODE HERE
+//   glDisable(GL_LIGHTING);
+//   glPointSize(5);
 
+
+//    glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
+//   for (int i = 0; i < scene->NParticles(); i++) {
+//     R3Particle *particle = scene->Particle(i);
+//     // glColor3d(particle->material->kd[0], particle->material->kd[1], particle->material->kd[2]);
+//     glBegin(GL_QUADS);
+//     glColor3d(1, 0, 0); 
+//     const R3Point& position = particle->position;
+//     glVertex2f(position[0]-.2, position[1]-.2);
+//     glVertex2f(position[0]+.2, position[1]-.2);
+//     glVertex2f(position[0]+.2, position[1]+.2);
+//     glVertex2f(position[0]-.2, position[1]+.2);
+//       glEnd();
+//   }   
+
+
+//    glPopAttrib();
+//    glPopMatrix();
+
+// }
+void RenderParticles(R3Scene *scene) {
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP); 
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
-  // REPLACE CODE HERE
-  glDisable(GL_LIGHTING);
-  glPointSize(5);
+   // Store the current matrix
+   glPushMatrix();
 
-  glColor3d(1, 0, 0); 
-  glBegin(GL_QUADS);
+   // Reset and transform the matrix.
+   glLoadIdentity();
+   gluLookAt(
+       0,0,0,
+       scene->camera.towards.X(),scene->camera.towards.Y(),scene->camera.towards.Z() - 5,
+       0,1,0);
+
+   // Enable/Disable features
+   glPushAttrib(GL_ENABLE_BIT);
+   glEnable(GL_TEXTURE_2D);
+   glDisable(GL_DEPTH_TEST);
+   glDisable(GL_LIGHTING);
+   glDisable(GL_BLEND);
+
+   glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
   for (int i = 0; i < scene->NParticles(); i++) {
-      glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
-
     R3Particle *particle = scene->Particle(i);
-
-    // glColor3f(particle->material->kd[0], particle->material->kd[1], particle->material->kd[2]);
     const R3Point& position = particle->position;
+   glColor4f(1,1,1,1);
+   // Render the front quad
 
+   glBegin(GL_QUADS);
     glVertex2f(position[0]-.2, position[1]-.2);
     glVertex2f(position[0]+.2, position[1]-.2);
     glVertex2f(position[0]+.2, position[1]+.2);
     glVertex2f(position[0]-.2, position[1]+.2);
+   glEnd();
+   glBindTexture(GL_TEXTURE_2D, 0);
+   // Restore enable bits wand matrix
 
-    // glColor3d(particle->material->kd[0], particle->material->kd[1], particle->material->kd[2]);
-    // const R3Point& position = particle->position;
-    // glVertex3d(position[0], position[1], position[2]);
-    // glEnd();
-  }
-  glEnd();
-
-  glBegin(GL_POINTS);
-  for (unsigned int i = 0; i < scene->fire_particles.size(); i++) {
-    R3Particle *particle = scene->fire_particles[i];
-    glColor3d(1, particle->lifetime / 10.0, 0);
-    const R3Point& position = particle->position;
-    glVertex3d(position[0], position[1], position[2]);
-  }
-
-  glEnd(); 
+  }   
+   glPopAttrib();
+   glPopMatrix();
 }
 
 

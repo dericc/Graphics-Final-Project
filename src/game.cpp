@@ -1460,6 +1460,7 @@ void DrawHUD()
   glPushMatrix();
   glLoadIdentity();
   glDisable(GL_CULL_FACE);
+  glDisable(GL_LIGHTING); 
 
   glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -1499,8 +1500,8 @@ void DrawHUD()
 }
 
 void DrawSkybox(R3Scene *scene) {
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP); 
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP); 
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
    // Store the current matrix
    glPushMatrix();
@@ -1528,7 +1529,9 @@ void DrawSkybox(R3Scene *scene) {
        glTexCoord2f(1, 1); glVertex3f( 0.5f,  0.5f, -0.5f );
        glTexCoord2f(0, 1); glVertex3f(  0.5f, -0.5f, -0.5f );
    glEnd();
-   // Restore enable bits and matrix
+   glBindTexture(GL_TEXTURE_2D, 0);
+   // Restore enable bits wand matrix
+
    glPopAttrib();
    glPopMatrix();
 
@@ -2330,7 +2333,7 @@ void SetupSkybox(R3Scene *scene) {
     if (!material->texture->Read(buffer)) {
       fprintf(stderr, "not a good icon file: %s\n", buffer);
     }
-    
+
     LoadMaterial(material);
     // Insert material
     skyboxMaterials.push_back(material);
