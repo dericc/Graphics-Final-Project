@@ -33,6 +33,14 @@ material
   1 1 creeper.jpg
 
 material
+1 1 1
+1 1 1
+0 0 0
+0 0 0
+0 0 0
+1 1 tallcreeper.jpg
+
+material
   1 0 0
   1 0 0
   0 0 0
@@ -98,8 +106,6 @@ platform
     150 30 -2
     1
 
-
-
 box 
   1
   160 30 -2
@@ -125,28 +131,21 @@ enemy
     4
     8 6 0
     9 7 1
-    1 1 0 0
-    1
-
-enemy 
-    4
-    8 6 0
-    9 7 1
     1 1 1 1
     1
 
 enemy 
     4
-    -4 6 0
-    -3.5 11 1
-    0 1 0 1
+    8 6 0
+    8.5 10 1
+    1 1 0 1
     1
 
 enemy 
     4
-    -6 6 0
-    -5 7 1
-    0 1 1 0
+    -4 6 0
+    -3 7 1
+    0 1 1 1
     1
 
 coin
@@ -185,6 +184,5 @@ death_y -10
 
 soundtrack /../sounds/maxo.wav
 
-next_level ../levels/output.scn
 
 particle_gravity 0 -9.8 0
