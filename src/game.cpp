@@ -1499,18 +1499,18 @@ void DrawHUD()
     float ymin = spacing;
     float ymax = spacing + size;
 
-    glDisable(GL_DEPTH_TEST); 
-    glColor4f(0.0f, 0.0f, 0.0, 0f);
-    glBindTexture(GL_TEXTURE_2D, scene->coins[0]->node->material->texture_index); 
+
+    // glColor4f(0.0f, 0.0f, 0.0, 0);
+    // glBindTexture(GL_TEXTURE_2D, scene->coins[0]->node->material->texture_index); 
     glBegin(GL_QUADS);
-      // glColor3f(1.0f, 1.0f, 0.0);
-      glTexCoord2f(0.0, 0.0); 
+      glColor3f(1.0f, 1.0f, 0.0);
+      // glTexCoord2f(0.0, 0.0); 
       glVertex2f(xmin, ymin);
-      glTexCoord2f(1.0, 0.0); 
+      // glTexCoord2f(1.0, 0.0); 
       glVertex2f(xmax, ymin);
-      glTexCoord2f(1.0, 1.0); 
+      // glTexCoord2f(1.0, 1.0); 
       glVertex2f(xmax, ymax);
-      glTexCoord2f(0.0, 1.0); 
+      // glTexCoord2f(0.0, 1.0); 
       glVertex2f(xmin, ymax);
     glEnd();
   }
