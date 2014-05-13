@@ -919,8 +919,10 @@ void ClickSidebar(int x, int y) {
       grabbed = NULL;
       move_mode = 0;
     }
-    scene->sidebar->selected_button = button;
-    *scene->sidebar->buttons[button]->value = 1;
+    if (scene->sidebar->buttons[button]->value != &move_mode) {
+      scene->sidebar->selected_button = button;
+      *scene->sidebar->buttons[button]->value = 1;
+    }
   }
   
 }
