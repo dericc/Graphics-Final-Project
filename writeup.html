@@ -25,11 +25,15 @@ Andrew Werner, ajwerner<BR>       <!-- Fill in your name and login -->
 For our final project, we created a 2.5 dimension platforming game that has many 
 of the necessary features for platforming game: coins, moving platforms, enemies that
 bounce and track the player, and decorative fire textures (the most important part of making
-any video game look sick). Our most useful and creative feature, though, is a level editor that
+any video game look sick). The game is built on a .scn file that takes in the parameters for nearly everything in a level, from the skybox to the textures to the coin location, and the game transitions smoothly between levels (e.g. loads a new scene file immediately once the goal is reached). Our most useful and creative feature, though, is a level editor that
 allows you to generate platforms by mouse, move platforms, create coins, create enemies, and so forth, and then immediately play the game in the window. <BR>
 
-Here are the features that we implemented, for a total of 8 features
+Here are the features that we implemented, for a total of 4 basic features and 8 extra features
 <ul>
+<li><b> 3D perspective viewing and objects.</b>
+<li><b> Lighting and smooth shading.</b>
+<li><b> User Input</b>
+  <li><b> Computer Control over some element in the scene</b>
 <li><b> 1) Texture Mapping</b>
 <li><b> 2) Multiple Views</b>
 <li><b> 3) On-Screen Control Panel</b>
@@ -39,7 +43,11 @@ Here are the features that we implemented, for a total of 8 features
 <li><b> 6) Simulated Dynamics</b>
 <li><b> 7) Sound </b>
 <li><b> 8) Game Level Editor</b>
+
 </ul>
+
+There are also many features of the game that do not fit under these 8 categories. We list them following our overview of the important features. 
+
 
 
 
@@ -50,7 +58,112 @@ Here are the features that we implemented, for a total of 8 features
 <!------------------------------------------------------------------------> 
 
 <!------------------------------------------------------------------------> 
-<H3><A name="texture"> Texture Mapping </A></H3>
+<H2><A name="texture"> 3D perspective viewing and objects </A></H2>
+<!------------------------------------------------------------------------> 
+
+<!-- <TABLE>
+<TBODY>
+  <TR>
+    <TD vAlign=top align=middle>
+       <A href="output/particlemotion.gif"><IMG  width=256 src="output/particlemotion.gif"></A><BR>       
+       <A href="input/particlemotion.scn">particlemotion.scn</A>
+    </TD>
+    <TD vAlign=top align=middle>
+       <A href="output/effectofgravity.gif"><IMG width=256  src="output/effectofgravity.gif"></A><BR>       
+       <A href="input/effectofgravity.scn">effectofgravity.scn</A>
+    </TD>  
+    <TD vAlign=top align=middle>
+       <A href="output/effectofdrag.gif"><IMG width=256 src="output/effectofdrag.gif"></A><BR>       
+       <A href="input/effectofdrag.scn">effectofdrag.scn</A>
+    </TD>  
+</TR>
+</TBODY>
+</TABLE> -->
+
+Our game is built in 3D using R3Scene.cpp as a base, OpenGL libraries to set up the basic game properties, and raytrace.cpp and particle.cpp for various functions related to collisions and particle creations. The game is created primarily in a single XY plane, and the movement is entirely 2D, so the game genre can be considered 2.5D. This is very useful for the game editor (so a simple click can create an object only in the XY plane, rather than having to specify distance from camera). The camera that follows the player shifts based on the speed of the player.  
+
+<hr><br>
+
+<!------------------------------------------------------------------------> 
+<H2><A name="texture"> Lighting and smooth shading.</A></H2>
+<!------------------------------------------------------------------------> 
+
+<!-- <TABLE>
+<TBODY>
+  <TR>
+    <TD vAlign=top align=middle>
+       <A href="output/particlemotion.gif"><IMG  width=256 src="output/particlemotion.gif"></A><BR>       
+       <A href="input/particlemotion.scn">particlemotion.scn</A>
+    </TD>
+    <TD vAlign=top align=middle>
+       <A href="output/effectofgravity.gif"><IMG width=256  src="output/effectofgravity.gif"></A><BR>       
+       <A href="input/effectofgravity.scn">effectofgravity.scn</A>
+    </TD>  
+    <TD vAlign=top align=middle>
+       <A href="output/effectofdrag.gif"><IMG width=256 src="output/effectofdrag.gif"></A><BR>       
+       <A href="input/effectofdrag.scn">effectofdrag.scn</A>
+    </TD>  
+</TR>
+</TBODY>
+</TABLE> -->
+We used OpenGL to implement lighting and smooth shading. Directional lights in the scn files light up the scene. The materials for all of the objects are defined in the scene. 
+<hr><br>
+
+<!------------------------------------------------------------------------> 
+<H2><A name="texture"> User Input</A></H2>
+<!------------------------------------------------------------------------> 
+
+<!-- <TABLE>
+<TBODY>
+  <TR>
+    <TD vAlign=top align=middle>
+       <A href="output/particlemotion.gif"><IMG  width=256 src="output/particlemotion.gif"></A><BR>       
+       <A href="input/particlemotion.scn">particlemotion.scn</A>
+    </TD>
+    <TD vAlign=top align=middle>
+       <A href="output/effectofgravity.gif"><IMG width=256  src="output/effectofgravity.gif"></A><BR>       
+       <A href="input/effectofgravity.scn">effectofgravity.scn</A>
+    </TD>  
+    <TD vAlign=top align=middle>
+       <A href="output/effectofdrag.gif"><IMG width=256 src="output/effectofdrag.gif"></A><BR>       
+       <A href="input/effectofdrag.scn">effectofdrag.scn</A>
+    </TD>  
+</TR>
+</TBODY>
+</TABLE> -->
+The user controls the player character with three keys: "w", "a", and "d" mapped to up, left, and right.  Many other keys are used for auxiliary functions: "c" brings up the overview of the entire level, "m" toggles the minimap, "p" prints out a new scene file with the entire game in its current state, and the level editor allows the user to click anywhere in the scene and immediately create (or alter) objects. 
+<hr><br>
+
+<!------------------------------------------------------------------------> 
+<H2><A name="texture"> Computer Control over some element in the scene </A></H2>
+<!------------------------------------------------------------------------> 
+
+<!-- <TABLE>
+<TBODY>
+  <TR>
+    <TD vAlign=top align=middle>
+       <A href="output/particlemotion.gif"><IMG  width=256 src="output/particlemotion.gif"></A><BR>       
+       <A href="input/particlemotion.scn">particlemotion.scn</A>
+    </TD>
+    <TD vAlign=top align=middle>
+       <A href="output/effectofgravity.gif"><IMG width=256  src="output/effectofgravity.gif"></A><BR>       
+       <A href="input/effectofgravity.scn">effectofgravity.scn</A>
+    </TD>  
+    <TD vAlign=top align=middle>
+       <A href="output/effectofdrag.gif"><IMG width=256 src="output/effectofdrag.gif"></A><BR>       
+       <A href="input/effectofdrag.scn">effectofdrag.scn</A>
+    </TD>  
+</TR>
+</TBODY>
+</TABLE> -->
+
+We have an enemy AI for each of the enemies that is able to track the player's location and navigate towards him. Pairing this with a jumping ability and a lot of size, this creates significant challenges to the player navigating through the scene. We also create a fire particle source that creates particles that slowly fade from yellow to red. 
+
+<hr><br>
+
+
+<!------------------------------------------------------------------------> 
+<H2><A name="texture"> Texture Mapping </A></H2>
 <!------------------------------------------------------------------------> 
 
 <!-- <TABLE>
@@ -78,7 +191,7 @@ as an argument to the material in the scene file, which is then loaded onto the 
 <hr><br>
 
 <!------------------------------------------------------------------------> 
-<H3><A name="multipleviews"> Multiple Views </A></H3>
+<H2><A name="multipleviews"> Multiple Views </A></H2>
 <!------------------------------------------------------------------------> 
 
 <!-- <TABLE cellSpacing=0 cellPadding=10 border=0>
@@ -103,7 +216,7 @@ We created a minimap on the bottom left corner that allows viewing of the entire
 <hr><br>
 
 <!------------------------------------------------------------------------> 
-<H3><A name="control"> On-Screen Control Panel </A></H3>
+<H2><A name="control"> On-Screen Control Panel </A></H2>
 <!------------------------------------------------------------------------> 
 <!-- 
 <TABLE cellSpacing=0 cellPadding=10 border=0>
@@ -148,7 +261,7 @@ There are multiple examples of on-screen control panels in our game. In the top 
 <hr><br>
 
 <!------------------------------------------------------------------------> 
-<H3><A name="procedural"> Procedural and physically-based modeling </A></H3>
+<H2><A name="procedural"> Procedural and physically-based modeling </A></H2>
 <!------------------------------------------------------------------------> 
 
 We created particle sources that emanated particles that changed colors slowly from yellow to red, imitating fire as a decorative addition. We also created red GL_QUADs that fly out from the player in all directions once the player dies, simulating an explosion. 
@@ -156,7 +269,7 @@ We created particle sources that emanated particles that changed colors slowly f
 
 
 <!------------------------------------------------------------------------> 
-<H3><A name="particleinteraction">Collision Detection </A></H3>
+<H2><A name="particleinteraction">Collision Detection </A></H2>
 <!------------------------------------------------------------------------> 
 
 <!-- <TABLE>
@@ -186,95 +299,18 @@ We created particle sources that emanated particles that changed colors slowly f
 </TBODY>
 </TABLE> -->
 
-We implemented collision detection between the player and other objects, and between the enemies and other objects (including other enemies and players). All of the collisions are axis-aligned. We also detect the direction of collisions (e.g. the player hits the enemy from the top), so that the player can kill and be killed by enemies depending on the direction of approach. 
+We implemented collision detection between the player and other objects, and between the enemies and other objects (including other enemies and players). All of the collisions are axis-aligned. We also detect the direction of collisions (e.g. the player hits the enemy from the top), so that the player can kill and be killed by enemies depending on the direction of approach. Collision detection handles impossible setups smoothly and without crashing (e.g. crushing blocks between platforms), though sometimes it may jump the block out in the wrong direction given an impossible situation. Collisions between moving objects are handled realistically: a jumping enemy on a jumping enemy will jump higher from the extra velocity. 
 
 <HR><BR>
 
 <!------------------------------------------------------------------------> 
-<H3><A name="dynamics"> Simulated Dynamics </A></H3>
+<H2><A name="dynamics"> Simulated Dynamics </A></H2>
 <!------------------------------------------------------------------------> 
 
 
 We have several examples of simulated dynamics. The player moves left and right on a platform, accelerating to a max_speed, and jumps by adding a force in the upwards direction. The movement left and right is slowed by drag, so the player continues moving for a short time after holding left/right. Platforms accelerate away from their start points and slow towards the end points, and the player on a platform has equivalent acceleration (e.g. moving up quickly increases jump velocity). Enemies follow the same simulated dynamics and also have the ability to jump and follow the player wherever the player is, reacting dynamically to their environment. Fire particles go from yellow to red as they age.  
 <HR><BR>
 
-<!------------------------------------------------------------------------> 
-<H3><A name="particlerendering"> Particle rendering </A></H3>
-<!------------------------------------------------------------------------> 
-
-<TABLE>
-<TBODY>
-<!--   <TR>
-    <TD vAlign=top align=middle>
-       <A href="output/trails.gif"><IMG width=256 src="output/trails.gif"></A><BR>       
-       <A href="input/trails.scn">trails.scn</A>
-    </TD>
-    <TD vAlign=top align=middle>
-       <A href="output/dynamicmaterials.gif"><IMG width=256 src="output/dynamicmaterials.gif"></A><BR>       
-       <A href="input/dynamicmaterials.scn">dynamicmaterials.scn</A>
-    </TD>
-    <TD vAlign=top align=middle>
-       <A href="output/responsivematerials.gif"><IMG width=256 src="output/responsivematerials.gif"></A><BR>       
-       <A href="input/responsivematerials.scn">responsivematerials.scn</A>
-    </TD>
-    <TD vAlign=top align=middle>
-       <A href="output/animatedmaterials.gif"><IMG width=256 src="output/animatedmaterials.gif"></A><BR>       
-       <A href="input/animatedmaterials.scn">animatedmaterials.scn</A>
-    </TD>
-    <TD vAlign=top align=middle>
-       <A href="output/sprites.gif"><IMG width=256 src="output/sprites.gif"></A><BR>       
-       <A href="input/sprites.scn">sprites.scn</A>
-    </TD>
-</TR> -->
-</TBODY>
-</TABLE>
-<HR><BR>
-<!------------------------------------------------------------------------> 
-<H3><A name="interactivecontrol"> Interactive control </A></H3>
-<!------------------------------------------------------------------------> 
-
-<TABLE>
-<TBODY>
-<!--   <TR>
-    <TD vAlign=top align=middle>
-       <A href="output/sourcecontrol.gif"><IMG width=256 src="output/sourcecontrol.gif"></A><BR>       
-       <A href="input/sourcecontrol.scn">sourcecontrol.scn</A>
-    </TD>
-    <TD vAlign=top align=middle>
-       <A href="output/sinkcontrol.gif"><IMG width=256 src="output/sinkcontrol.gif"></A><BR>       
-       <A href="input/sinkcontrol.scn">sinkcontrol.scn</A>
-    </TD>
-    <TD vAlign=top align=middle>
-       <A href="output/sourcesinkdragging.gif"><IMG width=256 src="output/sourcesinkdragging.gif"></A><BR>       
-       <A href="input/sourcesinkdragging.scn">sourcesinkdragging.scn</A>
-    </TD>
-    <TD vAlign=top align=middle>
-       <A href="output/ropeorclothmanipulation.gif"><IMG width=256 src="output/ropeorclothmanipulation.gif"></A><BR>       
-       <A href="input/ropeorclothmanipulation.scn">ropeorclothmanipulation.scn</A>
-    </TD>
-</TR> -->
-</TBODY>
-</TABLE>
-<HR><BR>
-
-  <!------------------------------------------------------------------------> 
-<!------------------------------------------------------------------------> 
-<H2><A name='interesting'>Interesting Scene Submission</A></H2>
-<!------------------------------------------------------------------------> 
-<!------------------------------------------------------------------------> 
-
-<TABLE cellSpacing=0 cellPadding=10 border=0 vAlign=top align=middle>
-<TBODY>
-  <TR>
-    <TD vAlign=top align=middle>
-       <A href="art/interestingscene.gif"><IMG width=512 src="art/interestingscene.gif"></A><BR>             
-       My interesting scene is a source and two sinks that launches particles rapidly in 
-       between the two sinks, causing them to flare out in random directions and quickly 
-       orbit the sinks (or shoot off in random directions quickly). I found that it created interesting and beautiful patterns, and as a result I chose to use it as my interesting scene for this week. 
-    </TD>
-  </TR>
-</TBODY>
-</TABLE>
 
 <!------------------------------------------------------------------------> 
 <!------------------------------------------------------------------------> 
@@ -313,8 +349,35 @@ We used the irrKlang library for sound, allowing wav files to be played whenever
 </TBODY>
 </TABLE>
  -->
-The level editor is a large proportion of our project. With the level editor, you can change the camera view to anywhere in the scene. You can select any block, platform, or enemy, and drag it to a different place using the mouse, as well as delete the object. You can select an enemy and make it bigger or smaller by dragging the mouse. You can also spawn enemies, stationary platforms, coins, or fire sources using a convenient object picker in the right sidebar, using only a mouse click at the location desired. 
+The level editor is a large proportion of our project. With the level editor, you can change the camera view to anywhere in the scene. You can select any block, platform, or enemy, and drag it to a different place using the mouse, as well as delete the object. You can select an enemy and make it bigger or smaller by dragging the mouse. You can also spawn enemies, stationary platforms, coins, or fire sources using only a mouse click at the location desired. All of these features are implemented using a convenient sidebar picker with 7 options, where you can simply click the option you want and then immediately begin creating objects. 
+<BR>
+Furthermore, we can immediately start the game at any time in the level editor by immediately pressing "n" to initiate the game. The current state of the game be printed at any time (requiring a lot of reverse engineering of Read()) by simply pressing "p", in which case a new .scn file is automatically generated with the location of all players, objects, fire sources, enemies, platforms, and coins, along with their associated textures. 
 <HR><BR>
+
+
+<!------------------------------------------------------------------------> 
+<!------------------------------------------------------------------------> 
+<H2><A name='sound'> Editor</A></H2>
+<!------------------------------------------------------------------------> 
+<!------------------------------------------------------------------------> 
+
+<TABLE cellSpacing=0 cellPadding=10 border=0 vAlign=top align=middle>
+<!-- <TBODY>
+  <TR>
+    <TD vAlign=top align=middle>
+       <A href="art/art.gif"><IMG width=512 src="art/art.gif"></A><BR>             
+       My art contest submission is a slightly modified version of my interesting scene that includes three sinks that form a triangle, but with the top sink slightly nearer to the source than the other two sinks. As a result, the particles flare off in a parabolic shape towards the upper sink, but  make an interesting fountain-shaped curve around the top sink, with random particles flying off in different directions. 
+    </TD>
+  </TR>
+</TBODY>
+</TABLE>
+ -->
+The level editor is a large proportion of our project. With the level editor, you can change the camera view to anywhere in the scene. You can select any block, platform, or enemy, and drag it to a different place using the mouse, as well as delete the object. You can select an enemy and make it bigger or smaller by dragging the mouse. You can also spawn enemies, stationary platforms, coins, or fire sources using only a mouse click at the location desired. All of these features are implemented using a convenient sidebar picker with 7 options, where you can simply click the option you want and then immediately begin creating objects. 
+<BR>
+Furthermore, we can immediately start the game at any time in the level editor by immediately pressing "n" to initiate the game. The current state of the game be printed at any time (requiring a lot of reverse engineering of Read()) by simply pressing "p", in which case a new .scn file is automatically generated with the location of all players, objects, fire sources, enemies, platforms, and coins, along with their associated textures. 
+<HR><BR>
+
+
 
 <!------------------------------------------------------------------------> 
 <!------------------------------------------------------------------------> 
