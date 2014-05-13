@@ -1,0 +1,355 @@
+<HTML>
+<HEAD>
+<TITLE>
+COS 426 Assignment 4
+</TITLE>
+<BODY>
+<CENTER>
+<H2>
+COS 426, Spring 2014<BR>
+Deric Cheng, dericc<BR>       
+Matt Goldsmith, mgoldsmi<BR> 
+Riley Thomasson, rthomass<BR>   
+Andrew Werner, ajwerner<BR>       <!-- Fill in your name and login -->
+</H2>                     
+</CENTER>
+<HR><BR>
+
+
+<!------------------------------------------------------------------------> 
+<!------------------------------------------------------------------------> 
+<H2>List of Implemented Features</H2>
+<!------------------------------------------------------------------------> 
+<!------------------------------------------------------------------------> 
+
+For our final project, we created a 2.5 dimension platforming game that has many 
+of the necessary features for platforming game: coins, moving platforms, enemies that
+bounce and track the player, and decorative fire textures (the most important part of making
+any video game look sick). Our most useful and creative feature, though, is a level editor that
+allows you to generate platforms by mouse, move platforms, create coins, create enemies, and so forth, and then immediately play the game in the window. <BR>
+
+Here are the features that we implemented, for a total of 8 features
+<ul>
+<li><b> 1) Texture Mapping</b>
+<li><b> 2) Multiple Views</b>
+<li><b> 3) On-Screen Control Panel</b>
+<li><b> 4) Procedural and physically-based modeling.</b>  
+
+<li><b> 5) Collision Detection</b>
+<li><b> 6) Simulated Dynamics</b>
+<li><b> 7) Sound </b>
+<li><b> 8) Game Level Editor</b>
+</ul>
+
+
+
+<!------------------------------------------------------------------------> 
+<!------------------------------------------------------------------------> 
+<H2>Demonstration of Implemented Features</H2>
+<!------------------------------------------------------------------------> 
+<!------------------------------------------------------------------------> 
+
+<!------------------------------------------------------------------------> 
+<H3><A name="texture"> Texture Mapping </A></H3>
+<!------------------------------------------------------------------------> 
+
+<!-- <TABLE>
+<TBODY>
+  <TR>
+    <TD vAlign=top align=middle>
+       <A href="output/particlemotion.gif"><IMG  width=256 src="output/particlemotion.gif"></A><BR>       
+       <A href="input/particlemotion.scn">particlemotion.scn</A>
+    </TD>
+    <TD vAlign=top align=middle>
+       <A href="output/effectofgravity.gif"><IMG width=256  src="output/effectofgravity.gif"></A><BR>       
+       <A href="input/effectofgravity.scn">effectofgravity.scn</A>
+    </TD>  
+    <TD vAlign=top align=middle>
+       <A href="output/effectofdrag.gif"><IMG width=256 src="output/effectofdrag.gif"></A><BR>       
+       <A href="input/effectofdrag.scn">effectofdrag.scn</A>
+    </TD>  
+</TR>
+</TBODY>
+</TABLE> -->
+
+We implemented texture mapping using OpenGL's libraries for texture maps. The texture file is passed
+as an argument to the material in the scene file, which is then loaded onto the list of materials and applied onto an object through OpenGL. 
+
+<hr><br>
+
+<!------------------------------------------------------------------------> 
+<H3><A name="multipleviews"> Multiple Views </A></H3>
+<!------------------------------------------------------------------------> 
+
+<!-- <TABLE cellSpacing=0 cellPadding=10 border=0>
+<TBODY>
+  <TR>
+    <TD vAlign=top align=middle>
+       <A href="output/spheresource.gif"><IMG width=256 src="output/spheresource.gif"></A><BR>       
+       <A href="input/spheresource.scn">spheresource.scn</A>
+    </TD>
+    <TD vAlign=top align=middle>
+
+    </TD>
+    <TD vAlign=top align=middle>
+       <A href="output/meshsource.gif"><IMG width=256 src="output/meshsource.gif"></A><BR>       
+       <A href="input/meshsource.scn">meshsource.scn</A>
+    </TD>
+  </TR>
+</TBODY>
+</TABLE>
+ -->
+We created a minimap on the bottom left corner that allows viewing of the entire map at the same time as the actual game, with a transparent background so it blends easily into the game. Furthermore, holding down "c" zooms the camera out to the entire map in fullscreen. 
+<hr><br>
+
+<!------------------------------------------------------------------------> 
+<H3><A name="control"> On-Screen Control Panel </A></H3>
+<!------------------------------------------------------------------------> 
+<!-- 
+<TABLE cellSpacing=0 cellPadding=10 border=0>
+<TBODY>
+  <TR>
+    <TD vAlign=top align=middle>
+       <A href="output/spheresink.gif"><IMG width=256 src="output/spheresink.gif"></A><BR>       
+       <A href="input/spheresink.scn">spheresink.scn</A>
+    </TD>
+<!--     <TD vAlign=top align=middle>
+       <A href="output/circlesink.gif"><IMG width=256 src="output/circlesink.gif"></A><BR>       
+       <A href="input/circlesink.scn">circlesink.scn</A>
+    </TD> -->
+<!--     <TD vAlign=top align=middle>
+       <A href="output/boxsink.gif"><IMG width=256 src="output/boxsink.gif"></A><BR>       
+       <A href="input/boxsink.scn">boxsink.scn</A>
+    </TD>
+    <TD vAlign=top align=middle>
+       <A href="output/linesink.gif"><IMG width=256 src="output/linesink.gif"></A><BR>       
+       <A href="input/linesink.scn">linesink.scn</A>
+    </TD>
+  <TR>
+ </TR> -->
+<!--     <TD vAlign=top align=middle>
+       <A href="output/cylindersink.gif"><IMG width=256 src="output/cylindersink.gif"></A><BR>       
+       <A href="input/cylindersink.scn">cylindersink.scn</A>
+    </TD>
+    <TD vAlign=top align=middle>
+       <A href="output/conesink.gif"><IMG width=256 src="output/conesink.gif"></A><BR>       
+       <A href="input/conesink.scn">conesink.scn</A>
+    </TD>
+    <TD vAlign=top align=middle>
+       <A href="output/meshsink.gif"><IMG width=256 src="output/meshsink.gif"></A><BR>       
+       <A href="input/meshsink.scn">meshsink.scn</A>
+    </TD> -->
+<!--   </TR>
+</TBODY>
+</TABLE> --> 
+
+
+There are multiple examples of on-screen control panels in our game. In the top left is a counter of the number of coins collected by the player. In the bottom left is a minimap HUD that allows the user to see the entire map at a time. In the level editor, there is a sidebar on the right side that allows you to choose between camera mode (for viewing), adding platforms, add enemies, 
+<hr><br>
+
+<!------------------------------------------------------------------------> 
+<H3><A name="procedural"> Procedural and physically-based modeling </A></H3>
+<!------------------------------------------------------------------------> 
+
+We created particle sources that emanated particles that changed colors slowly from yellow to red, imitating fire as a decorative addition. We also created red GL_QUADs that fly out from the player in all directions once the player dies, simulating an explosion. 
+<HR><BR>
+
+
+<!------------------------------------------------------------------------> 
+<H3><A name="particleinteraction">Collision Detection </A></H3>
+<!------------------------------------------------------------------------> 
+
+<!-- <TABLE>
+<TBODY>
+  <TR>
+    <TD vAlign=top align=middle>
+       <A href="output/collisiondetection.gif"><IMG width=256 src="output/collisiondetection.gif"></A><BR>       
+       <A href="input/collisiondetection.scn">collisiondetection.scn</A>
+    </TD>
+    <TD vAlign=top align=middle>
+       <A href="output/mutualparticleattraction.gif"><IMG width=256 src="output/mutualparticleattraction.gif"></A><BR>       
+       <A href="input/mutualparticleattraction.scn">mutualparticleattraction.scn</A>
+    </TD>
+    <TD vAlign=top align=middle>
+       <A href="output/rope.gif"><IMG width=256 src="output/rope.gif"></A><BR>       
+       <A href="input/rope.scn">rope.scn</A>
+    </TD>
+    <TD vAlign=top align=middle>
+       <A href="output/cloth.gif"><IMG width=256 src="output/cloth.gif"></A><BR>       
+       <A href="input/cloth.scn">cloth.scn</A>
+    </TD>
+    <TD vAlign=top align=middle>
+       <A href="output/falling_cube.gif"><IMG width=256 src="output/falling_cube.gif"></A><BR>       
+       <A href="input/falling_cube.scn">falling_cube.scn</A>
+    </TD>
+</TR>
+</TBODY>
+</TABLE> -->
+
+We implemented collision detection between the player and other objects, and between the enemies and other objects (including other enemies and players). All of the collisions are axis-aligned. We also detect the direction of collisions (e.g. the player hits the enemy from the top), so that the player can kill and be killed by enemies depending on the direction of approach. 
+
+<HR><BR>
+
+<!------------------------------------------------------------------------> 
+<H3><A name="dynamics"> Simulated Dynamics </A></H3>
+<!------------------------------------------------------------------------> 
+
+
+We have several examples of simulated dynamics. The player moves left and right on a platform, accelerating to a max_speed, and jumps by adding a force in the upwards direction. The movement left and right is slowed by drag, so the player continues moving for a short time after holding left/right. Platforms accelerate away from their start points and slow towards the end points, and the player on a platform has equivalent acceleration (e.g. moving up quickly increases jump velocity). Enemies follow the same simulated dynamics and also have the ability to jump and follow the player wherever the player is, reacting dynamically to their environment. Fire particles go from yellow to red as they age.  
+<HR><BR>
+
+<!------------------------------------------------------------------------> 
+<H3><A name="particlerendering"> Particle rendering </A></H3>
+<!------------------------------------------------------------------------> 
+
+<TABLE>
+<TBODY>
+<!--   <TR>
+    <TD vAlign=top align=middle>
+       <A href="output/trails.gif"><IMG width=256 src="output/trails.gif"></A><BR>       
+       <A href="input/trails.scn">trails.scn</A>
+    </TD>
+    <TD vAlign=top align=middle>
+       <A href="output/dynamicmaterials.gif"><IMG width=256 src="output/dynamicmaterials.gif"></A><BR>       
+       <A href="input/dynamicmaterials.scn">dynamicmaterials.scn</A>
+    </TD>
+    <TD vAlign=top align=middle>
+       <A href="output/responsivematerials.gif"><IMG width=256 src="output/responsivematerials.gif"></A><BR>       
+       <A href="input/responsivematerials.scn">responsivematerials.scn</A>
+    </TD>
+    <TD vAlign=top align=middle>
+       <A href="output/animatedmaterials.gif"><IMG width=256 src="output/animatedmaterials.gif"></A><BR>       
+       <A href="input/animatedmaterials.scn">animatedmaterials.scn</A>
+    </TD>
+    <TD vAlign=top align=middle>
+       <A href="output/sprites.gif"><IMG width=256 src="output/sprites.gif"></A><BR>       
+       <A href="input/sprites.scn">sprites.scn</A>
+    </TD>
+</TR> -->
+</TBODY>
+</TABLE>
+<HR><BR>
+<!------------------------------------------------------------------------> 
+<H3><A name="interactivecontrol"> Interactive control </A></H3>
+<!------------------------------------------------------------------------> 
+
+<TABLE>
+<TBODY>
+<!--   <TR>
+    <TD vAlign=top align=middle>
+       <A href="output/sourcecontrol.gif"><IMG width=256 src="output/sourcecontrol.gif"></A><BR>       
+       <A href="input/sourcecontrol.scn">sourcecontrol.scn</A>
+    </TD>
+    <TD vAlign=top align=middle>
+       <A href="output/sinkcontrol.gif"><IMG width=256 src="output/sinkcontrol.gif"></A><BR>       
+       <A href="input/sinkcontrol.scn">sinkcontrol.scn</A>
+    </TD>
+    <TD vAlign=top align=middle>
+       <A href="output/sourcesinkdragging.gif"><IMG width=256 src="output/sourcesinkdragging.gif"></A><BR>       
+       <A href="input/sourcesinkdragging.scn">sourcesinkdragging.scn</A>
+    </TD>
+    <TD vAlign=top align=middle>
+       <A href="output/ropeorclothmanipulation.gif"><IMG width=256 src="output/ropeorclothmanipulation.gif"></A><BR>       
+       <A href="input/ropeorclothmanipulation.scn">ropeorclothmanipulation.scn</A>
+    </TD>
+</TR> -->
+</TBODY>
+</TABLE>
+<HR><BR>
+
+  <!------------------------------------------------------------------------> 
+<!------------------------------------------------------------------------> 
+<H2><A name='interesting'>Interesting Scene Submission</A></H2>
+<!------------------------------------------------------------------------> 
+<!------------------------------------------------------------------------> 
+
+<TABLE cellSpacing=0 cellPadding=10 border=0 vAlign=top align=middle>
+<TBODY>
+  <TR>
+    <TD vAlign=top align=middle>
+       <A href="art/interestingscene.gif"><IMG width=512 src="art/interestingscene.gif"></A><BR>             
+       My interesting scene is a source and two sinks that launches particles rapidly in 
+       between the two sinks, causing them to flare out in random directions and quickly 
+       orbit the sinks (or shoot off in random directions quickly). I found that it created interesting and beautiful patterns, and as a result I chose to use it as my interesting scene for this week. 
+    </TD>
+  </TR>
+</TBODY>
+</TABLE>
+
+<!------------------------------------------------------------------------> 
+<!------------------------------------------------------------------------> 
+<H2><A name='sound'>Sound</A></H2>
+<!------------------------------------------------------------------------> 
+<!------------------------------------------------------------------------> 
+
+<TABLE cellSpacing=0 cellPadding=10 border=0 vAlign=top align=middle>
+<!-- <TBODY>
+  <TR>
+    <TD vAlign=top align=middle>
+       <A href="art/art.gif"><IMG width=512 src="art/art.gif"></A><BR>             
+       My art contest submission is a slightly modified version of my interesting scene that includes three sinks that form a triangle, but with the top sink slightly nearer to the source than the other two sinks. As a result, the particles flare off in a parabolic shape towards the upper sink, but  make an interesting fountain-shaped curve around the top sink, with random particles flying off in different directions. 
+    </TD>
+  </TR>
+</TBODY>
+</TABLE>
+ -->
+We used the irrKlang library for sound, allowing wav files to be played whenever events occur. The user can select music to be played in the background in the scene file. Sounds are played during jumps, and the sound of enemy's jumps attenuates with the player's distance from the enemies. Collecting coins creates a Mario sound, death sounds are played when the player dies, and success sounds are played when a level is completed. 
+<HR><BR>
+
+<!------------------------------------------------------------------------> 
+<!------------------------------------------------------------------------> 
+<H2><A name='sound'>Level Editor</A></H2>
+<!------------------------------------------------------------------------> 
+<!------------------------------------------------------------------------> 
+
+<TABLE cellSpacing=0 cellPadding=10 border=0 vAlign=top align=middle>
+<!-- <TBODY>
+  <TR>
+    <TD vAlign=top align=middle>
+       <A href="art/art.gif"><IMG width=512 src="art/art.gif"></A><BR>             
+       My art contest submission is a slightly modified version of my interesting scene that includes three sinks that form a triangle, but with the top sink slightly nearer to the source than the other two sinks. As a result, the particles flare off in a parabolic shape towards the upper sink, but  make an interesting fountain-shaped curve around the top sink, with random particles flying off in different directions. 
+    </TD>
+  </TR>
+</TBODY>
+</TABLE>
+ -->
+The level editor is a large proportion of our project. With the level editor, you can change the camera view to anywhere in the scene. You can select any block, platform, or enemy, and drag it to a different place using the mouse, as well as delete the object. You can select an enemy and make it bigger or smaller by dragging the mouse. You can also spawn enemies, stationary platforms, coins, or fire sources using a convenient object picker in the right sidebar, using only a mouse click at the location desired. 
+<HR><BR>
+
+<!------------------------------------------------------------------------> 
+<!------------------------------------------------------------------------> 
+<H2>Feedback</H2>
+<!------------------------------------------------------------------------> 
+<!------------------------------------------------------------------------> 
+
+<DL>
+  <DT>How long did you spend on this assignment?
+  <DD> Not nearly as long as the other ones. 
+  <BR>&nbsp;<BR>
+
+  <DT>Was it too hard, too easy, or just right?
+  <DD>Just right; but logically, that doesn't make any sense given that I responded "just right" for the other ones, even though the other ones were much harder. Perhaps I should have replied "too hard" for assignments 1 - 3, or there should be an extra response "Exactly as hard as it needed to be". 
+  <BR>&nbsp;<BR>
+
+  <DT>What was the best part of the assignment?
+  <DD>Getting collisions working!
+  <BR>&nbsp;<BR>
+
+  <DT>What was the worst part of the assignment?
+  <DD>Not being able to get collisions working!
+  <BR>&nbsp;<BR>
+
+  <DT>How could it be improved for next year?
+  <DD>I think its a great assignment. 
+  <BR>&nbsp;<BR>
+
+</DL>
+
+<HR><BR>
+
+
+
+<!------------------------------------------------------------------------> 
+
+</BODY>
+</HTML>
