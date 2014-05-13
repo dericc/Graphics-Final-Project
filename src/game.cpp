@@ -20,7 +20,7 @@
 using namespace irrklang;
 
 #define TIME_SCALE 2
-#define TIME_STEP .002
+#define TIME_STEP 0.002
 
 ////////////////////////////////////////////////////////////
 // GLOBAL CONSTANTS
@@ -109,6 +109,7 @@ int LoadLevel(const char *filename);
 ////////////////////////////////////////////////////////////
 
 R3Camera GetMinimapCam(R3Scene *scene);
+void DrawSidebar(R3Scene *);
 
 void CreateShape(R3ShapeType type, R3Scene *s, R3Point p)
 {
@@ -269,10 +270,61 @@ void KillEnemy(R3Enemy *e) {
 // SCENE DRAWING CODE
 ////////////////////////////////////////////////////////////
 
+enum
+{
+  COLLISION_LEFT,
+  COLLISION_TOP,
+  COLLISION_RIGHT,
+  COLLISION_BOTTOM,
+  COLLISION_NONE
+};
+
+// returns collision direction in relation to box A
+int CollideBoxes(R3Box box_a, R3Box box_b)
+{
+  // calculate to what depth the player is intersecting in each direction
+  double xmin_d = abs(box_b.XMax() - box_a.XMin());
+  double xmax_d = abs(box_b.XMin() - box_a.XMax());
+  double ymin_d = abs(box_b.YMax() - box_a.YMin());
+  double ymax_d = abs(box_b.YMin() - box_a.YMax());
+
+  bool zcoll = (box_a.ZMin() <= box_b.ZMax() && box_a.ZMin() >= box_b.ZMin())
+            || (box_a.ZMax() <= box_b.ZMax() && box_a.ZMax() >= box_b.ZMin())
+            || (box_a.ZMax() >= box_b.ZMax() && box_a.ZMin() <= box_b.ZMin());
+
+  bool ycoll = (box_a.YMin() <= box_b.YMax() && box_a.YMin() >= box_b.YMin())
+            || (box_a.YMax() <= box_b.YMax() && box_a.YMax() >= box_b.YMin())
+            || (box_a.YMax() >= box_b.YMax() && box_a.YMin() <= box_b.YMin());
+
+  bool xcoll = (box_a.XMin() <= box_b.XMax() && box_a.XMin() >= box_b.XMin())
+            || (box_a.XMax() <= box_b.XMax() && box_a.XMax() >= box_b.XMin())
+            || (box_a.XMax() >= box_b.XMax() && box_a.XMin() <= box_b.XMin());
+
+  // determine if there is an intersection for each direction (player edge is inside object)
+  bool xmin_coll = zcoll && ycoll && box_a.XMin() <= box_b.XMax() && box_a.XMin() >= box_b.XMin();
+
+  bool xmax_coll = zcoll && ycoll && box_a.XMax() <= box_b.XMax() && box_a.XMax() >= box_b.XMin();
+
+  bool ymin_coll = zcoll && xcoll && box_a.YMin() <= box_b.YMax() && box_a.YMin() >= box_b.YMin();
+
+  bool ymax_coll = zcoll && xcoll && box_a.YMax() <= box_b.YMax() && box_a.YMax() >= box_b.YMin();
+
+  // for each direction, check if it has the minimum depth of all other collisions before correcting player position and setting velocity to 0
+  if (xmin_coll && (!ymin_coll || xmin_d < ymin_d) && (!ymax_coll || xmin_d < ymax_d))
+    return COLLISION_LEFT;
+  if (xmax_coll && (!ymin_coll || xmax_d < ymin_d) && (!ymax_coll || xmax_d < ymax_d))
+    return COLLISION_RIGHT;
+  if (ymin_coll && (!xmin_coll || ymin_d < xmin_d) && (!xmax_coll || ymin_d < xmax_d))
+    return COLLISION_BOTTOM;
+  if (ymax_coll && (!xmin_coll || ymax_d < xmin_d) && (!xmax_coll || ymax_d < xmax_d))
+    return COLLISION_TOP;
+
+  return COLLISION_NONE;
+}
+
 // recursively collide player with the scene
 void CollidePlayer(R3Node *node)
 {
-
   // get transformed player box
   R3Player *p = scene->player;
   if (node == p->node)
@@ -296,41 +348,7 @@ void CollidePlayer(R3Node *node)
       scene_box.Translate(node->coin->position.Vector());
     }
 
-    // calculate to what depth the player is intersecting in each direction
-    double xmin_d = abs(scene_box.XMax() - player_box.XMin());
-    double xmax_d = abs(scene_box.XMin() - player_box.XMax());
-    double ymin_d = abs(scene_box.YMax() - player_box.YMin());
-    double ymax_d = abs(scene_box.YMin() - player_box.YMax());
-
-    bool zcoll = (player_box.ZMin() <= scene_box.ZMax() && player_box.ZMin() >= scene_box.ZMin())
-              || (player_box.ZMax() <= scene_box.ZMax() && player_box.ZMax() >= scene_box.ZMin());
-
-    // determine if there is an intersection for each direction (player edge is inside object)
-    bool xmin_coll = zcoll
-                &&   player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin()
-                && ((player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin())
-                ||  (player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin()));
-
-    bool xmax_coll = zcoll
-                &&   player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin()
-                && ((player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin())
-                ||  (player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin()));
-
-    bool ymin_coll = zcoll
-                &&   player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin()
-                && ((player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin())
-                ||  (player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin()));
-
-    bool ymax_coll = zcoll
-                &&   player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin()
-                && ((player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin())
-                ||  (player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin()));
-
-    bool inside = zcoll
-               && (player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin())
-               && (player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin())
-               && (player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin())
-               && (player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin());
+    int coll_dir = CollideBoxes(player_box, scene_box);
 
     if (node->is_obstacle)
     {
@@ -338,7 +356,7 @@ void CollidePlayer(R3Node *node)
       R3Matrix tform = p->node->transformation;
 
       // for each direction, check if it has the minimum depth of all other collisions before correcting player position and setting velocity to 0
-      if (xmin_coll && (!ymin_coll || xmin_d < ymin_d) && (!ymax_coll || xmin_d < ymax_d))
+      if (coll_dir == COLLISION_LEFT)
       {
         if (node->is_enemy) {
           KillPlayer();  
@@ -349,7 +367,7 @@ void CollidePlayer(R3Node *node)
         v.SetX(0);
         p->velocity = v;
       }
-      if (xmax_coll && (!ymin_coll || xmax_d < ymin_d) && (!ymax_coll || xmax_d < ymax_d))
+      if (coll_dir == COLLISION_RIGHT)
       {
         if (node->is_enemy) {
           KillPlayer();  
@@ -361,7 +379,7 @@ void CollidePlayer(R3Node *node)
         p->velocity = v;
       }
 
-      if (ymin_coll && (!xmin_coll || ymin_d < xmin_d) && (!xmax_coll || ymin_d < xmax_d))
+      if (coll_dir == COLLISION_BOTTOM)
       {
         if (node->is_enemy) {
           KillEnemy(node->enemy);  
@@ -381,7 +399,7 @@ void CollidePlayer(R3Node *node)
           p->platform = NULL;
         }
       }
-      if (ymax_coll && (!xmin_coll || ymax_d < xmin_d) && (!xmax_coll || ymax_d < xmax_d))
+      if (coll_dir == COLLISION_TOP)
       {
         if (node->is_enemy) {
           KillPlayer();  
@@ -397,7 +415,7 @@ void CollidePlayer(R3Node *node)
     }
     else if (node->is_coin)
     {
-      if (xmin_coll || xmax_coll || ymin_coll || ymax_coll || inside)
+      if (coll_dir != COLLISION_NONE)
       {
         PlaySound("/../sounds/coin.wav", false);
         p->n_coins++;
@@ -414,17 +432,13 @@ void CollidePlayer(R3Node *node)
 }
 
 
-// recursively collide player with the scene
+// collide enemies
 void CollideEnemy(R3Enemy *e, R3Node *node)
 {
-
-  // get transformed player box
-  R3Enemy *p = e; 
-
-  if (node == p->node)
+  if (node == e->node)
     return;
-  R3Box player_box = *(p->node->shape->box);
-  player_box.Transform(p->node->transformation);
+  R3Box enemy_box = *(e->node->shape->box);
+  enemy_box.Transform(e->node->transformation);
 
   // if the scene node is a box
   if (node->is_obstacle || node->is_coin)
@@ -442,83 +456,57 @@ void CollideEnemy(R3Enemy *e, R3Node *node)
       scene_box.Translate(node->coin->position.Vector());
     }
 
-    // calculate to what depth the player is intersecting in each direction
-    double xmin_d = abs(scene_box.XMax() - player_box.XMin());
-    double xmax_d = abs(scene_box.XMin() - player_box.XMax());
-    double ymin_d = abs(scene_box.YMax() - player_box.YMin());
-    double ymax_d = abs(scene_box.YMin() - player_box.YMax());
-
-    // determine if there is an intersection for each direction (player edge is inside object)
-    bool xmin_coll = player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin()
-    && ((player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin())
-      ||  (player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin()));
-
-    bool xmax_coll = player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin()
-    && ((player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin())
-      ||  (player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin()));
-
-    bool ymin_coll = player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin()
-    && ((player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin())
-      ||  (player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin()));
-
-    bool ymax_coll = player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin()
-    && ((player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin())
-      ||  (player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin()));
-
-    bool inside = (player_box.YMin() <= scene_box.YMax() && player_box.YMin() >= scene_box.YMin())
-    && (player_box.YMax() <= scene_box.YMax() && player_box.YMax() >= scene_box.YMin())
-    && (player_box.XMin() <= scene_box.XMax() && player_box.XMin() >= scene_box.XMin())
-    && (player_box.XMax() <= scene_box.XMax() && player_box.XMax() >= scene_box.XMin());
+    int coll_dir = CollideBoxes(enemy_box, scene_box);
 
     if (node->is_obstacle)
     {
-      // get player transformation
-      R3Matrix tform = p->node->transformation;
+      // get enemy transformation
+      R3Matrix tform = e->node->transformation;
 
-      // for each direction, check if it has the minimum depth of all other collisions before correcting player position and setting velocity to 0
-      if (xmin_coll && (!ymin_coll || xmin_d < ymin_d) && (!ymax_coll || xmin_d < ymax_d))
+      // for each direction, check if it has the minimum depth of all other collisions before correcting enemy position and setting velocity to 0
+      if (coll_dir == COLLISION_LEFT)
       {
-        tform.Translate(R3Vector(scene_box.XMax() - player_box.XMin(), 0, 0));
-        R3Vector v = p->velocity;
+        tform.Translate(R3Vector(scene_box.XMax() - enemy_box.XMin(), 0, 0));
+        R3Vector v = e->velocity;
         v.SetX(0);
-        p->velocity = v;
+        e->velocity = v;
       }
 
-      if (xmax_coll && (!ymin_coll || xmax_d < ymin_d) && (!ymax_coll || xmax_d < ymax_d))
+      if (coll_dir == COLLISION_RIGHT)
       {
-        tform.Translate(R3Vector(scene_box.XMin() - player_box.XMax(), 0, 0));
-        R3Vector v = p->velocity;
+        tform.Translate(R3Vector(scene_box.XMin() - enemy_box.XMax(), 0, 0));
+        R3Vector v = e->velocity;
         v.SetX(0);
-        p->velocity = v;
+        e->velocity = v;
       }
 
-      if (ymin_coll && (!xmin_coll || ymin_d < xmin_d) && (!xmax_coll || ymin_d < xmax_d))
+      if (coll_dir == COLLISION_BOTTOM)
       {
-        tform.Translate(R3Vector(0, scene_box.YMax() - player_box.YMin(), 0));
-        R3Vector v = p->velocity;
+        tform.Translate(R3Vector(0, scene_box.YMax() - enemy_box.YMin(), 0));
+        R3Vector v = e->velocity;
         v.SetY(0);
-        p->velocity = v;
-        p->inAir = false;
+        e->velocity = v;
+        e->inAir = false;
         if (node->is_platform) {
-          p->onPlatform = true;
-          p->platform = node->platform;
+          e->onPlatform = true;
+          e->platform = node->platform;
         }
       }
-      if (ymax_coll && (!xmin_coll || ymax_d < xmin_d) && (!xmax_coll || ymax_d < xmax_d))
+      if (coll_dir == COLLISION_TOP)
       {
-        tform.Translate(R3Vector(0, scene_box.YMin() - player_box.YMax(), 0));
-        R3Vector v = p->velocity;
+        tform.Translate(R3Vector(0, scene_box.YMin() - enemy_box.YMax(), 0));
+        R3Vector v = e->velocity;
         v.SetY(0);
-        p->velocity = v;
+        e->velocity = v;
       }
-      // update player tform
-      p->node->transformation = tform;
+      // update enemy tform
+      e->node->transformation = tform;
     }
   }
 
   for (unsigned int i = 0; i < node->children.size(); i++)
   {
-    CollideEnemy(p, node->children[i]);
+    CollideEnemy(e, node->children[i]);
   }
 }
 
@@ -632,7 +620,7 @@ void UpdatePlayer(R3Scene *scene, double delta_time) {
     double MAX_ROTATION = PI/8;
     double new_angle = -1*MAX_ROTATION * (forwardVelocity.Length() / p->max_speed);
     if (forwardVelocity.Dot(p->Towards()) < 0) { new_angle *= -1; }
-    angle = angle * 0.9 + new_angle * 0.1;
+    angle = angle * 0.995 + new_angle * 0.005;
     R3Line center_line(p->Center(), p->Up());
     scene->camera.Rotate(center_line, angle);
     camera = scene->camera;
@@ -807,82 +795,6 @@ void UpdateEnemies(R3Scene *scene, double delta_time) {
 }
 
 
-
-void DrawSidebar(R3Scene *scene) {
-  R3Sidebar& sidebar(*scene->sidebar);
-  // draw the background
-  float xmin = GLUTwindow_width - scene->sidebar->width;
-  glBegin(GL_QUADS);
-  glColor3f(0, 0, 0);
-  glVertex2f(xmin, 0);
-  glColor3f(.3, .3, .3);
-  glVertex2f(GLUTwindow_width, 0);
-  glColor3f(0, 0, 0);
-  glVertex2f(GLUTwindow_width, GLUTwindow_height);
-  glColor3f(.2, .2, .2);
-  glVertex2f(xmin, GLUTwindow_height);
-  glEnd();
-  
-  int numButtons = scene->sidebar->buttons.size();
-  double button_width = sidebar.width - 2*sidebar.border;
-  for (int i = 0; i < numButtons; ++i) {
-    R3Button& cur(*scene->sidebar->buttons[i]);
-    float xmin = GLUTwindow_width - sidebar.width + sidebar.border;
-    float ymin = (i) * (button_width + sidebar.border) + sidebar.border;
-    float ymax = ymin + button_width;
-    float xmax = xmin + button_width;
-    glBegin(GL_QUADS);
-    if (i == scene->sidebar->selected_button) {
-      glColor3f(1, 0, 0);
-    }
-    else {
-      glColor3f(0, 0, 1);
-    }
-    glVertex3f(xmin, ymin, .01);
-    glVertex3f(xmax, ymin, .01);
-    glVertex3f(xmax, ymax, .01);
-    glVertex3f(xmin, ymax, .01);
-    glEnd();
-    
-   button_width = sidebar.width - 3*sidebar.border;
-   xmin = GLUTwindow_width - sidebar.width + sidebar.border*1.5;
-   ymin = (i) * (button_width + sidebar.border) + sidebar.border*1.5;
-   ymax = ymin + button_width;
-   xmax = xmin + button_width;
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-   
-   // Store the current matrix
-   glPushMatrix();
-   // Reset and transform the matrix.
-//    glLoadIdentity();
-//    gluLookAt(
-//              0,0,0,
-//              scene->camera.towards.X(),scene->camera.towards.Y(),scene->camera.towards.Z(),
-//              0,1,0);
-//    
-   // Enable/Disable features
-   glPushAttrib(GL_ENABLE_BIT);
-   glEnable(GL_TEXTURE_2D);
-   glDisable(GL_DEPTH_TEST);
-   glDisable(GL_LIGHTING);
-   glDisable(GL_BLEND);
-   // Just in case we set all vertices to white.
-   glColor4f(1,1,1,1);
-   // Render the front quad
-   glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
-   glBegin(GL_QUADS);
-   glTexCoord2f(0, 0);  glVertex3f(xmin, ymin, .04);
-   glTexCoord2f(1, 0); glVertex3f(xmax, ymin, .04);
-   glTexCoord2f(1, 1); glVertex3f(xmax, ymax, .04);
-   glTexCoord2f(0, 1); glVertex3f(xmin, ymax, .04);
-   glEnd();
-   glPopAttrib();
-   glPopMatrix();
-  }
-  
-}
-
 void ClickSidebar(int x, int y) {
   // did we click a button?
   int sidebarLeftX = GLUTwindow_width - scene->sidebar->width;
@@ -892,7 +804,7 @@ void ClickSidebar(int x, int y) {
     return;
   }
   // how many buttons down are we?
-  int button = floor((GLUTwindow_height - y) / (scene->sidebar->button_width + scene->sidebar->border));
+  unsigned int button = floor((GLUTwindow_height - y) / (scene->sidebar->button_width + scene->sidebar->border));
   if (button >= scene->sidebar->buttons.size()) {
     return;
   }
@@ -2323,18 +2235,97 @@ ParseArgs(int argc, char **argv)
   return 1;
 }
 
-const int NButtons = 3;
+
+
+
+void DrawSidebar(R3Scene *scene) {
+  R3Sidebar& sidebar(*scene->sidebar);
+  // draw the background
+  float xmin = GLUTwindow_width - scene->sidebar->width;
+  glBegin(GL_QUADS);
+  glColor3f(0, 0, 0);
+  glVertex2f(xmin, 0);
+  glColor3f(.3, .3, .3);
+  glVertex2f(GLUTwindow_width, 0);
+  glColor3f(0, 0, 0);
+  glVertex2f(GLUTwindow_width, GLUTwindow_height);
+  glColor3f(.2, .2, .2);
+  glVertex2f(xmin, GLUTwindow_height);
+  glEnd();
+  
+  int numButtons = scene->sidebar->buttons.size();
+  double button_width = sidebar.width - 2*sidebar.border;
+  for (int i = 0; i < numButtons; ++i) {
+    R3Button& cur(*scene->sidebar->buttons[i]);
+    {
+      float xmin = GLUTwindow_width - sidebar.width + sidebar.border;
+      float ymin = (i) * (button_width + sidebar.border) + sidebar.border;
+      float ymax = ymin + button_width;
+      float xmax = xmin + button_width;
+      glBegin(GL_QUADS);
+      if (i == scene->sidebar->selected_button) {
+        glColor3f(1, 0, 0);
+      }
+      else {
+        glColor3f(0, 0, 1);
+      }
+      glVertex3f(xmin, ymin, .01);
+      glVertex3f(xmax, ymin, .01);
+      glVertex3f(xmax, ymax, .01);
+      glVertex3f(xmin, ymax, .01);
+      glEnd();
+    }
+    {
+      float button_width = sidebar.width - 4*sidebar.border;
+      float xmin = GLUTwindow_width - sidebar.width + sidebar.border*2;
+      float ymin = (i) * (button_width + sidebar.border*3) + sidebar.border*2;
+      float ymax = ymin + button_width;
+      float xmax = xmin + button_width;
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+      
+      // Store the current matrix
+      glPushMatrix();
+      // Reset and transform the matrix.
+      
+      // Enable/Disable features
+      glPushAttrib(GL_ENABLE_BIT);
+      glEnable(GL_TEXTURE_2D);
+      glDisable(GL_DEPTH_TEST);
+      glDisable(GL_LIGHTING);
+      glDisable(GL_BLEND);
+      // Just in case we set all vertices to white.
+      glColor4f(1,1,1,1);
+      // Render the front quad
+      R3Material *playermat = scene->player->node->material;
+      glBindTexture(GL_TEXTURE_2D, cur.material->texture_index);
+      glBegin(GL_QUADS);
+      glTexCoord2f(1, 1); glVertex3f(xmin, ymin, .04);
+      glTexCoord2f(1, 0); glVertex3f(xmax, ymin, .04);
+      glTexCoord2f(0, 0); glVertex3f(xmax, ymax, .04);
+      glTexCoord2f(0, 1); glVertex3f(xmin, ymax, .04);
+      glEnd();
+      glPopAttrib();
+      glPopMatrix();
+    }
+  }
+  
+}
+
+const int NButtons = 4;
 
 int *ButtonVariables[] = {
   &blocks_mode,
   &camera_mode,
   &grab_mode,
+  &blocks_mode,
 };
 
 const char *ButtonIconFiles[] = {
   "camera.jpg",
-  "asfd",
-  "grab.png",
+  "camera.jpg",
+  "camera.jpg",
+  "camera.jpg"
 };
 
 void SetupLevelEditor(R3Scene *scene) {
@@ -2342,7 +2333,7 @@ void SetupLevelEditor(R3Scene *scene) {
     // Create material
     R3Material *material = new R3Material();
     *material = *scene->materials[0];
-    material->texture_index = scene->materials.size();
+    material->texture_index = -1;
 
     
     // Get texture filename
@@ -2352,12 +2343,21 @@ void SetupLevelEditor(R3Scene *scene) {
     strcat(buffer, ButtonIconFiles[i]);
     strcpy(material->texture_name, buffer);
     
+    material->ka = R3Rgb(1, 1, 1, 0);
+    material->kd = R3Rgb(1, 1, 1, 0);
+    material->ks = R3Rgb(0, 0, 0, 0);
+    material->kt = R3Rgb(0, 0, 0, 0);
+    material->emission = R3Rgb(0, 0, 0, 0);
+    material->shininess = 1;
+    material->indexofrefraction = 1;
+    
     // Read texture image
     material->texture = new R2Image();
     if (!material->texture->Read(buffer)) {
       fprintf(stderr, "not a good icon file: %s\n", buffer);
     }
     
+    LoadMaterial(material);
     // Insert material
     scene->materials.push_back(material);
     R3Button *button = new R3Button(ButtonVariables[i], material);
