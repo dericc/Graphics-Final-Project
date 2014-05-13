@@ -129,6 +129,7 @@ struct R3Particle {
   double lifetime;
   R3Material *material;
   vector<struct R3ParticleSpring *> springs;
+  vector<R3Point> trail;
 };
 
 struct R3ParticleSource {
@@ -157,6 +158,10 @@ struct R3ParticleSpring {
   double rest_length;
   double ks;
   double kd;
+};
+
+struct R3Fire {
+  R3Point position;
 };
 
 struct R3Player {
@@ -196,8 +201,9 @@ struct R3Coin {
 };
 
 struct R3Enemy {
-  R3Enemy(R3Node *node, bool moveLeft, double speed, double mass) :
-    node(node), moveLeft(moveLeft), speed(speed), mass(mass), is_dead(false), del(false), onPlatform(false) {};
+  R3Enemy(R3Node *node, bool moveLeft, double speed, double mass, bool is_jumping, bool is_following) :
+    node(node), moveLeft(moveLeft), speed(speed), mass(mass), 
+    is_dead(false), del(false), is_jumping(is_jumping), is_following(is_following), onPlatform(false) {};
   
   R3Node *node; 
   bool moveLeft; // current direction of motion: left or right
@@ -213,6 +219,9 @@ struct R3Enemy {
   bool inAir;
   bool is_dead;
   bool del; 
+
+  bool is_jumping; 
+  bool is_following; 
   
   bool onPlatform;
   R3Platform *platform;
@@ -268,13 +277,16 @@ struct R3Scene {
   void WritePlatforms(FILE *fp); 
   void WriteCoins(FILE *fp); 
   void WriteNode(FILE *fp, R3Node *node); 
-  void WriteSkybox(FILE *fp); 
+  void WriteSkybox(FILE *fp);
+  void WriteSoundtrack(FILE *fp);
+  void WriteNextLevel(FILE *fp);
   int Write(const char *filename, R3Node *node); 
 
  public:
   int death_y;
   R3Node *root;
   vector<R3Particle *> particles;
+  vector<R3Particle *> fire_particles;
   vector<R3ParticleSource *> particle_sources;
   vector<R3ParticleSink *> particle_sinks;
   vector<R3ParticleSpring *> particle_springs;
@@ -282,6 +294,7 @@ struct R3Scene {
   vector<R3Platform *> platforms;
   vector<R3Light *> lights;
   vector<R3Enemy *> enemies;
+  vector<R3Fire *> fires;
   vector<R3Material *> materials;
   R3Vector gravity;
   R3Camera camera;
@@ -292,9 +305,11 @@ struct R3Scene {
   R3Goal *goal;
   R3Sidebar *sidebar;
   R3Plane movement_plane;
-  char skyboxTexture[256];
   R3Shape *coin_shape;
   R3Material *coin_material;
+  char skyboxTexture[256]; 
+  char soundtrack[256];
+  char next_level[256];
 };
 
 typedef void (*button_fxn)(void);

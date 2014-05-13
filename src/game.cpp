@@ -102,6 +102,7 @@ static bool key_state[256] = {false};
 
 // sound engine
 static ISoundEngine *sound_engine;
+static ISound *soundtrack;
 
 // executable path
 static char exec_path[FILENAME_MAX + 1];
@@ -412,6 +413,7 @@ void CollidePlayer(R3Node *node)
 
       if (coll_dir == COLLISION_BOTTOM)
       {
+        //If collision with enemy from above, kill the enemy
         if (node->is_enemy) {
           KillEnemy(node->enemy);  
         }
@@ -419,7 +421,15 @@ void CollidePlayer(R3Node *node)
         tform.Translate(R3Vector(0, scene_box.YMax() - player_box.YMin(), 0));
         R3Vector v = p->velocity;
         v.SetY(0);
-        p->velocity = v;
+        
+        //Jump up if node is enemy; else, just regular collision
+        if (node ->is_enemy) {
+          p->velocity = v + 10 * p->Up();
+        }
+        else {
+          p->velocity = v;
+        }
+
         p->inAir = false;
         if (node->is_platform && !node->is_enemy) {
           p->onPlatform = true;
@@ -463,7 +473,7 @@ void CollidePlayer(R3Node *node)
 }
 
 
-// collide enemies
+// Collide enemies with different objects. 
 void CollideEnemy(R3Enemy *e, R3Node *node)
 {
   if (node == e->node)
@@ -541,6 +551,7 @@ void CollideEnemy(R3Enemy *e, R3Node *node)
   }
 }
 
+//Update the player's location based on key presses
 void UpdatePlayer(R3Scene *scene, double delta_time) {
   R3Player *p = scene->player;
 
@@ -756,7 +767,8 @@ void UpdateEnemies(R3Scene *scene, double delta_time) {
     // get the forces to move the box
     R3Vector f = R3null_vector;
     f += -9.8 * p->Up() * p->mass;
-    if (!p->inAir) {
+
+    if (!p->inAir && p->is_jumping) {
       p->velocity += 10 * p->Up();
       if (scene->player && R3Distance(scene->player->Center(), p->Center()) < 20.0f)
       {
@@ -789,8 +801,12 @@ void UpdateEnemies(R3Scene *scene, double delta_time) {
     player_box.Transform(scene->player->node->transformation); 
 
     double direction = enemy_box.XMin() - player_box.XMin();
-    if (direction < 0) {p->moveLeft = false;}
-    else {p->moveLeft = true;}
+
+    //Only change direction if the enemy is following
+    if (p->is_following) {
+      if (direction < 0) {p->moveLeft = false;}
+      else {p->moveLeft = true;}
+    }
 
     if (!p->moveLeft) {
       f += (p->speed * forward - forwardVelocity) / TAU;
@@ -1491,6 +1507,7 @@ void DrawHUD()
   glPushMatrix();
   glLoadIdentity();
   glDisable(GL_CULL_FACE);
+  glDisable(GL_LIGHTING); 
 
   glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -1502,7 +1519,7 @@ void DrawHUD()
 
   // Draw coins as squares in top left
   float spacing = 15.0;
-  float size = 30.0;
+  float size = 50.0;
 
   //Cancels if no player
   if (scene->player == NULL) return; 
@@ -1513,11 +1530,19 @@ void DrawHUD()
     float xmax = spacing * (i + 1) + size * (i + 1);
     float ymin = spacing;
     float ymax = spacing + size;
+
+
+    // glColor4f(0.0f, 0.0f, 0.0, 0);
+    // glBindTexture(GL_TEXTURE_2D, scene->coins[0]->node->material->texture_index); 
     glBegin(GL_QUADS);
       glColor3f(1.0f, 1.0f, 0.0);
+      // glTexCoord2f(0.0, 0.0); 
       glVertex2f(xmin, ymin);
+      // glTexCoord2f(1.0, 0.0); 
       glVertex2f(xmax, ymin);
+      // glTexCoord2f(1.0, 1.0); 
       glVertex2f(xmax, ymax);
+      // glTexCoord2f(0.0, 1.0); 
       glVertex2f(xmin, ymax);
     glEnd();
   }
@@ -1559,7 +1584,9 @@ void DrawSkybox(R3Scene *scene) {
        glTexCoord2f(1, 1); glVertex3f( 0.5f,  0.5f, -0.5f );
        glTexCoord2f(0, 1); glVertex3f(  0.5f, -0.5f, -0.5f );
    glEnd();
-   // Restore enable bits and matrix
+   glBindTexture(GL_TEXTURE_2D, 0);
+   // Restore enable bits wand matrix
+
    glPopAttrib();
    glPopMatrix();
 
@@ -1798,6 +1825,14 @@ void GLUTRedraw(void)
   if (quit) {
     if (output_image_name) GLUTSaveImage(output_image_name);
     GLUTStop();
+  }
+
+  if (scene->player && scene->player->has_won)
+  {
+    if (GetTime() - scene->player->won_time > 10.0f && strlen(scene->next_level))
+    {
+      LoadLevel(scene->next_level);
+    }
   }
 
   // Swap buffers 
@@ -2356,7 +2391,7 @@ void SetupSkybox(R3Scene *scene) {
     if (!material->texture->Read(buffer)) {
       fprintf(stderr, "not a good icon file: %s\n", buffer);
     }
-    
+
     LoadMaterial(material);
     // Insert material
     skyboxMaterials.push_back(material);
@@ -2420,14 +2455,21 @@ R3Camera GetMinimapCam(R3Scene *scene) {
 
 void LoadLevel(const char *filename)
 {
+  if (soundtrack)
+  {
+    soundtrack->stop();
+    soundtrack->drop();
+  }
+
   if (scene) {
     delete scene;
   }
   // Read scene
   scene = ReadScene(filename);
-  static double previous_time = 0;
   
   if (!scene) exit(-1);
+
+  previous_time = 0.0f;
   
   SetupSkybox(scene); 
   minimap_cam = GetMinimapCam(scene);
@@ -2438,11 +2480,11 @@ void LoadLevel(const char *filename)
     camera = minimap_cam;
   }
 
-  if (soundtrack_enabled)
+  if (soundtrack_enabled && scene->soundtrack)
   {
     char path[FILENAME_MAX];
-    FilePath(path, "/../sounds/maxo.wav");
-    ISound *soundtrack = sound_engine->play2D(path, true, false, true);
+    FilePath(path, scene->soundtrack);
+    soundtrack = sound_engine->play2D(path, true, false, true);
     soundtrack->setVolume(0.35);
     soundtrack->setIsPaused(false);
   }

@@ -121,6 +121,9 @@ ambient(0,0,0,1)
   
   coin_shape = NULL;
   coin_material = NULL;
+
+  next_level[0] = '\0';
+  soundtrack[0] = '\0';
 }
 
 
@@ -382,9 +385,9 @@ WriteEnemies(FILE *fp) {
     else 
       moveLeftInt = 0; 
 
-    fprintf(fp, "enemy %d %lf %lf %lf \n %lf %lf %lf \n %d %lf %lf \n", 
+    fprintf(fp, "enemy %d %lf %lf %lf \n %lf %lf %lf \n %d %lf %d %d %lf \n", 
       materialID, cBox.XMin(), cBox.YMin(), cBox.ZMin(), cBox.XMax(), cBox.YMax(), cBox.ZMax(), 
-      moveLeftInt, cEnemy->speed, cEnemy->mass); 
+      moveLeftInt, cEnemy->speed, cEnemy->is_jumping, cEnemy->is_following, cEnemy->mass); 
 
   }
 
@@ -481,6 +484,20 @@ WriteSkybox(FILE *fp) {
 }
 
 void R3Scene::
+WriteSoundtrack(FILE *fp) {
+  if (soundtrack != NULL) {
+    fprintf(fp, "soundtrack %s \n", soundtrack);
+  }
+}
+
+void R3Scene::
+WriteNextLevel(FILE *fp) {
+  if (next_level != NULL) {
+    fprintf(fp, "next_level %s \n", next_level);
+  }
+}
+
+void R3Scene::
 WriteLights(FILE *fp) {
 
   for (unsigned int i = 0; i < lights.size(); i++) {
@@ -531,12 +548,8 @@ WriteNode(FILE *fp, R3Node *node) {
     if (node == player->node) return; 
   }
 
-  //Skip redrawing enemy nodes
-  if (node->is_enemy) 
-    return; 
-
-  //Skip redrawing goal node
-  if (node->is_goal) 
+  //Skip redrawing goal node, coin node, enemy node
+  if (node->is_goal || node->is_coin || node->is_enemy) 
     return; 
 
   //Skip redrawing the platform nodes
@@ -593,6 +606,8 @@ Write(const char *filename, R3Node *node) {
   WriteEnemies(fp);
   WriteGoal(fp); 
   WriteSkybox(fp); 
+  WriteSoundtrack(fp);
+  WriteNextLevel(fp);
 
   fclose(fp); 
 
@@ -1552,9 +1567,11 @@ Read(const char *filename, R3Node *node)
       int m;
       R3Point p1, p2;
       int moveLeftInt; 
+      int isJumpingInt; 
+      int isFollowingInt; 
       double speed;
       double mass;
-      if (fscanf(fp, "%d%lf%lf%lf%lf%lf%lf%d%lf%lf", &m, &p1[0], &p1[1], &p1[2], &p2[0], &p2[1], &p2[2], &moveLeftInt, &speed, &mass) != 10) {
+      if (fscanf(fp, "%d%lf%lf%lf%lf%lf%lf%d%lf%d%d%lf", &m, &p1[0], &p1[1], &p1[2], &p2[0], &p2[1], &p2[2], &moveLeftInt, &speed, &isJumpingInt, &isFollowingInt, &mass) != 12) {
         fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
         return 0;
       }
@@ -1564,6 +1581,18 @@ Read(const char *filename, R3Node *node)
         moveLeft = true; 
       }
       else moveLeft = false; 
+
+      bool is_jumping; 
+      if (isJumpingInt == 1) {
+        is_jumping = true; 
+      }
+      else is_jumping = false; 
+
+      bool is_following; 
+      if (isFollowingInt == 1) {
+        is_following = true; 
+      }
+      else is_following = false; 
       
       // Get material
       R3Material *material = group_materials[depth];
@@ -1605,7 +1634,7 @@ Read(const char *filename, R3Node *node)
       node->parent = group_nodes[depth];
 
       // Create platform
-      R3Enemy *e = new R3Enemy(node, moveLeft, speed, mass);
+      R3Enemy *e = new R3Enemy(node, moveLeft, speed, mass, is_jumping, is_following);
       if (!moveLeft) 
         e->velocity = speed * e->Towards(); 
       else 
@@ -1748,6 +1777,37 @@ Read(const char *filename, R3Node *node)
       }
       
       death_y = y;
+    }
+    else if (!strcmp(cmd, "fire")) {
+      // Read data
+      R3Point p;
+      if (fscanf(fp, "%lf%lf%lf", &p[0], &p[1], &p[2]) != 3) {
+        fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
+        return 0;
+      }
+      
+      R3Fire *fire = new R3Fire();
+      fire->position = p;
+      fires.push_back(fire);
+    }
+    else if (!strcmp(cmd, "soundtrack")) {
+      // Read data
+      char music_file[256];
+      if (fscanf(fp, "%s", music_file) != 1) {
+        fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
+        return 0;
+      }
+      strcpy(soundtrack, music_file);
+    }
+    else if (!strcmp(cmd, "next_level")) {
+      // Read data
+      char level_file[256];
+      if (fscanf(fp, "%s", level_file) != 1) {
+        fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
+        return 0;
+      }
+      
+      strcpy(next_level, level_file);
     }
     else {
       fprintf(stderr, "Unrecognized command %d in file %s: %s\n", command_number, filename, cmd);

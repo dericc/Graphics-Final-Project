@@ -564,40 +564,75 @@ R3Vector ComputeForce(R3Scene *scene, R3Particle *particle)
 // Rendering Particles
 ////////////////////////////////////////////////////////////
 
-void RenderParticles(R3Scene *scene)
-{
-  // Draw every particle
+// void RenderParticles(R3Scene *scene)
+// {
+//   // Draw every particle
+ 
+//     glPushMatrix();
+//   // REPLACE CODE HERE
+//   glDisable(GL_LIGHTING);
+//   glPointSize(5);
 
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP); 
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
-  // REPLACE CODE HERE
-  glDisable(GL_LIGHTING);
-  glPointSize(5);
+//    glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
+//   for (int i = 0; i < scene->NParticles(); i++) {
+//     R3Particle *particle = scene->Particle(i);
+//     // glColor3d(particle->material->kd[0], particle->material->kd[1], particle->material->kd[2]);
+//     glBegin(GL_QUADS);
+//     glColor3d(1, 0, 0); 
+//     const R3Point& position = particle->position;
+//     glVertex2f(position[0]-.2, position[1]-.2);
+//     glVertex2f(position[0]+.2, position[1]-.2);
+//     glVertex2f(position[0]+.2, position[1]+.2);
+//     glVertex2f(position[0]-.2, position[1]+.2);
+//       glEnd();
+//   }   
 
-  glColor3d(1, 0, 0); 
-  glBegin(GL_QUADS);
+
+//    glPopAttrib();
+//    glPopMatrix();
+
+// }
+void RenderParticles(R3Scene *scene) {
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP); 
+  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+   // Store the current matrix
+   glPushMatrix();
+
+   // Reset and transform the matrix.
+   glLoadIdentity();
+   gluLookAt(
+       0,0,0,
+       scene->camera.towards.X(),scene->camera.towards.Y(),scene->camera.towards.Z() - 5,
+       0,1,0);
+
+   // Enable/Disable features
+   glPushAttrib(GL_ENABLE_BIT);
+   glEnable(GL_TEXTURE_2D);
+   glDisable(GL_DEPTH_TEST);
+   glDisable(GL_LIGHTING);
+   glDisable(GL_BLEND);
+
+   glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
   for (int i = 0; i < scene->NParticles(); i++) {
-      glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
-
     R3Particle *particle = scene->Particle(i);
-
-    // glColor3f(particle->material->kd[0], particle->material->kd[1], particle->material->kd[2]);
     const R3Point& position = particle->position;
+   glColor4f(1,1,1,1);
+   // Render the front quad
 
+   glBegin(GL_QUADS);
     glVertex2f(position[0]-.2, position[1]-.2);
     glVertex2f(position[0]+.2, position[1]-.2);
     glVertex2f(position[0]+.2, position[1]+.2);
     glVertex2f(position[0]-.2, position[1]+.2);
+   glEnd();
+   glBindTexture(GL_TEXTURE_2D, 0);
+   // Restore enable bits wand matrix
 
-    // glColor3d(particle->material->kd[0], particle->material->kd[1], particle->material->kd[2]);
-    // const R3Point& position = particle->position;
-    // glVertex3d(position[0], position[1], position[2]);
-    // glEnd();
   }   
-
-  glEnd(); 
-
+   glPopAttrib();
+   glPopMatrix();
 }
 
 
