@@ -101,6 +101,8 @@ static ISoundEngine *sound_engine;
 // executable path
 static char exec_path[FILENAME_MAX + 1];
 
+int LoadLevel(const char *filename);
+
 
 ////////////////////////////////////////////////////////////
 // LEVEL EDITOR STUFF
@@ -2100,6 +2102,12 @@ void GLUTKeyboard(unsigned char key, int x, int y)
     scene->Write("DoesNothingRightNow", scene->root); 
     break;
 
+  case 'R':
+  case 'r':
+    if (scene->player && scene->player->is_dead)
+      LoadLevel(input_scene_name);
+    break;
+
   // case 'P':
   // case 'p':
   //   show_particles = !show_particles;
@@ -2373,19 +2381,13 @@ R3Camera GetMinimapCam(R3Scene *scene) {
 // MAIN
 ////////////////////////////////////////////////////////////
 
-int 
-main(int argc, char **argv)
+int LoadLevel(const char *filename)
 {
-  // Parse program arguments
-  if (!ParseArgs(argc, argv)) exit(1);
-
-  GetExecPath();
-
-  // Initialize GLUT
-  GLUTInit(&argc, argv);
+  if (scene)
+    delete scene;
 
   // Read scene
-  scene = ReadScene(input_scene_name);
+  scene = ReadScene(filename);
   
   if (!scene) exit(-1);
   
@@ -2397,12 +2399,6 @@ main(int argc, char **argv)
     camera = minimap_cam;
   }
 
-  
-  // Initialize sound shit
-  sound_engine = createIrrKlangDevice();
-  if (!sound_engine)
-    return 0; // if there was an error creating the sound engine
-
   if (soundtrack_enabled)
   {
     char path[FILENAME_MAX];
@@ -2411,8 +2407,28 @@ main(int argc, char **argv)
     soundtrack->setVolume(0.35);
     soundtrack->setIsPaused(false);
   }
+}
 
-  // Run GLUT interface
+int 
+main(int argc, char **argv)
+{
+  // Parse program arguments
+  if (!ParseArgs(argc, argv)) exit(1);
+
+  GetExecPath();
+
+  // Initialize GLUT
+  GLUTInit(&argc, argv);
+
+  // Initialize sound shit
+  sound_engine = createIrrKlangDevice();
+  if (!sound_engine)
+    return 0; // if there was an error creating the sound engine
+
+  // Read scene
+  LoadLevel(input_scene_name);
+
+  // glut loop
   GLUTMainLoop();
 
   // Return success 
