@@ -180,6 +180,6 @@ death_y -10
 
 soundtrack /../sounds/maxo.wav
 
-next_level ../levels/output.scn
+next_level ../levels/death.scn
 
 particle_gravity 0 -9.8 0

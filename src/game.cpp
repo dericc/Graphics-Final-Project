@@ -165,6 +165,7 @@ void CreateShape(R3ShapeType type, R3Scene *s, R3Point p)
     node->material = s->coin_material;
     node->shape = s->coin_shape;
     node->bbox = s->coin_shape->cylinder->BBox();
+    node->bbox.Transform(tform);
     node->is_coin = true;
     node->coin = coin;
     
@@ -1344,8 +1345,6 @@ void DrawCamera(R3Scene *scene)
   if (lighting) glEnable(GL_LIGHTING);
 }
 
-
-
 void DrawScene(R3Scene *scene) 
 {
   // Draw nodes recursively
@@ -1428,8 +1427,6 @@ void DrawParticleSources(R3Scene *scene)
   // Clean up
   if (!lighting) glDisable(GL_LIGHTING);
 }
-
-
 
 void DrawParticleSinks(R3Scene *scene)
 {
@@ -1712,10 +1709,11 @@ void GLUTRedraw(void)
     // Update Player
     if (level_editor != 1 && !scene->player->is_dead) {
       UpdatePlayer(scene, delta_time);
+      UpdateEnemies(scene, delta_time);
     }
 
     UpdatePlatforms(scene, delta_time);
-    UpdateEnemies(scene, delta_time);
+
 
     // Update Coins
     UpdateCoins(scene, delta_time);
@@ -1890,15 +1888,27 @@ void GLUTMotion(int x, int y)
           glutPostRedisplay();
         }
       }
-    else if (move_mode && GLUTbutton[0]) {
-      R3Point scene_center = scene->bbox.Centroid();
-      double length = R3Distance(scene_center, camera.eye) * tan(camera.yfov);
-      double vx = length * (double) dx / (double) GLUTwindow_width;
-      double vy = length * (double) dy / (double) GLUTwindow_height;
-      R3Vector translation = ((camera.right * vx) + (camera.up * vy));
-      // snap the shit to a grid
-      grabbed->shape->box->Translate(translation);
-      grabbed->bbox = *grabbed->shape->box;
+    else if (move_mode) {
+      if (GLUTbutton[0] && (GLUTmodifiers & GLUT_ACTIVE_SHIFT)){
+        R3Point scene_center = scene->bbox.Centroid();
+        double length = R3Distance(scene_center, camera.eye) * tan(camera.yfov);
+        double vx = length * (double) dx / (double) GLUTwindow_width;
+        double vy = length * (double) dy / (double) GLUTwindow_height;
+        R3Box newBox(grabbed->shape->box->Min(), grabbed->shape->box->Max() + vx * R3posx_vector);
+        *grabbed->shape->box = newBox;
+        grabbed->bbox = newBox;
+        scene->bbox.Union(newBox);
+      }
+      else if (GLUTbutton[0]) {
+        R3Point scene_center = scene->bbox.Centroid();
+        double length = R3Distance(scene_center, camera.eye) * tan(camera.yfov);
+        double vx = length * (double) dx / (double) GLUTwindow_width;
+        double vy = length * (double) dy / (double) GLUTwindow_height;
+        R3Vector translation = ((camera.right * vx) + (camera.up * vy));
+        // snap the shit to a grid
+        grabbed->shape->box->Translate(translation);
+        grabbed->bbox = *grabbed->shape->box;
+      }
     }
   }
   
@@ -2037,6 +2047,7 @@ void GLUTKeyboard(unsigned char key, int x, int y)
   case 'c':
   case 'C':
       camera = minimap_cam;
+      break;
   case 'M':
   case 'm':
       minimap = (minimap == 1) ? 0 : 1;
@@ -2053,6 +2064,16 @@ void GLUTKeyboard(unsigned char key, int x, int y)
         paused = 1;
       }
     break;
+      
+  case 'D':
+  case 'd':
+      if (move_mode) {
+        grabbed->del = 1;
+        grabbed = NULL;
+        scene->sidebar->selected_button = -1;
+        move_mode = 0;
+      }
+      break;
 
   // case 'P':
   // case 'p':
@@ -2445,7 +2466,12 @@ R3Camera GetMinimapCam(R3Scene *scene) {
   ret.up = R3posy_vector;
   ret.right = R3posx_vector;
   ret.eye = scene->root->bbox.Centroid();
-  ret.eye.Translate(-1*ret.towards*(scene->root->bbox.XLength()/2)/tan(ret.xfov));
+  if (scene->root->bbox.XLength() > scene->root->bbox.YLength()) {
+    ret.eye.Translate(-1.05*ret.towards*(scene->root->bbox.XLength()/2)/tan(ret.xfov));
+  }
+  else {
+    ret.eye.Translate(-1.05*ret.towards*(scene->root->bbox.YLength()/2)/tan(ret.yfov));
+  }
   return ret;
 }
 

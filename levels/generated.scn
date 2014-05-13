@@ -1,0 +1,180 @@
+material 
+ 1 1 1 
+ 1 1 1 
+ 0 0 0 
+0 0 0 
+ 0 0 0 
+ 1 1 stonewall.jpg 
+
+material 
+ 1 1 1 
+ 1 1 1 
+ 0 0 0 
+ 0 0 0 
+ 0 0 0 
+ 1 1 stonewallRotate.jpg 
+
+material 1.000000 1.000000 1.000000 .90000 .700000 0.200000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 1.000000 1.000000 coin.jpg 
+
+material 
+ 1 1 1 
+ 1 1 1 
+ 0 0 0 
+ 0 0 0 
+ 0 0 0 
+ 1 1 CCube.jpg 
+
+coin_material 2
+
+player  
+ 3 
+ 0 0 0 
+ 1 1 1 
+ 5 
+ 1 
+
+goal 1 
+ 28 0 0 
+ 29 1 1
+
+box 
+ 1 
+ -5 -1 -2 
+ 30 0 2 
+
+skybox black.jpg
+
+soundtrack /../sounds/secret_level.wav
+
+coin
+2 1 0 
+
+coin
+2 3 0 
+
+coin
+2 5 0 
+
+coin
+2 7 0 
+
+coin
+4 1 0 
+
+coin
+4 3 0 
+
+coin
+4 5 0 
+
+coin
+4 7 0 
+
+coin
+6 1 0 
+
+coin
+6 3 0 
+
+coin
+6 5 0 
+
+coin
+6 7 0 
+
+coin
+8 1 0 
+
+coin
+8 3 0 
+
+coin
+8 5 0 
+
+coin
+8 7 0 
+
+coin
+10 1 0 
+
+coin
+10 3 0 
+
+coin
+10 5 0 
+
+coin
+10 7 0 
+
+coin
+12 1 0 
+
+coin
+12 3 0 
+
+coin
+12 5 0 
+
+coin
+12 7 0 
+
+coin
+14 1 0 
+
+coin
+14 3 0 
+
+coin
+14 5 0 
+
+coin
+14 7 0 
+
+coin
+16 1 0 
+
+coin
+16 3 0 
+
+coin
+16 5 0 
+
+coin
+16 7 0 
+
+coin
+18 1 0 
+
+coin
+18 3 0 
+
+coin
+18 5 0 
+
+coin
+18 7 0 
+
+coin
+20 1 0 
+
+coin
+20 3 0 
+
+coin
+20 5 0 
+
+coin
+20 7 0 
+
+coin
+22 1 0 
+
+coin
+22 3 0 
+
+coin
+22 5 0 
+
+coin
+22 7 0 
+
