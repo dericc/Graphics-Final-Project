@@ -114,7 +114,7 @@ ambient(0,0,0,1)
   root->bbox = R3null_box;
   
   player = NULL;
-  death_y = -1000;
+  death_y = -300;
 
   // Create sidebar
   sidebar = new R3Sidebar(180, 10);
@@ -1504,7 +1504,7 @@ Read(const char *filename, R3Node *node)
       double max_speed;
       double mass;
       if (fscanf(fp, "%d%lf%lf%lf%lf%lf%lf%lf%lf", &m, &p1[0], &p1[1], &p1[2], &p2[0], &p2[1], &p2[2], &max_speed, &mass) != 9) {
-        fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
+        fprintf(stderr, "Unable to read player at command %d in file %s\n", command_number, filename);
         return 0;
       }
       
@@ -1555,7 +1555,7 @@ Read(const char *filename, R3Node *node)
       int m;
       R3Point p1, p2;
       if (fscanf(fp, "%d%lf%lf%lf%lf%lf%lf", &m, &p1[0], &p1[1], &p1[2], &p2[0], &p2[1], &p2[2]) != 7) {
-        fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
+        fprintf(stderr, "Unable to read goal at command %d in file %s\n", command_number, filename);
         return 0;
       }
       
@@ -1598,7 +1598,7 @@ Read(const char *filename, R3Node *node)
       double speed;
       double mass;
       if (fscanf(fp, "%d%lf%lf%lf%lf%lf%lf%d%lf%d%d%lf%lf", &m, &p1[0], &p1[1], &p1[2], &p2[0], &p2[1], &p2[2], &moveLeftInt, &speed, &isJumpingInt, &isFollowingInt, &jumpHeight, &mass) != 13) {
-        fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
+        fprintf(stderr, "Unable to read enemy at command %d in file %s\n", command_number, filename);
         return 0;
       }
 
@@ -1680,7 +1680,7 @@ Read(const char *filename, R3Node *node)
       R3Point p1, p2, p3;
       double speed;
       if (fscanf(fp, "%d%lf%lf%lf%lf%lf%lf%lf%lf%lf%lf", &m, &p1[0], &p1[1], &p1[2], &p2[0], &p2[1], &p2[2], &p3[0], &p3[1], &p3[2], &speed) != 11) {
-        fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
+        fprintf(stderr, "Unable to read platform at command %d in file %s\n", command_number, filename);
         return 0;
       }
       
@@ -1733,7 +1733,7 @@ Read(const char *filename, R3Node *node)
     else if (!strcmp(cmd, "coin_material")) {
       int m;
       if (fscanf(fp, "%d", &m) != 1) {
-        fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
+        fprintf(stderr, "Unable to read coin_material at command %d in file %s\n", command_number, filename);
         return 0;
       }
       // Get material
@@ -1803,7 +1803,7 @@ Read(const char *filename, R3Node *node)
       // Read data
       double y;
       if (fscanf(fp, "%lf", &y) != 1) {
-        fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
+        fprintf(stderr, "Unable to read death_y at command %d in file %s\n", command_number, filename);
         return 0;
       }
       
@@ -1813,7 +1813,7 @@ Read(const char *filename, R3Node *node)
       // Read data
       R3Point p;
       if (fscanf(fp, "%lf%lf%lf", &p[0], &p[1], &p[2]) != 3) {
-        fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
+        fprintf(stderr, "Unable to read fire at command %d in file %s\n", command_number, filename);
         return 0;
       }
       
@@ -1825,7 +1825,7 @@ Read(const char *filename, R3Node *node)
       // Read data
       char music_file[256];
       if (fscanf(fp, "%s", music_file) != 1) {
-        fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
+        fprintf(stderr, "Unable to read soundtrack at command %d in file %s\n", command_number, filename);
         return 0;
       }
       strcpy(soundtrack, music_file);
@@ -1834,7 +1834,7 @@ Read(const char *filename, R3Node *node)
       // Read data
       char level_file[256];
       if (fscanf(fp, "%s", level_file) != 1) {
-        fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
+        fprintf(stderr, "Unable to read next_level at command %d in file %s\n", command_number, filename);
         return 0;
       }
       

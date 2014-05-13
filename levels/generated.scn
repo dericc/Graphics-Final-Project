@@ -46,6 +46,8 @@ skybox black.jpg
 
 soundtrack /../sounds/secret_level.wav
 
+next_level ../levels/hard.scn
+
 coin
 2 1 0 
 
