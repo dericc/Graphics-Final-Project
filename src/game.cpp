@@ -37,8 +37,8 @@ static const double VIDEO_FRAME_DELAY = 1./25.; // 25 FPS
 static char *input_scene_name = NULL;
 static char *output_image_name = NULL;
 static const char *video_prefix = "./video-frames/";
-static const char *images_path = "../images/";
-static const char *skybox_path = "../skybox/";
+static const char *images_path = "./images/";
+static const char *skybox_path = "./levels/";
 static int integration_type = EULER_INTEGRATION;
 
 // Display variables
