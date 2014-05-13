@@ -1,0 +1,30 @@
+Bugs
+
+Major
+Box collisions with the tall box: Riley
+General box collision troubles
+Missing platforms and floors
+Level Editor doesn’t shoot out rays correctly
+Minor
+
+
+Changes
+Reskin the background: support for textures
+Enemy reskinning
+
+
+
+Features
+Pictures on the icons for level editor
+Level stringing together
+
+
+Points
+Collision Detection
+Texture Mapping
+Multiple Views
+On-Screen Control Panel
+Simulated Dynamics
+Sound
+Game Level Editor
+??????

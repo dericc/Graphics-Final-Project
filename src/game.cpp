@@ -20,7 +20,7 @@
 using namespace irrklang;
 
 #define TIME_SCALE 2
-#define TIME_STEP .05
+#define TIME_STEP .01
 
 ////////////////////////////////////////////////////////////
 // GLOBAL CONSTANTS
