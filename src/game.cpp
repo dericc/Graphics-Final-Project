@@ -37,7 +37,8 @@ static const double VIDEO_FRAME_DELAY = 1./25.; // 25 FPS
 static char *input_scene_name = NULL;
 static char *output_image_name = NULL;
 static const char *video_prefix = "./video-frames/";
-static const char *images_path = "./images/";
+static const char *images_path = "../images/";
+static const char *skybox_path = "../skybox/";
 static int integration_type = EULER_INTEGRATION;
 
 // Display variables
@@ -74,6 +75,8 @@ static int GLUTwindow_width = 512;
 static int GLUTmouse[2] = { 0, 0 };
 static int GLUTbutton[3] = { 0, 0, 0 };
 static int GLUTmodifiers = 0;
+
+vector<R3Material *> skyboxMaterials; 
 
 // GLUT command list
 
@@ -1515,7 +1518,7 @@ void DrawSkybox(R3Scene *scene) {
    glLoadIdentity();
    gluLookAt(
        0,0,0,
-       scene->camera.towards.X(),scene->camera.towards.Y(),scene->camera.towards.Z(),
+       scene->camera.towards.X(),scene->camera.towards.Y(),scene->camera.towards.Z() - 5,
        0,1,0);
 
    // Enable/Disable features
@@ -1527,15 +1530,15 @@ void DrawSkybox(R3Scene *scene) {
 
    glColor4f(1,1,1,1);
    // Render the front quad
-   glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
+   glBindTexture(GL_TEXTURE_2D, skyboxMaterials[0]->texture_index);
    glBegin(GL_QUADS);
-       glTexCoord2f(0, 0); glVertex3f(  0.5f, -0.5f, -0.5f );
-       glTexCoord2f(1, 0); glVertex3f( -0.5f, -0.5f, -0.5f );
-       glTexCoord2f(1, 1); glVertex3f( -0.5f,  0.5f, -0.5f );
-       glTexCoord2f(0, 1); glVertex3f(  0.5f,  0.5f, -0.5f );
+       glTexCoord2f(0, 0); glVertex3f( -0.5f, -0.5f, -0.5f );
+       glTexCoord2f(1, 0); glVertex3f( -0.5f, 0.5f, -0.5f );
+       glTexCoord2f(1, 1); glVertex3f( 0.5f,  0.5f, -0.5f );
+       glTexCoord2f(0, 1); glVertex3f(  0.5f, -0.5f, -0.5f );
    glEnd();
    // Render the left quad
-   glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
+   glBindTexture(GL_TEXTURE_2D, skyboxMaterials[1]->texture_index);
    glBegin(GL_QUADS);
        glTexCoord2f(0, 0); glVertex3f(  0.5f, -0.5f,  0.5f );
        glTexCoord2f(1, 0); glVertex3f(  0.5f, -0.5f, -0.5f );
@@ -1543,7 +1546,7 @@ void DrawSkybox(R3Scene *scene) {
        glTexCoord2f(0, 1); glVertex3f(  0.5f,  0.5f,  0.5f );
    glEnd();
    // Render the back quad
-   glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
+   glBindTexture(GL_TEXTURE_2D, skyboxMaterials[2]->texture_index);
    glBegin(GL_QUADS);
        glTexCoord2f(0, 0); glVertex3f( -0.5f, -0.5f,  0.5f );
        glTexCoord2f(1, 0); glVertex3f(  0.5f, -0.5f,  0.5f );
@@ -1551,7 +1554,7 @@ void DrawSkybox(R3Scene *scene) {
        glTexCoord2f(0, 1); glVertex3f( -0.5f,  0.5f,  0.5f );
    glEnd();
    // Render the right quad
-   glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
+   glBindTexture(GL_TEXTURE_2D, skyboxMaterials[3]->texture_index);
    glBegin(GL_QUADS);
        glTexCoord2f(0, 0); glVertex3f( -0.5f, -0.5f, -0.5f );
        glTexCoord2f(1, 0); glVertex3f( -0.5f, -0.5f,  0.5f );
@@ -2328,6 +2331,52 @@ const char *ButtonIconFiles[] = {
   "grab.png",
 };
 
+const char *SkybarFiles[] = {
+  "clouds_front.jpg",
+  "clouds_front.jpg",
+  "clouds_front.jpg",
+  "clouds_front.jpg",
+  "clouds_front.jpg",
+  "clouds_front.jpg",
+};
+
+
+void SetupSkybox(R3Scene *scene) {
+  for (int i = 0; i < 5; ++i) {
+    // Create material
+    R3Material *material = new R3Material();
+    *material = *scene->materials[0];
+    material->texture_index = -1;
+
+    // Get texture filename
+    char buffer[2048];
+    memset(buffer, 0, 2048);
+    strcpy(buffer, skybox_path);
+    strcat(buffer, SkybarFiles[i]);
+    strcpy(material->texture_name, buffer);
+    
+    material->ka = R3Rgb(1, 1, 1, 0);
+    material->kd = R3Rgb(1, 1, 1, 0);
+    material->ks = R3Rgb(0, 0, 0, 0);
+    material->kt = R3Rgb(0, 0, 0, 0);
+    material->emission = R3Rgb(0, 0, 0, 0);
+    material->shininess = 1;
+    material->indexofrefraction = 1;
+    
+    // Read texture image
+    material->texture = new R2Image();
+    if (!material->texture->Read(buffer)) {
+      fprintf(stderr, "not a good icon file: %s\n", buffer);
+    }
+    
+    LoadMaterial(material);
+    // Insert material
+    skyboxMaterials.push_back(material);
+  }
+  
+
+}
+
 void SetupLevelEditor(R3Scene *scene) {
   for (int i = 0; i < NButtons; ++i) {
     // Create material
@@ -2335,7 +2384,7 @@ void SetupLevelEditor(R3Scene *scene) {
     *material = *scene->materials[0];
     material->texture_index = -1;
 
-    
+
     // Get texture filename
     char buffer[2048];
     memset(buffer, 0, 2048);
@@ -2397,6 +2446,7 @@ main(int argc, char **argv)
   
   if (!scene) exit(-1);
   
+  SetupSkybox(scene); 
   minimap_cam = GetMinimapCam(scene);
 
   if (level_editor) {

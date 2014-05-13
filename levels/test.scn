@@ -30,7 +30,15 @@ material
   0 0 0
   0 0 0
   0 0 0
-  1 1 nazi.jpg
+  1 1 creeper.jpg
+
+material
+1 1 1
+1 1 1
+0 0 0
+0 0 0
+0 0 0
+1 1 tallcreeper.jpg
 
 goal
     1
@@ -114,21 +122,21 @@ player
 
 
 enemy 
-    3
+    4
     8 6 0
     9 7 1
     1 1
     1
 
 enemy 
-    3
+    4
     8 6 0
     8.5 10 1
     1 1
     1
 
 enemy 
-    3
+    4
     -4 6 0
     -3 7 1
     0 1
