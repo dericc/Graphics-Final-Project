@@ -261,6 +261,7 @@ struct R3Scene {
 
   void WritePlayer(FILE *fp); 
   void WriteEnemies(FILE *fp); 
+  void WriteGoal(FILE *fp); 
   void WriteMaterials(FILE *fp); 
   void WriteLights(FILE *fp); 
   void WritePlatforms(FILE *fp); 
