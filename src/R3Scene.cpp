@@ -1800,6 +1800,8 @@ Read(const char *filename, R3Node *node)
     lights.push_back(light);
   }
   
+  materials = materials;
+  
   // Close file
   fclose(fp);
   
