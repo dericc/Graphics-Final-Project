@@ -209,7 +209,7 @@ struct R3Enemy {
   R3Vector Towards();
   R3Vector Up();
 
-  bool inAir; 
+  bool inAir;
   bool is_dead;
   bool del; 
   
@@ -261,6 +261,7 @@ struct R3Scene {
 
   void WritePlayer(FILE *fp); 
   void WriteEnemies(FILE *fp); 
+  void WriteGoal(FILE *fp); 
   void WriteMaterials(FILE *fp); 
   void WriteLights(FILE *fp); 
   void WritePlatforms(FILE *fp); 
@@ -300,7 +301,7 @@ struct R3Button {
   
   int * value;
   button_fxn f;
-  const R3Material *material;
+  R3Material *material;
 };
 
 struct R3Sidebar {
