@@ -451,6 +451,16 @@ WritePlatforms(FILE *fp) {
 void R3Scene::
 WriteCoins(FILE *fp) {
 
+  if (coin_material != NULL) {
+    R3Material *cMaterial = coin_material; 
+    int materialID = -1; 
+    for (unsigned int j = 0; j < materials.size(); j++) {
+      if (cMaterial == materials[j]) 
+        materialID = j; 
+    }
+    fprintf(fp, "coin_material %d \n", materialID); 
+  }
+
   for (unsigned int i = 0; i < coins.size(); i++) {
 
     R3Coin *cCoin = coins[i]; 
@@ -465,8 +475,7 @@ WriteCoins(FILE *fp) {
 
     R3Point cPos = cCoin->position; 
 
-    fprintf(fp, "coin %d %lf %lf %lf \n", 
-      materialID, cPos.X(), cPos.Y(), cPos.Z()); 
+    fprintf(fp, "coin %lf %lf %lf \n", cPos.X(), cPos.Y(), cPos.Z()); 
   }
 
   fprintf(fp, "\n"); 
