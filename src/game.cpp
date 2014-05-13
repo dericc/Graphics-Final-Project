@@ -19,6 +19,7 @@
 using namespace irrklang;
 
 #define TIME_SCALE 2
+#define TIME_STEP .005
 
 ////////////////////////////////////////////////////////////
 // GLOBAL CONSTANTS
@@ -512,25 +513,17 @@ void CollideEnemy(R3Enemy *e, R3Node *node)
   }
 }
 
-void UpdatePlayer(R3Scene *scene) {
+void UpdatePlayer(R3Scene *scene, double delta_time) {
   R3Player *p = scene->player;
 
-  if (p == NULL) return; 
-
-  // Get current time (in seconds) since start of execution
-  double current_time = GetTime();
-  static double previous_time = 0;
+  if (p == NULL) return;
 
   // program just started up?
-  if (previous_time == 0) {
-    previous_time = current_time;
+  if (delta_time == 0) {
     p->velocity = R3null_vector;
     p->onPlatform = false;
     p->inAir = true;
   }
-  
-  // time passed since starting
-  double delta_time = current_time - previous_time;
 
   bool up_key = key_state['w'] || key_state['W'];
   bool down_key = key_state['s'] || key_state['S'];
@@ -620,7 +613,6 @@ void UpdatePlayer(R3Scene *scene) {
     scene->camera.Rotate(center_line, angle);
     camera = scene->camera;
   }
-  previous_time = current_time;
 }
 
 void UpdateCoin(R3Coin *coin, double delta_time)
@@ -634,19 +626,9 @@ void UpdateCoin(R3Coin *coin, double delta_time)
   coin->node->transformation = tform;
 }
 
-void UpdateCoins(R3Scene *scene)
+void UpdateCoins(R3Scene *scene, double delta_time)
 {
-  double current_time = GetTime();
-  static double previous_time = 0;
-  // program just started up?
-  if (previous_time == 0) {
-    previous_time = current_time;
-  }
-  
   // time passed since starting
-  double delta_time = current_time - previous_time;
-  previous_time = current_time;
-
   for (int i = 0; i < scene->NCoins(); i++)
   {
     R3Coin *coin = scene->Coin(i);
@@ -704,33 +686,18 @@ void DeleteEnemies() {
   }
 }
 
-void UpdatePlatforms(R3Scene *scene) {
-  double current_time = GetTime();
-  static double previous_time = 0;
-  
-  // time passed since starting
-  double delta_time = current_time - previous_time;
-  
+void UpdatePlatforms(R3Scene *scene, double delta_time) {
   int numPlatforms = scene->platforms.size();
   for (int i = 0; i < numPlatforms; ++i) {
     R3Platform *cur = scene->platforms[i];
-    if (previous_time == 0) {
-      previous_time = current_time;
+    if (delta_time == 0) {
       cur->velocity = R3null_vector;
     }
     UpdatePlatform(cur, delta_time);
   }
-  
-  previous_time = current_time;
 }
 
-void UpdateEnemies(R3Scene *scene) {
-
-  double current_time = GetTime();
-  static double previous_time = 0;
-  
-  // time passed since starting
-  double delta_time = current_time - previous_time;
+void UpdateEnemies(R3Scene *scene, double delta_time) {
   
   int numEnemies = scene->enemies.size();
 
@@ -738,7 +705,7 @@ void UpdateEnemies(R3Scene *scene) {
     R3Enemy *p = scene->enemies[i];
 
     if (p == NULL) return; 
-    if (previous_time == 0) {
+    if (delta_time == 0) {
       p->inAir = true;
       p->onPlatform = false;
     }
@@ -811,8 +778,6 @@ void UpdateEnemies(R3Scene *scene) {
       p->node->transformation.Translate(p->platform->velocity * delta_time);
     }
   }
-
-  previous_time = current_time;
 }
 
 
@@ -1592,22 +1557,39 @@ void GLUTRedraw(void)
   glClearColor(background[0], background[1], background[2], background[3]);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   
-  // Update Player
-  if (level_editor != 1) {
-    UpdatePlayer(scene);
+  double current_time = GetTime();
+  static double previous_time = 0;
+
+  while (previous_time < current_time) {
+    double delta_time;
+    if (previous_time == 0) {
+      delta_time = 0;
+      previous_time = current_time;
+    }
+    else {
+      delta_time = TIME_STEP;
+      previous_time += TIME_STEP;
+    }
+    
+    // Update Player
+    if (level_editor != 1) {
+      UpdatePlayer(scene, delta_time);
+    }
+
+    UpdatePlatforms(scene, delta_time);
+    UpdateEnemies(scene, delta_time);
+
+    // Update Coins
+    UpdateCoins(scene, delta_time);
+    
+    // delete objects
+    DeleteNodes(scene->root);
+    DeleteCoins();
+    DeleteEnemies();
+    
   }
 
-  UpdatePlatforms(scene);
-  UpdateEnemies(scene); 
 
-  // Update Coins
-  UpdateCoins(scene);
-
-  // delete objects
-  DeleteNodes(scene->root);
-  DeleteCoins();
-  DeleteEnemies(); 
-  
   // Load camera
   LoadCamera(&camera);
 
