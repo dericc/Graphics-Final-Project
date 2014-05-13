@@ -270,6 +270,7 @@ struct R3Scene {
   int Read(const char *filename, R3Node *root = NULL);
 
   void WritePlayer(FILE *fp); 
+  void WriteFire(FILE *fp); 
   void WriteEnemies(FILE *fp); 
   void WriteGoal(FILE *fp); 
   void WriteMaterials(FILE *fp); 

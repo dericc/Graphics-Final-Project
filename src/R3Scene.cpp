@@ -394,6 +394,21 @@ WriteEnemies(FILE *fp) {
   fprintf(fp, "\n"); 
 }
 
+void R3Scene:: 
+WriteFire(FILE *fp) {
+
+  for (unsigned int i = 0; i < fires.size(); i++) {
+    R3Fire *cFire = fires[i]; 
+
+    R3Point cPos = cFire->position; 
+
+    fprintf(fp, "fire %lf %lf %lf \n", 
+      cPos.X(), cPos.Y(), cPos.Z()); 
+  }
+
+  fprintf(fp, "\n"); 
+}
+
 
 void R3Scene:: 
 WriteMaterials(FILE *fp) {
