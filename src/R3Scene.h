@@ -128,6 +128,7 @@ struct R3Particle {
   double lifetime;
   R3Material *material;
   vector<struct R3ParticleSpring *> springs;
+  vector<R3Point> trail;
 };
 
 struct R3ParticleSource {
@@ -156,6 +157,10 @@ struct R3ParticleSpring {
   double rest_length;
   double ks;
   double kd;
+};
+
+struct R3Fire {
+  R3Point position;
 };
 
 struct R3Player {
@@ -273,6 +278,7 @@ struct R3Scene {
   int death_y;
   R3Node *root;
   vector<R3Particle *> particles;
+  vector<R3Particle *> fire_particles;
   vector<R3ParticleSource *> particle_sources;
   vector<R3ParticleSink *> particle_sinks;
   vector<R3ParticleSpring *> particle_springs;
@@ -280,6 +286,7 @@ struct R3Scene {
   vector<R3Platform *> platforms;
   vector<R3Light *> lights;
   vector<R3Enemy *> enemies;
+  vector<R3Fire *> fires;
   vector<R3Material *> materials;
   R3Vector gravity;
   R3Camera camera;

@@ -1694,7 +1694,7 @@ void GLUTRedraw(void)
   // Draw particle springs
   DrawParticleSprings(scene);
 
-  DrawSkybox(scene); 
+  // DrawSkybox(scene); 
   
 
   // Draw scene surfaces
@@ -2388,7 +2388,7 @@ int LoadLevel(const char *filename)
   
   if (!scene) exit(-1);
   
-  SetupSkybox(scene); 
+  // SetupSkybox(scene); 
   minimap_cam = GetMinimapCam(scene);
 
   if (level_editor) {

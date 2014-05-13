@@ -1730,6 +1730,18 @@ Read(const char *filename, R3Node *node)
       
       death_y = y;
     }
+    else if (!strcmp(cmd, "fire")) {
+      // Read data
+      R3Point p;
+      if (fscanf(fp, "%lf%lf%lf", &p[0], &p[1], &p[2]) != 3) {
+        fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
+        return 0;
+      }
+      
+      R3Fire *fire = new R3Fire();
+      fire->position = p;
+      fires.push_back(fire);
+    }
     else {
       fprintf(stderr, "Unrecognized command %d in file %s: %s\n", command_number, filename, cmd);
       return 0;
