@@ -65,10 +65,8 @@ box
   170 31 2
 
 coin
-  165 32 0
+  49 0 0
 
-coin
-  166 32 0
 
 player 
     3
@@ -156,23 +154,41 @@ enemy
     0 3 1 1
     1
 
+fire
+  -5 0 0 
 
 fire
   0 0 0 
 
 fire
-  5 5 0 
+  5 0 0 
 
 fire
-  10 10 0 
+  10 0 0 
 
 fire
-  15 15 0 
+  15 0 0 
 
 fire
-  20 20 0 
+  20 0 0 
 
+fire
+  25 0 0 
 
+fire
+  30 0 0 
+
+fire
+  35 0 0 
+
+fire
+  40 0 0 
+
+fire
+  45 0 0 
+
+fire
+  50 0 0 
 
 skybox clouds_front.jpg
 
