@@ -1508,9 +1508,6 @@ void GLUTRedraw(void)
   R3Rgb background = scene->background;
   glClearColor(background[0], background[1], background[2], background[3]);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  UpdatePlatforms(scene);
-  UpdateEnemies(scene); 
   
   // Update Player
   if (level_editor != 1) {
@@ -1518,6 +1515,9 @@ void GLUTRedraw(void)
   } else {
     UpdateSidebar(scene);
   }
+
+  UpdatePlatforms(scene);
+  UpdateEnemies(scene); 
 
   // Update Coins
   UpdateCoins(scene);
