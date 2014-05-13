@@ -534,7 +534,7 @@ void UpdatePlayer(R3Scene *scene, double delta_time) {
   // check if they've won
   R3Goal *goal = scene->goal;
   double goal_dist = R3Distance(p->Center(), goal->Center());
-  if (!p->has_won && goal_dist < 0.2f && scene->NCoins() <= 0) {
+  if (!p->has_won && goal_dist < 0.15f && scene->NCoins() <= 0) {
     PlaySound("/../sounds/victory.wav", false);
     p->won_time = GetTime();
     p->has_won = true;
@@ -731,17 +731,19 @@ void UpdateEnemies(R3Scene *scene, double delta_time) {
     f += -9.8 * p->Up() * p->mass;
     if (!p->inAir) {
       p->velocity += 10 * p->Up();
-      char path[FILENAME_MAX + 1];
-      FilePath(path, "/../sounds/jump.wav");
-      ISound *soundtrack = sound_engine->play2D(path, false, false, true);
-      double dist = 1.0f;
-      if (scene->player)
+      if (scene->player && R3Distance(scene->player->Center(), p->Center()) < 20.0f)
       {
-        double r = R3Distance(scene->player->Center(), p->Center()) / 10;
-        dist = (1.0f / (1.0f + r * r));
+        char path[FILENAME_MAX + 1];
+        FilePath(path, "/../sounds/jump.wav");
+        ISound *jump_sound = sound_engine->play2D(path, false, false, true);
+        double dist = 1.0f;
+        if (scene->player) {
+          double r = R3Distance(scene->player->Center(), p->Center()) / 10;
+          dist = (1.0f / (1.0f + r * r));
+        }
+        jump_sound->setVolume(dist);
+        jump_sound->setIsPaused(false);
       }
-      soundtrack->setVolume(dist);
-      soundtrack->setIsPaused(false);
       if (p->onPlatform) {
         p->velocity += p->platform->velocity;
       }
