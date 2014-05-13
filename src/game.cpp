@@ -217,7 +217,7 @@ void CreateEnemy(R3Scene *s, R3Point p) {
   s->root->children.push_back(node);
   node->parent = s->root;
 
-  R3Enemy *e = new R3Enemy(node, true, 1, 1, true, true);
+  R3Enemy *e = new R3Enemy(node, true, 1, true, true, 10, 1);
   if (e->moveLeft)
     e->velocity = e->speed * e->Towards();
   else
@@ -815,7 +815,7 @@ void UpdateEnemies(R3Scene *scene, double delta_time) {
     f += -9.8 * p->Up() * p->mass;
 
     if (!p->inAir && p->is_jumping) {
-      p->velocity += 10 * p->Up();
+      p->velocity += p->jumpHeight * p->Up();
       if (scene->player && R3Distance(scene->player->Center(), p->Center()) < 20.0f)
       {
         char path[FILENAME_MAX + 1];

@@ -201,16 +201,15 @@ struct R3Coin {
 };
 
 struct R3Enemy {
-  R3Enemy(R3Node *node, bool moveLeft, double speed, double mass, bool is_jumping, bool is_following) :
-    node(node), moveLeft(moveLeft), speed(speed), mass(mass), 
-    is_dead(false), del(false), is_jumping(is_jumping), is_following(is_following), onPlatform(false) {};
+  R3Enemy(R3Node *node, bool moveLeft, double speed, bool is_jumping, bool is_following, double jumpHeight, double mass) :
+    node(node), moveLeft(moveLeft), speed(speed), 
+    is_dead(false), del(false), is_jumping(is_jumping), is_following(is_following), jumpHeight(jumpHeight), mass(mass), onPlatform(false) {};
   
   R3Node *node; 
   bool moveLeft; // current direction of motion: left or right
   double speed; 
   R3Vector velocity; // current direction of motion
-  const double mass;
-
+  
   R3Point Center();
   R3Vector Right();
   R3Vector Towards();
@@ -222,6 +221,10 @@ struct R3Enemy {
 
   bool is_jumping; 
   bool is_following; 
+
+  double jumpHeight; 
+
+  const double mass;
   
   bool onPlatform;
   R3Platform *platform;
@@ -270,7 +273,7 @@ struct R3Scene {
   int Read(const char *filename, R3Node *root = NULL);
 
   void WritePlayer(FILE *fp); 
-  void WriteFire(FILE *fp); 
+  void WriteFires(FILE *fp); 
   void WriteEnemies(FILE *fp); 
   void WriteGoal(FILE *fp); 
   void WriteMaterials(FILE *fp); 

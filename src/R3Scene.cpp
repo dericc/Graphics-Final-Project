@@ -385,9 +385,9 @@ WriteEnemies(FILE *fp) {
     else 
       moveLeftInt = 0; 
 
-    fprintf(fp, "enemy %d %lf %lf %lf \n %lf %lf %lf \n %d %lf %d %d %lf \n", 
+    fprintf(fp, "enemy %d %lf %lf %lf \n %lf %lf %lf \n %d %lf %d %d %lf %lf \n", 
       materialID, cBox.XMin(), cBox.YMin(), cBox.ZMin(), cBox.XMax(), cBox.YMax(), cBox.ZMax(), 
-      moveLeftInt, cEnemy->speed, cEnemy->is_jumping, cEnemy->is_following, cEnemy->mass); 
+      moveLeftInt, cEnemy->speed, cEnemy->is_jumping, cEnemy->is_following, cEnemy->jumpHeight, cEnemy->mass); 
 
   }
 
@@ -395,7 +395,7 @@ WriteEnemies(FILE *fp) {
 }
 
 void R3Scene:: 
-WriteFire(FILE *fp) {
+WriteFires(FILE *fp) {
 
   for (unsigned int i = 0; i < fires.size(); i++) {
     R3Fire *cFire = fires[i]; 
@@ -630,6 +630,7 @@ Write(const char *filename, R3Node *node) {
   WriteEnemies(fp);
   WriteGoal(fp); 
   WriteSkybox(fp); 
+  WriteFires(fp); 
   WriteSoundtrack(fp);
   WriteNextLevel(fp);
 
@@ -1593,9 +1594,10 @@ Read(const char *filename, R3Node *node)
       int moveLeftInt; 
       int isJumpingInt; 
       int isFollowingInt; 
+      double jumpHeight; 
       double speed;
       double mass;
-      if (fscanf(fp, "%d%lf%lf%lf%lf%lf%lf%d%lf%d%d%lf", &m, &p1[0], &p1[1], &p1[2], &p2[0], &p2[1], &p2[2], &moveLeftInt, &speed, &isJumpingInt, &isFollowingInt, &mass) != 12) {
+      if (fscanf(fp, "%d%lf%lf%lf%lf%lf%lf%d%lf%d%d%lf%lf", &m, &p1[0], &p1[1], &p1[2], &p2[0], &p2[1], &p2[2], &moveLeftInt, &speed, &isJumpingInt, &isFollowingInt, &jumpHeight, &mass) != 13) {
         fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
         return 0;
       }
@@ -1657,7 +1659,9 @@ Read(const char *filename, R3Node *node)
       group_nodes[depth]->children.push_back(node);
       node->parent = group_nodes[depth];
 
-      R3Enemy *e = new R3Enemy(node, moveLeft, speed, mass, is_jumping, is_following);
+
+      R3Enemy *e = new R3Enemy(node, moveLeft, speed, is_jumping, is_following, jumpHeight, mass);
+      
       if (!moveLeft) 
         e->velocity = speed * e->Towards(); 
       else 
