@@ -531,12 +531,8 @@ WriteNode(FILE *fp, R3Node *node) {
     if (node == player->node) return; 
   }
 
-  //Skip redrawing enemy nodes
-  if (node->is_enemy) 
-    return; 
-
-  //Skip redrawing goal node
-  if (node->is_goal) 
+  //Skip redrawing goal node, coin node, enemy node
+  if (node->is_goal || node->is_coin || node->is_enemy) 
     return; 
 
   //Skip redrawing the platform nodes

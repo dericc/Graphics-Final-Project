@@ -385,6 +385,7 @@ void CollidePlayer(R3Node *node)
 
       if (coll_dir == COLLISION_BOTTOM)
       {
+        //If collision with enemy from above, kill the enemy
         if (node->is_enemy) {
           KillEnemy(node->enemy);  
         }
@@ -393,13 +394,14 @@ void CollidePlayer(R3Node *node)
         R3Vector v = p->velocity;
         v.SetY(0);
         
-        //Jump up if node is enemy
+        //Jump up if node is enemy; else, just regular collision
         if (node ->is_enemy) {
           p->velocity = v + 10 * p->Up();
         }
         else {
           p->velocity = v;
         }
+
         p->inAir = false;
         if (node->is_platform && !node->is_enemy) {
           p->onPlatform = true;
@@ -443,7 +445,7 @@ void CollidePlayer(R3Node *node)
 }
 
 
-// collide enemies
+// Collide enemies with different objects. 
 void CollideEnemy(R3Enemy *e, R3Node *node)
 {
   if (node == e->node)
@@ -521,6 +523,7 @@ void CollideEnemy(R3Enemy *e, R3Node *node)
   }
 }
 
+//Update the player's location based on key presses
 void UpdatePlayer(R3Scene *scene, double delta_time) {
   R3Player *p = scene->player;
 
@@ -1484,7 +1487,7 @@ void DrawHUD()
 
   // Draw coins as squares in top left
   float spacing = 15.0;
-  float size = 30.0;
+  float size = 50.0;
 
   //Cancels if no player
   if (scene->player == NULL) return; 
@@ -1495,11 +1498,19 @@ void DrawHUD()
     float xmax = spacing * (i + 1) + size * (i + 1);
     float ymin = spacing;
     float ymax = spacing + size;
+
+    glDisable(GL_DEPTH_TEST); 
+    glColor4f(0.0f, 0.0f, 0.0, 0f);
+    glBindTexture(GL_TEXTURE_2D, scene->coins[0]->node->material->texture_index); 
     glBegin(GL_QUADS);
-      glColor3f(1.0f, 1.0f, 0.0);
+      // glColor3f(1.0f, 1.0f, 0.0);
+      glTexCoord2f(0.0, 0.0); 
       glVertex2f(xmin, ymin);
+      glTexCoord2f(1.0, 0.0); 
       glVertex2f(xmax, ymin);
+      glTexCoord2f(1.0, 1.0); 
       glVertex2f(xmax, ymax);
+      glTexCoord2f(0.0, 1.0); 
       glVertex2f(xmin, ymax);
     glEnd();
   }
@@ -1512,8 +1523,8 @@ void DrawHUD()
 }
 
 void DrawSkybox(R3Scene *scene) {
-  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP); 
-  // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP); 
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
    // Store the current matrix
    glPushMatrix();
@@ -1711,7 +1722,7 @@ void GLUTRedraw(void)
   // Draw particle springs
   DrawParticleSprings(scene);
 
-  // DrawSkybox(scene); 
+  DrawSkybox(scene); 
   
 
   // Draw scene surfaces
@@ -2423,7 +2434,7 @@ void LoadLevel(const char *filename)
   
   if (!scene) exit(-1);
   
-  // SetupSkybox(scene); 
+  SetupSkybox(scene); 
   minimap_cam = GetMinimapCam(scene);
 
   if (level_editor) {
