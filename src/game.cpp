@@ -1555,7 +1555,7 @@ void DrawSkybox(R3Scene *scene) {
    glDisable(GL_DEPTH_TEST);
    glDisable(GL_LIGHTING);
    glDisable(GL_BLEND);
-   // Just in case we set all vertices to white.
+
    glColor4f(1,1,1,1);
    // Render the front quad
    glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
