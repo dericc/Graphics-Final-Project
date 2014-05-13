@@ -333,6 +333,29 @@ WritePlayer(FILE *fp) {
 }
 
 void R3Scene:: 
+WriteGoal(FILE *fp) {
+
+  if (goal == NULL) return; 
+
+  R3Node *cNode = goal->node; 
+  R3Box cBox = *(cNode->shape->box); 
+  cBox.Transform(cNode->transformation);
+
+  R3Material *cMat = cNode->material; 
+  int materialID = -1; 
+
+  for (unsigned int j = 0; j < materials.size(); j++) {
+    if (cMat == materials[j]) 
+      materialID = j; 
+  }
+  
+  fprintf(fp, "goal %d %lf %lf %lf %lf %lf %lf \n", 
+    materialID, cBox.XMin(), cBox.YMin(), cBox.ZMin(), cBox.XMax(), cBox.YMax(), cBox.ZMax()); 
+
+  fprintf(fp, "\n"); 
+}
+
+void R3Scene:: 
 WriteEnemies(FILE *fp) {
 
   for (unsigned int i = 0; i < enemies.size(); i++) {
@@ -498,6 +521,10 @@ WriteNode(FILE *fp, R3Node *node) {
   if (node->is_enemy) 
     return; 
 
+  //Skip redrawing goal node
+  if (node->is_goal) 
+    return; 
+
   //Skip redrawing the platform nodes
   for (unsigned int j = 0; j < platforms.size(); j++) {
     
@@ -550,6 +577,7 @@ Write(const char *filename, R3Node *node) {
   WriteCoins(fp); 
   WritePlayer(fp); 
   WriteEnemies(fp);
+  WriteGoal(fp); 
 
   fclose(fp); 
 

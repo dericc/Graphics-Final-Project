@@ -537,8 +537,9 @@ void UpdatePlayer(R3Scene *scene, double delta_time) {
   bool left_key = key_state['a'] || key_state['A'];
   bool right_key = key_state['d'] || key_state['D'];
 
-  if (scene->goal != NULL) {
-    // check if they've won
+  // check if they've won
+  if (scene->goal)
+  {
     R3Goal *goal = scene->goal;
     double goal_dist = R3Distance(p->Center(), goal->Center());
     if (!p->has_won && goal_dist < 0.15f && scene->NCoins() <= 0) {
@@ -546,9 +547,6 @@ void UpdatePlayer(R3Scene *scene, double delta_time) {
       p->won_time = GetTime();
       p->has_won = true;
     }
-    
-    if (p->has_won)
-      return;
   }
 
   // Motion Shit
