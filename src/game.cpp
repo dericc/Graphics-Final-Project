@@ -2401,12 +2401,12 @@ void LoadLevel(const char *filename)
   if (scene)
     delete scene;
 
-  previous_time = 0.0f;
-
   // Read scene
   scene = ReadScene(filename);
   
   if (!scene) exit(-1);
+
+  previous_time = 0.0f;
   
   // SetupSkybox(scene); 
   minimap_cam = GetMinimapCam(scene);

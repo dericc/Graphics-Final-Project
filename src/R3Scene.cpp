@@ -481,6 +481,20 @@ WriteSkybox(FILE *fp) {
 }
 
 void R3Scene::
+WriteSoundtrack(FILE *fp) {
+  if (soundtrack != NULL) {
+    fprintf(fp, "soundtrack %s \n", soundtrack);
+  }
+}
+
+void R3Scene::
+WriteNextLevel(FILE *fp) {
+  if (next_level != NULL) {
+    fprintf(fp, "next_level %s \n", next_level);
+  }
+}
+
+void R3Scene::
 WriteLights(FILE *fp) {
 
   for (unsigned int i = 0; i < lights.size(); i++) {
@@ -593,6 +607,8 @@ Write(const char *filename, R3Node *node) {
   WriteEnemies(fp);
   WriteGoal(fp); 
   WriteSkybox(fp); 
+  WriteSoundtrack(fp);
+  WriteNextLevel(fp);
 
   fclose(fp); 
 
