@@ -2262,70 +2262,75 @@ void DrawSidebar(R3Scene *scene) {
   double button_width = sidebar.width - 2*sidebar.border;
   for (int i = 0; i < numButtons; ++i) {
     R3Button& cur(*scene->sidebar->buttons[i]);
-    float xmin = GLUTwindow_width - sidebar.width + sidebar.border;
-    float ymin = (i) * (button_width + sidebar.border) + sidebar.border;
-    float ymax = ymin + button_width;
-    float xmax = xmin + button_width;
-    glBegin(GL_QUADS);
-    if (i == scene->sidebar->selected_button) {
-      glColor3f(1, 0, 0);
+    {
+      float xmin = GLUTwindow_width - sidebar.width + sidebar.border;
+      float ymin = (i) * (button_width + sidebar.border) + sidebar.border;
+      float ymax = ymin + button_width;
+      float xmax = xmin + button_width;
+      glBegin(GL_QUADS);
+      if (i == scene->sidebar->selected_button) {
+        glColor3f(1, 0, 0);
+      }
+      else {
+        glColor3f(0, 0, 1);
+      }
+      glVertex3f(xmin, ymin, .01);
+      glVertex3f(xmax, ymin, .01);
+      glVertex3f(xmax, ymax, .01);
+      glVertex3f(xmin, ymax, .01);
+      glEnd();
     }
-    else {
-      glColor3f(0, 0, 1);
+    {
+      float button_width = sidebar.width - 4*sidebar.border;
+      float xmin = GLUTwindow_width - sidebar.width + sidebar.border*2;
+      float ymin = (i) * (button_width + sidebar.border*3) + sidebar.border*2;
+      float ymax = ymin + button_width;
+      float xmax = xmin + button_width;
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+      
+      // Store the current matrix
+      glPushMatrix();
+      // Reset and transform the matrix.
+      
+      // Enable/Disable features
+      glPushAttrib(GL_ENABLE_BIT);
+      glEnable(GL_TEXTURE_2D);
+      glDisable(GL_DEPTH_TEST);
+      glDisable(GL_LIGHTING);
+      glDisable(GL_BLEND);
+      // Just in case we set all vertices to white.
+      glColor4f(1,1,1,1);
+      // Render the front quad
+      R3Material *playermat = scene->player->node->material;
+      glBindTexture(GL_TEXTURE_2D, cur.material->texture_index);
+      glBegin(GL_QUADS);
+      glTexCoord2f(1, 1); glVertex3f(xmin, ymin, .04);
+      glTexCoord2f(1, 0); glVertex3f(xmax, ymin, .04);
+      glTexCoord2f(0, 0); glVertex3f(xmax, ymax, .04);
+      glTexCoord2f(0, 1); glVertex3f(xmin, ymax, .04);
+      glEnd();
+      glPopAttrib();
+      glPopMatrix();
     }
-    glVertex3f(xmin, ymin, .01);
-    glVertex3f(xmax, ymin, .01);
-    glVertex3f(xmax, ymax, .01);
-    glVertex3f(xmin, ymax, .01);
-    glEnd();
-    
-//    button_width = sidebar.width - 3*sidebar.border;
-//    xmin = GLUTwindow_width - sidebar.width + sidebar.border*1.5;
-//    ymin = (i) * (button_width + sidebar.border*1.5) + sidebar.border*1.5;
-//    ymax = ymin + button_width;
-//    xmax = xmin + button_width;
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    
-    // Store the current matrix
-    glPushMatrix();
-    // Reset and transform the matrix.
-    
-    // Enable/Disable features
-    glPushAttrib(GL_ENABLE_BIT);
-    glEnable(GL_TEXTURE_2D);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_BLEND);
-    // Just in case we set all vertices to white.
-    glColor4f(1,1,1,1);
-    // Render the front quad
-    R3Material *playermat = scene->player->node->material;
-    glBindTexture(GL_TEXTURE_2D, cur.material->texture_index);
-    glBegin(GL_QUADS);
-    glTexCoord2f(0, 0); glVertex3f(xmin, ymin, .04);
-    glTexCoord2f(1, 0); glVertex3f(xmax, ymin, .04);
-    glTexCoord2f(1, 1); glVertex3f(xmax, ymax, .04);
-    glTexCoord2f(0, 1); glVertex3f(xmin, ymax, .04);
-    glEnd();
-    glPopAttrib();
-    glPopMatrix();
   }
   
 }
 
-const int NButtons = 3;
+const int NButtons = 4;
 
 int *ButtonVariables[] = {
   &blocks_mode,
   &camera_mode,
   &grab_mode,
+  &blocks_mode,
 };
 
 const char *ButtonIconFiles[] = {
   "camera.jpg",
-  "asfd",
-  "grab.png",
+  "camera.jpg",
+  "camera.jpg",
+  "camera.jpg"
 };
 
 void SetupLevelEditor(R3Scene *scene) {
