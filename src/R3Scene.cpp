@@ -114,7 +114,7 @@ ambient(0,0,0,1)
   root->bbox = R3null_box;
   
   player = NULL;
-  death_y = -100;
+  death_y = -1000;
 
   // Create sidebar
   sidebar = new R3Sidebar(200, 10);

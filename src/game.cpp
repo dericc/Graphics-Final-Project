@@ -1428,8 +1428,6 @@ void DrawParticleSources(R3Scene *scene)
   if (!lighting) glDisable(GL_LIGHTING);
 }
 
-
-
 void DrawParticleSinks(R3Scene *scene)
 {
   // Check if should draw particle sinks
@@ -1534,7 +1532,7 @@ void DrawHUD()
     // glBindTexture(GL_TEXTURE_2D, scene->coins[0]->node->material->texture_index); 
     glBindTexture(GL_TEXTURE_2D, 0); 
     glBegin(GL_QUADS);
-      glColor3f(.8f, .8f, 0.0);
+      glColor3f(.7f, .7f, 0.0);
       // glTexCoord2f(0.0, 0.0); 
       glVertex2f(xmin, ymin);
       // glTexCoord2f(1.0, 0.0); 
@@ -1564,7 +1562,7 @@ void DrawSkybox(R3Scene *scene) {
    glLoadIdentity();
    gluLookAt(
        0,0,0,
-       scene->camera.towards.X(),scene->camera.towards.Y(),scene->camera.towards.Z() - 5,
+       scene->camera.towards.X(),scene->camera.towards.Y(),scene->camera.towards.Z() - 50,
        0,1,0);
 
    // Enable/Disable features
@@ -1753,7 +1751,6 @@ void GLUTRedraw(void)
   // Draw particle springs
   DrawParticleSprings(scene);
   
-
   // Draw scene surfaces
   if (show_faces) {
     glEnable(GL_LIGHTING);
@@ -1839,7 +1836,6 @@ void GLUTRedraw(void)
   // Swap buffers 
   glutSwapBuffers();
 }    
-
 
 
 void GLUTMotion(int x, int y)
@@ -1979,7 +1975,6 @@ void GLUTMouse(int button, int state, int x, int y)
   // Redraw
   glutPostRedisplay();
 }
-
 
 
 // void GLUTSpecial(int key, int x, int y)
@@ -2472,7 +2467,12 @@ R3Camera GetMinimapCam(R3Scene *scene) {
   ret.up = R3posy_vector;
   ret.right = R3posx_vector;
   ret.eye = scene->root->bbox.Centroid();
-  ret.eye.Translate(-1*ret.towards*(scene->root->bbox.XLength()/2)/tan(ret.xfov));
+  if (scene->root->bbox.XLength() > scene->root->bbox.YLength()) {
+    ret.eye.Translate(-1.05*ret.towards*(scene->root->bbox.XLength()/2)/tan(ret.xfov));
+  }
+  else {
+    ret.eye.Translate(-1.05*ret.towards*(scene->root->bbox.YLength()/2)/tan(ret.yfov));
+  }
   return ret;
 }
 
