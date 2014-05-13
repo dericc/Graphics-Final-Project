@@ -272,6 +272,7 @@ struct R3Scene {
   void WritePlatforms(FILE *fp); 
   void WriteCoins(FILE *fp); 
   void WriteNode(FILE *fp, R3Node *node); 
+  void WriteSkybox(FILE *fp); 
   int Write(const char *filename, R3Node *node); 
 
  public:
@@ -298,6 +299,8 @@ struct R3Scene {
   R3Sidebar *sidebar;
   R3Plane movement_plane;
   char skyboxTexture[256]; 
+  char soundtrack[256];
+  char next_level[256];
 };
 
 typedef void (*button_fxn)(void);

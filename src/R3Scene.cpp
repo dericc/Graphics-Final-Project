@@ -118,6 +118,9 @@ ambient(0,0,0,1)
 
   // Create sidebar
   sidebar = new R3Sidebar(200, 10);
+
+  next_level[0] = '\0';
+  soundtrack[0] = '\0';
 }
 
 
@@ -466,6 +469,17 @@ WriteCoins(FILE *fp) {
   fprintf(fp, "\n"); 
 }
 
+
+void R3Scene::
+WriteSkybox(FILE *fp) {
+
+  if (skyboxTexture != NULL) {
+    fprintf(fp, "skybox %s \n", skyboxTexture); 
+
+    fprintf(fp, "\n"); 
+  }
+}
+
 void R3Scene::
 WriteLights(FILE *fp) {
 
@@ -578,6 +592,7 @@ Write(const char *filename, R3Node *node) {
   WritePlayer(fp); 
   WriteEnemies(fp);
   WriteGoal(fp); 
+  WriteSkybox(fp); 
 
   fclose(fp); 
 
@@ -1741,6 +1756,25 @@ Read(const char *filename, R3Node *node)
       R3Fire *fire = new R3Fire();
       fire->position = p;
       fires.push_back(fire);
+    }
+    else if (!strcmp(cmd, "soundtrack")) {
+      // Read data
+      char music_file[256];
+      if (fscanf(fp, "%s", music_file) != 1) {
+        fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
+        return 0;
+      }
+      strcpy(soundtrack, music_file);
+    }
+    else if (!strcmp(cmd, "next_level")) {
+      // Read data
+      char level_file[256];
+      if (fscanf(fp, "%s", level_file) != 1) {
+        fprintf(stderr, "Unable to read box at command %d in file %s\n", command_number, filename);
+        return 0;
+      }
+      
+      strcpy(next_level, level_file);
     }
     else {
       fprintf(stderr, "Unrecognized command %d in file %s: %s\n", command_number, filename, cmd);
