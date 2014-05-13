@@ -597,24 +597,24 @@ void RenderParticles(R3Scene *scene) {
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP); 
   // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
-   // Store the current matrix
-   glPushMatrix();
+   // // Store the current matrix
+   // glPushMatrix();
 
-   // Reset and transform the matrix.
-   glLoadIdentity();
-   gluLookAt(
-       0,0,0,
-       scene->camera.towards.X(),scene->camera.towards.Y(),scene->camera.towards.Z() - 5,
-       0,1,0);
+   // // Reset and transform the matrix.
+   // glLoadIdentity();
+   // gluLookAt(
+   //     0,0,0,
+   //     scene->camera.towards.X(),scene->camera.towards.Y(),scene->camera.towards.Z() - 5,
+   //     0,1,0);
 
    // Enable/Disable features
-   glPushAttrib(GL_ENABLE_BIT);
-   glEnable(GL_TEXTURE_2D);
-   glDisable(GL_DEPTH_TEST);
-   glDisable(GL_LIGHTING);
-   glDisable(GL_BLEND);
+   // glPushAttrib(GL_ENABLE_BIT);
+   // glEnable(GL_TEXTURE_2D);
+   // glDisable(GL_DEPTH_TEST);
+   // glDisable(GL_LIGHTING);
+   // glDisable(GL_BLEND);
 
-   glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
+   //glBindTexture(GL_TEXTURE_2D, scene->player->node->material->texture_index);
   for (int i = 0; i < scene->NParticles(); i++) {
     R3Particle *particle = scene->Particle(i);
     const R3Point& position = particle->position;

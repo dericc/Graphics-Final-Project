@@ -1742,8 +1742,7 @@ void GLUTRedraw(void)
   // Draw scene lights
   DrawLights(scene);
 
-  // Draw particles
-  RenderParticles(scene);
+  DrawSkybox(scene); 
 
   // Draw particle sources 
   DrawParticleSources(scene);
@@ -1754,7 +1753,8 @@ void GLUTRedraw(void)
   // Draw particle springs
   DrawParticleSprings(scene);
 
-  DrawSkybox(scene); 
+  // Draw particles
+  RenderParticles(scene);
   
 
   // Draw scene surfaces
