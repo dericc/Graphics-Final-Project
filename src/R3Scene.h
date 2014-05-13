@@ -209,11 +209,11 @@ struct R3Enemy {
   R3Vector Towards();
   R3Vector Up();
 
-  bool inAir; 
+  bool inAir = true; 
   bool is_dead;
   bool del; 
   
-  bool onPlatform;
+  bool onPlatform = false;
   R3Platform *platform;
 };
 
