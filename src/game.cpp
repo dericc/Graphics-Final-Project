@@ -362,7 +362,7 @@ void CollidePlayer(R3Node *node)
         v.SetY(0);
         p->velocity = v;
         p->inAir = false;
-        if (node->is_platform) {
+        if (node->is_platform && !node->is_enemy) {
           p->onPlatform = true;
           p->platform = node->platform;
         }
@@ -525,6 +525,8 @@ void UpdatePlayer(R3Scene *scene) {
   if (previous_time == 0) {
     previous_time = current_time;
     p->velocity = R3null_vector;
+    p->onPlatform = false;
+    p->inAir = true;
   }
   
   // time passed since starting
@@ -733,11 +735,13 @@ void UpdateEnemies(R3Scene *scene) {
   int numEnemies = scene->enemies.size();
 
   for (int i = 0; i < numEnemies; i++) {
-
     R3Enemy *p = scene->enemies[i];
 
     if (p == NULL) return; 
-
+    if (previous_time == 0) {
+      p->inAir = true;
+      p->onPlatform = false;
+    }
     // Motion Shit
     // get the forces to move the box
     R3Vector f = R3null_vector;

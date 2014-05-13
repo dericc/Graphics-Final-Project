@@ -3,7 +3,6 @@
 #define R3Rgb R2Pixel
 #define PI 3.1415926535
 
-
 // Constant definitions
 
 typedef enum {
@@ -84,7 +83,7 @@ struct R3Enemy;
 
 struct R3Node {
   R3Node(void)
-  : is_obstacle(false), is_coin(false), is_enemy(false), is_goal(false) {};
+  : is_obstacle(false), is_coin(false), is_enemy(false), is_goal(false), is_platform(false), is_visible(true) {};
   struct R3Node *parent;
   vector<struct R3Node *> children;
   R3Shape *shape;
