@@ -118,6 +118,9 @@ ambient(0,0,0,1)
 
   // Create sidebar
   sidebar = new R3Sidebar(200, 10);
+
+  next_level[0] = '\0';
+  soundtrack[0] = '\0';
 }
 
 

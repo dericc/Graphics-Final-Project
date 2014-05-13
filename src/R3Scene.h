@@ -235,7 +235,7 @@ struct R3Sidebar;
 struct R3Scene {
  public:
   // Constructor functions
-  R3Scene(void) {next_level[0] = '\0'; soundtrack[0] = '\0';};
+  R3Scene(void);
 
   // Access functions
   R3Node *Root(void) const;
