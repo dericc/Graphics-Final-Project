@@ -2559,9 +2559,10 @@ void LoadLevel(const char *filename)
     soundtrack->drop();
   }
 
-  if (scene) {
-    delete scene;
-  }
+//  if (scene) {
+//    delete scene;
+//  }
+  
   // Read scene
   scene = ReadScene(filename);
   
