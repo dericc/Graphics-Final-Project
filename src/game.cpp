@@ -2562,7 +2562,6 @@ void LoadLevel(const char *filename)
 //  if (scene) {
 //    delete scene;
 //  }
-  
   // Read scene
   scene = ReadScene(filename);
   
