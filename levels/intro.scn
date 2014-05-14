@@ -1,0 +1,121 @@
+material
+  1 1 1
+  1 1 1
+  0 0 0
+  0 0 0
+  0 0 0
+  1 1 stonewall.jpg
+
+material
+  1 1 1
+  1 1 1
+  0 0 0
+  0 0 0
+  0 0 0
+  1 1 stonewallRotate.jpg
+
+material 1.000000 1.000000 1.000000 .90000 .700000 0.200000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 1.000000 1.000000 coin.jpg
+
+material
+  1 1 1
+  1 1 1
+  0 0 0
+  0 0 0
+  0 0 0
+  1 1 CCube.jpg
+
+material
+  1 1 1
+  1 1 1
+  0 0 0
+  0 0 0
+  0 0 0
+  1 1 creeper.jpg
+
+material
+  1 0 0
+  1 0 0
+  0 0 0
+  0 0 0
+  0 0 0
+  1 1 0
+
+coin_material
+  2
+
+goal
+    1
+    50 0 0
+    51 1 1
+
+box
+    1
+    -10 -1 -2
+    120 0 2
+
+#box
+#    4
+#    -10 -1 -2
+#    10 2 -3
+
+
+box 
+  1
+  160 30 -2
+  170 31 2
+
+coin
+  49 0 0
+
+
+player 
+    3
+    0 0 0
+    1 1 1
+    5
+    1
+
+
+fire
+  -5 0 0 
+
+fire
+  0 0 0 
+
+fire
+  5 0 0 
+
+fire
+  10 0 0 
+
+fire
+  15 0 0 
+
+fire
+  20 0 0 
+
+fire
+  25 0 0 
+
+fire
+  30 0 0 
+
+fire
+  35 0 0 
+
+fire
+  40 0 0 
+
+fire
+  45 0 0 
+
+fire
+  50 0 0 
+
+skybox dark_trees.jpg
+
+death_y -10
+
+next_level ../levels/test.scn
+
+particle_gravity 0 -9.8 0
