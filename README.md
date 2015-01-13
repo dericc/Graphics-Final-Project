@@ -366,17 +366,7 @@ We have several examples of simulated dynamics. The player moves left and right 
 <!------------------------------------------------------------------------> 
 <!------------------------------------------------------------------------> 
 
-<TABLE cellSpacing=0 cellPadding=10 border=0 vAlign=top align=middle>
-<!-- <TBODY>
-  <TR>
-    <TD vAlign=top align=middle>
-       <A href="art/art.gif"><IMG width=512 src="art/art.gif"></A><BR>             
-       My art contest submission is a slightly modified version of my interesting scene that includes three sinks that form a triangle, but with the top sink slightly nearer to the source than the other two sinks. As a result, the particles flare off in a parabolic shape towards the upper sink, but  make an interesting fountain-shaped curve around the top sink, with random particles flying off in different directions. 
-    </TD>
-  </TR>
-</TBODY>
-</TABLE>
- -->
+
 We used the irrKlang library for sound, allowing wav files to be played whenever events occur. The user can select music to be played in the background in the scene file. Sounds are played during jumps, and the sound of enemy's jumps attenuates with the player's distance from the enemies. Collecting coins creates a Mario sound, death sounds are played when the player dies, and success sounds are played when a level is completed. 
 <HR><BR>
 
@@ -386,17 +376,6 @@ We used the irrKlang library for sound, allowing wav files to be played whenever
 <!------------------------------------------------------------------------> 
 <!------------------------------------------------------------------------> 
 
-<TABLE cellSpacing=0 cellPadding=10 border=0 vAlign=top align=middle>
-<!-- <TBODY>
-  <TR>
-    <TD vAlign=top align=middle>
-       <A href="art/art.gif"><IMG width=512 src="art/art.gif"></A><BR>             
-       My art contest submission is a slightly modified version of my interesting scene that includes three sinks that form a triangle, but with the top sink slightly nearer to the source than the other two sinks. As a result, the particles flare off in a parabolic shape towards the upper sink, but  make an interesting fountain-shaped curve around the top sink, with random particles flying off in different directions. 
-    </TD>
-  </TR>
-</TBODY>
-</TABLE>
- -->
 The level editor is a large proportion of our project. With the level editor, you can change the camera view to anywhere in the scene. You can select any block, platform, or enemy, and drag it to a different place using the mouse, as well as delete the object. You can select an enemy and make it bigger or smaller by dragging the mouse. You can also spawn enemies, stationary platforms, coins, or fire sources using only a mouse click at the location desired. All of these features are implemented using a convenient sidebar picker with 7 options, where you can simply click the option you want and then immediately begin creating objects. 
 <BR>
 Furthermore, we can immediately start the game at any time in the level editor by immediately pressing "n" to initiate the game. The current state of the game be printed at any time (requiring a lot of reverse engineering of Read()) by simply pressing "p", in which case a new .scn file is automatically generated with the location of all players, objects, fire sources, enemies, platforms, and coins, along with their associated textures. 
@@ -415,17 +394,6 @@ Furthermore, we can immediately start the game at any time in the level editor b
 <!------------------------------------------------------------------------> 
 <!------------------------------------------------------------------------> 
 
-<TABLE cellSpacing=0 cellPadding=10 border=0 vAlign=top align=middle>
-<!-- <TBODY>
-  <TR>
-    <TD vAlign=top align=middle>
-       <A href="art/art.gif"><IMG width=512 src="art/art.gif"></A><BR>             
-       My art contest submission is a slightly modified version of my interesting scene that includes three sinks that form a triangle, but with the top sink slightly nearer to the source than the other two sinks. As a result, the particles flare off in a parabolic shape towards the upper sink, but  make an interesting fountain-shaped curve around the top sink, with random particles flying off in different directions. 
-    </TD>
-  </TR>
-</TBODY>
-</TABLE>
- -->
 Our scn file has support for practically every variable in the game. Blocks and platforms can be created with any texture, and platforms move between two specified locations. The player and enemies can be created with any box shape at any location, with a given max speed. Enemies can be initialized to jump, to jump with any velocity, to follow the player, or to initially move in some direction (if it does not follow the player). Coins and fire sources can be created anywhere. The skybox image, minimum scene height, soundtrack to the scene, and next level after completion can all be set in the scene. 
 <HR><BR>
 <BR>
@@ -437,17 +405,6 @@ Our scn file has support for practically every variable in the game. Blocks and 
 <!------------------------------------------------------------------------> 
 <!------------------------------------------------------------------------> 
 
-<TABLE cellSpacing=0 cellPadding=10 border=0 vAlign=top align=middle>
-<!-- <TBODY>
-  <TR>
-    <TD vAlign=top align=middle>
-       <A href="art/art.gif"><IMG width=512 src="art/art.gif"></A><BR>             
-       My art contest submission is a slightly modified version of my interesting scene that includes three sinks that form a triangle, but with the top sink slightly nearer to the source than the other two sinks. As a result, the particles flare off in a parabolic shape towards the upper sink, but  make an interesting fountain-shaped curve around the top sink, with random particles flying off in different directions. 
-    </TD>
-  </TR>
-</TBODY>
-</TABLE>
- -->
 All relevant scene information can be immediately printed back out to another file ../levels/output.scn using "p", by reverse engineering Read() for all relevant objects. This is very useful for saving game state and creating new levels using the level editor. 
 
 <HR><BR>
@@ -459,17 +416,6 @@ All relevant scene information can be immediately printed back out to another fi
 <!------------------------------------------------------------------------> 
 <!------------------------------------------------------------------------> 
 
-<TABLE cellSpacing=0 cellPadding=10 border=0 vAlign=top align=middle>
-<!-- <TBODY>
-  <TR>
-    <TD vAlign=top align=middle>
-       <A href="art/art.gif"><IMG width=512 src="art/art.gif"></A><BR>             
-       My art contest submission is a slightly modified version of my interesting scene that includes three sinks that form a triangle, but with the top sink slightly nearer to the source than the other two sinks. As a result, the particles flare off in a parabolic shape towards the upper sink, but  make an interesting fountain-shaped curve around the top sink, with random particles flying off in different directions. 
-    </TD>
-  </TR>
-</TBODY>
-</TABLE>
- -->
 In our game, completing a level will immediately jump you to the next level as specified in the scn file. This transition is smooth, and can be used by level designers to build an integrated massive game (e.g. transitioning betwen many levels or dungeons). 
 
 <HR><BR>
