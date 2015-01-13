@@ -1,17 +1,16 @@
 <HTML>
 <HEAD>
-<TITLE>
-COS 426 Assignment 4
-</TITLE>
 <BODY>
 <CENTER>
 <H2>
-COS 426, Spring 2014<BR>
-Deric Cheng, dericc<BR>       
-Matt Goldsmith, mgoldsmi<BR> 
-Riley Thomasson, rthomass<BR>   
-Andrew Werner, ajwerner<BR>       <!-- Fill in your name and login -->
-</H2>                     
+COS 426, Spring 2014
+</H2> 
+<H3>
+Deric Cheng<BR>       
+Matt Goldsmith<BR> 
+Riley Thomasson<BR>   
+Andrew Werner<BR>  
+</H3>                     
 </CENTER>
 <HR><BR>
 
@@ -320,33 +319,6 @@ We created particle sources that emanated particles that changed colors slowly f
 <H2><A name="particleinteraction">Collision Detection </A></H2>
 <!------------------------------------------------------------------------> 
 
-<!-- <TABLE>
-<TBODY>
-  <TR>
-    <TD vAlign=top align=middle>
-       <A href="output/collisiondetection.gif"><IMG width=256 src="output/collisiondetection.gif"></A><BR>       
-       <A href="input/collisiondetection.scn">collisiondetection.scn</A>
-    </TD>
-    <TD vAlign=top align=middle>
-       <A href="output/mutualparticleattraction.gif"><IMG width=256 src="output/mutualparticleattraction.gif"></A><BR>       
-       <A href="input/mutualparticleattraction.scn">mutualparticleattraction.scn</A>
-    </TD>
-    <TD vAlign=top align=middle>
-       <A href="output/rope.gif"><IMG width=256 src="output/rope.gif"></A><BR>       
-       <A href="input/rope.scn">rope.scn</A>
-    </TD>
-    <TD vAlign=top align=middle>
-       <A href="output/cloth.gif"><IMG width=256 src="output/cloth.gif"></A><BR>       
-       <A href="input/cloth.scn">cloth.scn</A>
-    </TD>
-    <TD vAlign=top align=middle>
-       <A href="output/falling_cube.gif"><IMG width=256 src="output/falling_cube.gif"></A><BR>       
-       <A href="input/falling_cube.scn">falling_cube.scn</A>
-    </TD>
-</TR>
-</TBODY>
-</TABLE> -->
-
 We implemented collision detection between the player and other objects, and between the enemies and other objects (including other enemies and players). All of the collisions are axis-aligned. We also detect the direction of collisions (e.g. the player hits the enemy from the top), so that the player can kill and be killed by enemies depending on the direction of approach. Collision detection handles impossible setups smoothly and without crashing (e.g. crushing blocks between platforms), though sometimes it may jump the block out in the wrong direction given an impossible situation. Collisions between moving objects are handled realistically: a jumping enemy on a jumping enemy will jump higher from the extra velocity. 
 
 <HR><BR>
@@ -390,7 +362,7 @@ Furthermore, we can immediately start the game at any time in the level editor b
 
 <!------------------------------------------------------------------------> 
 <!------------------------------------------------------------------------> 
-<H2><A name='sound'></A>SCN File</H2>
+<H2><A name='sound'>SCN File</A></H2>
 <!------------------------------------------------------------------------> 
 <!------------------------------------------------------------------------> 
 
